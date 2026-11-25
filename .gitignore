@@ -1,0 +1,10 @@
+/target
+*.pdb
+*.log
+.env
+.env.*
+/dist
+**/tests/snapshots/*.new.png
+**/tests/snapshots/*.diff.png
+.vs/
+.idea/
