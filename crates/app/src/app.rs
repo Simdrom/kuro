@@ -8,6 +8,7 @@ use jiff::civil::Date;
 use jiff::tz::TimeZone;
 use kuro_api::music::Track;
 use kuro_api::{ApiError, Page, Ranking, RankingQuery, SeasonQuery, Tokens};
+use kuro_core::kioku::Platform;
 use kuro_core::links::{self, Link};
 use kuro_core::list::{Filter, SortKey};
 use kuro_core::notify;
@@ -18,7 +19,7 @@ use kuro_core::{
     TitleLanguage, UserProfile, progress,
 };
 
-use crate::backend::{Backend, Event, now};
+use crate::backend::{Backend, Event, KiokuReview, now};
 use crate::confetti::Confetti;
 use crate::i18n::{self, t, tf};
 use crate::system::System;
@@ -75,6 +76,8 @@ pub enum Route {
     Person(u64),
     Review(MediaRef, u64),
     Settings(SettingsPage),
+    /// Kioku: viewing history from streaming platforms.
+    Kioku,
 }
 
 /// Something requested by the interface, applied after drawing.
@@ -107,6 +110,25 @@ pub enum Act {
     Random(MediaKind),
     ShowStatus(MediaKind, ListStatus),
     Import(String),
+    KiokuConnect(Platform),
+    KiokuAskDisconnect(Platform),
+    KiokuDisconnect(Platform),
+    KiokuSync(Platform),
+    KiokuAskApply,
+    KiokuApply,
+    /// Leaves an unmatched series out of every later review.
+    KiokuDismiss(usize),
+}
+
+/// Kioku's screen.
+#[derive(Default)]
+pub struct KiokuView {
+    /// Whether a Crunchyroll session is stored; asked once, not every frame.
+    pub connected: Option<bool>,
+    pub connecting: bool,
+    pub syncing: bool,
+    pub review: Option<KiokuReview>,
+    pub error: Option<ApiError>,
 }
 
 #[derive(Default)]
@@ -290,6 +312,7 @@ pub struct App {
     pub sync_error: Option<(Service, ApiError)>,
     pub image_bytes: Option<u64>,
     pub cache_bytes: Option<u64>,
+    pub kioku: KiokuView,
     acts: Vec<Act>,
     next_tick: f64,
     airing_at: i64,
@@ -388,6 +411,7 @@ impl App {
             sync_error: None,
             image_bytes: None,
             cache_bytes: None,
+            kioku: KiokuView::default(),
             acts: Vec::new(),
             next_tick: 0.0,
             airing_at: 0,
@@ -861,7 +885,126 @@ impl App {
                     Err(e) => self.say_error(tf("This backup could not be read: {}", &[&e])),
                 }
             }
+            Act::KiokuConnect(p) => {
+                self.kioku.connecting = true;
+                self.kioku.error = None;
+                self.bg.kioku_connect(p);
+            }
+            Act::KiokuAskDisconnect(p) => {
+                self.confirm = Some(Confirm {
+                    title: tf("kioku.disconnect.title", &[&p.name()]),
+                    body: tf("kioku.disconnect.body", &[&p.name()]),
+                    action: t("kioku.disconnect").into(),
+                    danger: true,
+                    act: Some(Act::KiokuDisconnect(p)),
+                });
+            }
+            Act::KiokuDisconnect(p) => {
+                use kuro_api::kioku::HistorySource;
+                let r = match p {
+                    Platform::Crunchyroll => self.bg.api.crunchyroll.disconnect(),
+                    _ => Ok(()),
+                };
+                match r {
+                    Ok(()) => {
+                        self.kioku.connected = Some(false);
+                        self.kioku.review = None;
+                    }
+                    Err(e) => self.say_error(format::error(&e)),
+                }
+            }
+            Act::KiokuSync(p) => {
+                self.kioku.syncing = true;
+                self.kioku.error = None;
+                self.kioku.review = None;
+                self.bg.kioku_sync(p, self.s.primary);
+            }
+            Act::KiokuAskApply => {
+                let n = self.kioku.review.as_ref().map_or(0, KiokuReview::selected);
+                self.confirm = Some(Confirm {
+                    title: tf("kioku.apply.title", &[&n]),
+                    body: t("kioku.apply.body").into(),
+                    action: t("kioku.apply.action").into(),
+                    danger: false,
+                    act: Some(Act::KiokuApply),
+                });
+            }
+            Act::KiokuApply => self.kioku_apply(),
+            Act::KiokuDismiss(i) => {
+                if let Some(r) = self.kioku.review.as_mut()
+                    && i < r.unmatched.len()
+                {
+                    let g = r.unmatched.remove(i);
+                    r.dismissed.extend(g.items.into_iter().map(|i| i.external_id));
+                }
+            }
         }
+    }
+
+    /// Writes the ticked Kioku changes, checked again against the list as it
+    /// is now: progress never moves back and finished titles stay as they are.
+    fn kioku_apply(&mut self) {
+        let Some(review) = self.kioku.review.take() else { return };
+        let Some(platform) = review.platform else { return };
+        if review.service != self.s.primary {
+            // The primary service changed since: the matches belong to the other one.
+            self.say_error(t("kioku.stale"));
+            return;
+        }
+        let mut written: HashMap<MediaRef, ListEntry> = HashMap::new();
+        let mut applied: Vec<String> = review.settled.clone();
+        let mut changes: Vec<&kuro_core::kioku::Proposal> =
+            review.changes.iter().filter(|p| p.selected).collect();
+        changes.sort_by_key(|p| p.after.progress);
+        for p in changes {
+            let r = self.home_ref(&p.media);
+            let current = written.get(&r).cloned().or_else(|| self.entry_at(r).map(|e| (*e).clone()));
+            let next = match &current {
+                // Unchanged since the review: exactly what was shown.
+                c if c.as_ref() == p.before.as_ref() => Some(p.after.clone()),
+                Some(c) if c.status == ListStatus::Completed || c.repeating => None,
+                Some(c) if c.progress >= p.after.progress => None,
+                Some(c) => {
+                    let mut e = c.clone();
+                    e.start = e.start.or(p.after.start);
+                    let mut e = progress::set_progress(&e, p.after.progress, today());
+                    if e.status == ListStatus::Completed && c.finish.is_none() {
+                        e.finish = p.after.finish.or(e.finish);
+                    }
+                    Some(e)
+                }
+                None => Some(p.after.clone()),
+            };
+            if let Some(e) = next {
+                let mut e = progress::sanitize(&e);
+                e.media = self.home_media(&e.media);
+                e.updated_at = now();
+                written.insert(e.media.media_ref(), e);
+            }
+            applied.extend(p.items.iter().cloned());
+        }
+        let entries: Vec<ListEntry> = written.into_values().collect();
+        let targets = self.targets();
+        let saved = self.bg.store().kioku_apply(&kuro_core::store::KiokuApply {
+            service: review.service,
+            platform,
+            entries: &entries,
+            targets: &targets,
+            applied: &applied,
+            dismissed: &review.dismissed,
+            now: now(),
+        });
+        if let Err(err) = saved {
+            tracing::error!("kioku import failed: {err}");
+            self.say_error(t("Your change could not be saved."));
+            self.kioku.review = Some(review);
+            return;
+        }
+        self.reload();
+        if !targets.is_empty() {
+            self.bg.sync();
+        }
+        self.say(tf("kioku.applied", &[&entries.len()]));
     }
 
     fn gesture(&mut self, g: GestureAction, m: Rc<Media>) {
@@ -1058,6 +1201,29 @@ impl App {
                 Ok(()) => self.say(t("Backup saved")),
                 Err(e) => self.say_error(tf("Something went wrong: {}", &[&e])),
             },
+            Event::KiokuConnected { platform, result } => {
+                self.kioku.connecting = false;
+                self.show_window(ctx);
+                match result {
+                    Ok(()) => {
+                        self.kioku.connected = Some(true);
+                        self.say(tf("kioku.connected.toast", &[&platform.name()]));
+                    }
+                    Err(e) => self.kioku.error = Some(e),
+                }
+            }
+            Event::KiokuReview(result) => {
+                self.kioku.syncing = false;
+                match result {
+                    Ok(r) => self.kioku.review = Some(r),
+                    Err(e) => {
+                        if e == ApiError::Unauthorized {
+                            self.kioku.connected = None;
+                        }
+                        self.kioku.error = Some(e);
+                    }
+                }
+            }
             Event::OpenLink(l) => {
                 self.open_link(&l);
             }

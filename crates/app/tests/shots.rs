@@ -41,6 +41,12 @@ fn screens() {
         h.state_mut().act(Act::Push(Route::Settings(page)));
         shot(&mut h, &format!("settings-{page:?}"));
     }
+    h.state_mut().routes.clear();
+    h.state_mut().act(Act::Push(Route::Kioku));
+    shot(&mut h, "kioku");
+    let found = review(h.state(), &history());
+    h.state_mut().kioku.review = Some(found);
+    shot(&mut h, "kioku-review");
     h.state_mut().act(Act::Go(Tab::Manga));
     settle(&mut h);
     h.state_mut().s.theme = Theme::Light;

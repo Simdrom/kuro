@@ -289,6 +289,15 @@ fn command(app: &mut App, ctx: &Context) {
                 rows.push((name.into(), icons::GEAR, Act::Push(Route::Settings(page))));
             }
         }
+        let kioku = super::kioku::NAME;
+        let about = t("kioku.palette");
+        if !q.is_empty() && [kioku, about, "crunchyroll"].iter().any(|n| n.to_lowercase().contains(&q)) {
+            rows.push((
+                format!("{kioku} · {about}"),
+                icons::CLOCK_COUNTER_CLOCKWISE,
+                Act::Push(Route::Kioku),
+            ));
+        }
         if !q.is_empty() {
             for k in MediaKind::ALL {
                 let label = tf("Search {}: {}", &[&format::kind(k), &text.trim()]);

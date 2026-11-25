@@ -250,6 +250,7 @@ pub fn error(e: &ApiError) -> String {
         ApiError::NotConfigured => t("Add a client ID in Settings › Accounts to use this service.").into(),
         ApiError::Status(s) => tf("The service is not available right now ({}).", &[s]),
         ApiError::Auth(m) if m == "cancelled" => t("Sign-in was cancelled.").into(),
+        ApiError::Unavailable => t("kioku.soon").into(),
         other => tf("Something went wrong: {}", &[other]),
     }
 }

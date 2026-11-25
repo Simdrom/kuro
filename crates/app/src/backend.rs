@@ -9,8 +9,10 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use eframe::egui;
 use kuro_api::images::ImageCache;
+use kuro_api::kioku::HistorySource;
 use kuro_api::music::Track;
 use kuro_api::{Api, ApiError, Page, RankingQuery, SeasonQuery, Tokens};
+use kuro_core::kioku::{self, Group, Platform, Proposal, WatchedItem};
 use kuro_core::overview::Section;
 use kuro_core::{
     ListEntry, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, Service, Store, Theme, UserProfile,
@@ -95,6 +97,13 @@ pub enum Event {
     /// Text chosen in a file dialog.
     ImportText(Result<String, String>),
     Exported(Result<(), String>),
+    /// Kioku: the sign-in window closed.
+    KiokuConnected {
+        platform: Platform,
+        result: Outcome<()>,
+    },
+    /// Kioku: history read and matched, waiting for the user.
+    KiokuReview(Outcome<KiokuReview>),
     /// A link passed by another process or the tray.
     OpenLink(String),
     ShowWindow,
@@ -130,6 +139,117 @@ impl Reply {
 
 pub fn now() -> i64 {
     jiff::Timestamp::now().as_second()
+}
+
+/// What a Kioku sync found, before anything is written.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct KiokuReview {
+    pub platform: Option<Platform>,
+    pub service: Service,
+    /// Proposed changes; the ticked ones are applied.
+    pub changes: Vec<Proposal>,
+    /// Platform ids of titles already up to date.
+    pub settled: Vec<String>,
+    /// Series no title was found for.
+    pub unmatched: Vec<Group>,
+    /// Platform ids the user chose to leave out.
+    pub dismissed: Vec<String>,
+    /// Items to keep for later until applied or dismissed.
+    pub held: Vec<WatchedItem>,
+}
+
+impl KiokuReview {
+    pub fn selected(&self) -> usize {
+        self.changes.iter().filter(|p| p.selected).count()
+    }
+}
+
+/// Texts to search the tracker with for one group.
+pub fn kioku_queries(g: &Group) -> Vec<String> {
+    let mut q = vec![g.query().to_owned()];
+    if let Some(i) = g.items.first() {
+        let extra = if i.movie { i.episode_title.clone() } else { i.season_title.clone() };
+        q.extend(extra.filter(|t| !t.trim().is_empty() && !t.eq_ignore_ascii_case(&i.series_title)));
+    }
+    q.retain(|t| !t.trim().is_empty());
+    q
+}
+
+/// Matches groups to titles and proposes changes. Pure, so the interface tests
+/// can feed it a simulated source.
+pub fn kioku_review(
+    platform: Platform,
+    service: Service,
+    groups: Vec<Group>,
+    candidates: impl Fn(&Group) -> Vec<Media>,
+    entry: impl Fn(&Media) -> Option<ListEntry>,
+    today: jiff::civil::Date,
+) -> KiokuReview {
+    let mut r = KiokuReview { platform: Some(platform), service, ..KiokuReview::default() };
+    for g in groups {
+        r.held.extend(g.items.iter().cloned());
+        let found = candidates(&g);
+        match kioku::review::review(g, &found, &entry, today) {
+            kioku::Outcome::Change(p) => r.changes.push(*p),
+            kioku::Outcome::Nothing { items, .. } => r.settled.extend(items),
+            kioku::Outcome::Unmatched(g) => r.unmatched.push(g),
+        }
+    }
+    let settled: HashSet<&String> = r.settled.iter().collect();
+    r.held.retain(|i| !settled.contains(&i.external_id));
+    r.changes.sort_by(|a, b| b.selected.cmp(&a.selected).then_with(|| a.media.title.cmp(&b.media.title)));
+    r
+}
+
+async fn kioku_run(
+    api: &Api,
+    store: &Mutex<Store>,
+    platform: Platform,
+    service: Service,
+) -> Outcome<KiokuReview> {
+    let db = |e: kuro_core::StoreError| ApiError::Service(e.to_string());
+    let (known, pending) = {
+        let s = lock(store);
+        (s.kioku_known(service, platform).map_err(db)?, s.kioku_pending(service, platform).map_err(db)?)
+    };
+    let source: &dyn HistorySource = match platform {
+        Platform::Crunchyroll => &api.crunchyroll,
+        _ => return Err(ApiError::Unavailable),
+    };
+    let mut items = source.fetch(&known).await?;
+    items.extend(pending);
+    let groups = kioku::review::groups(items, &known);
+    let mut found: std::collections::HashMap<String, Vec<Media>> = std::collections::HashMap::new();
+    for q in groups.iter().flat_map(kioku_queries) {
+        if found.contains_key(&q) {
+            continue;
+        }
+        // Anime only: what the tracker does not know as anime stays unmatched.
+        let page = api.search(service, MediaKind::Anime, &q, false, 1).await;
+        match page {
+            Ok(p) => drop(found.insert(q, p.items)),
+            Err(e) if e.is_transient() || e == ApiError::NotConfigured => return Err(e),
+            Err(_) => drop(found.insert(q, Vec::new())),
+        }
+    }
+    let candidates = |g: &Group| {
+        let mut all: Vec<Media> = Vec::new();
+        for q in kioku_queries(g) {
+            for m in found.get(&q).into_iter().flatten() {
+                if !all.iter().any(|x| x.id == m.id) {
+                    all.push(m.clone());
+                }
+            }
+        }
+        all
+    };
+    let entry = |m: &Media| {
+        let r = MediaRef { service, kind: m.kind, id: m.id_on(service).unwrap_or(m.id) };
+        lock(store).entry(r).ok().flatten()
+    };
+    let review = kioku_review(platform, service, groups, candidates, entry, crate::app::today());
+    lock(store).kioku_set_pending(service, platform, &review.held).map_err(db)?;
+    Ok(review)
 }
 
 fn lock(store: &Mutex<Store>) -> MutexGuard<'_, Store> {
@@ -413,6 +533,28 @@ impl Backend {
         });
     }
 
+    // Kioku
+
+    /// Opens the platform's sign-in window in a process of its own.
+    pub fn kioku_connect(&self, platform: Platform) {
+        if self.rt.is_none() {
+            return;
+        }
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            let result = kioku_sign_in(platform);
+            reply.send(Event::KiokuConnected { platform, result });
+        });
+    }
+
+    /// Reads the history and matches it; nothing is written to the list.
+    pub fn kioku_sync(&self, platform: Platform, service: Service) {
+        let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
+        self.spawn(async move {
+            reply.send(Event::KiokuReview(kioku_run(&api, &store, platform, service).await))
+        });
+    }
+
     pub fn cancel_login(&mut self) {
         if let Some(h) = self.login.take() {
             h.abort();
@@ -490,6 +632,27 @@ impl Backend {
             reply.send(Event::ImportText(r));
         });
     }
+}
+
+#[cfg(windows)]
+fn kioku_sign_in(platform: Platform) -> Outcome<()> {
+    use crate::kioku_login as login;
+    let exe = std::env::current_exe().map_err(|e| ApiError::Service(e.to_string()))?;
+    let status = std::process::Command::new(exe)
+        .args([login::ARG, platform.key()])
+        .status()
+        .map_err(|e| ApiError::Service(e.to_string()))?;
+    match status.code() {
+        Some(login::SIGNED_IN) => Ok(()),
+        Some(login::CANCELLED) => Err(ApiError::Auth("cancelled".into())),
+        Some(login::EXPIRED) => Err(ApiError::Unauthorized),
+        _ => Err(ApiError::Auth("Crunchyroll".into())),
+    }
+}
+
+#[cfg(not(windows))]
+fn kioku_sign_in(_: Platform) -> Outcome<()> {
+    Err(ApiError::Unavailable)
 }
 
 fn to_page((items, more): (Vec<Media>, bool)) -> Page<Media> {

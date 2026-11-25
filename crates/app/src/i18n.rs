@@ -1,4 +1,7 @@
 //! Translations. English text is the key; `strings.txt` holds the rest.
+//!
+//! Keys that start with [`PREFIX`] are names rather than text, and their row
+//! holds the English text too, in the first column.
 
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -96,6 +99,9 @@ thread_local! {
 
 type Table = HashMap<&'static str, Vec<&'static str>>;
 
+/// Keys of Kioku, whose rows start with the English text.
+pub const PREFIX: &str = "kioku.";
+
 fn table() -> &'static Table {
     static TABLE: OnceLock<Table> = OnceLock::new();
     TABLE.get_or_init(|| parse(include_str!("strings.txt")))
@@ -128,10 +134,14 @@ pub fn current() -> &'static Language {
 
 pub fn t(key: &'static str) -> &'static str {
     let i = CURRENT.get();
-    if i == 0 {
+    let column = if key.starts_with(PREFIX) {
+        i
+    } else if i == 0 {
         return key;
-    }
-    table().get(key).and_then(|c| c.get(i - 1)).copied().filter(|s| !s.is_empty()).unwrap_or(key)
+    } else {
+        i - 1
+    };
+    table().get(key).and_then(|c| c.get(column)).copied().filter(|s| !s.is_empty()).unwrap_or(key)
 }
 
 /// Translates and replaces `{}` placeholders in order.
@@ -202,10 +212,12 @@ mod tests {
         let missing: Vec<_> = keys.iter().filter(|k| !table().contains_key(k.as_str())).collect();
         assert!(missing.is_empty(), "missing from strings.txt: {missing:#?}");
         for (k, cols) in table() {
-            assert_eq!(cols.len(), LANGUAGES.len() - 1, "columns of {k:?}");
-            for (c, l) in cols.iter().zip(&LANGUAGES[1..]) {
+            let named = k.starts_with(PREFIX);
+            let (langs, english) = if named { (&LANGUAGES[..], cols[0]) } else { (&LANGUAGES[1..], *k) };
+            assert_eq!(cols.len(), langs.len(), "columns of {k:?}");
+            for (c, l) in cols.iter().zip(langs) {
                 assert!(!c.trim().is_empty(), "{k:?} is empty in {}", l.code);
-                assert_eq!(c.matches("{}").count(), k.matches("{}").count(), "{k:?} in {}", l.code);
+                assert_eq!(c.matches("{}").count(), english.matches("{}").count(), "{k:?} in {}", l.code);
             }
         }
     }
@@ -224,6 +236,15 @@ mod tests {
         }
         assert_eq!(LANGUAGES[1].date(jiff::civil::date(2025, 10, 3), true), "3 oct 2025");
         assert_eq!(LANGUAGES[6].date(jiff::civil::date(2025, 10, 3), true), "2025년 10월 3일");
+    }
+
+    #[test]
+    fn named_keys_have_english_text() {
+        set("en");
+        assert_eq!(t("kioku.sync"), "Sync history");
+        set("es");
+        assert_eq!(t("kioku.sync"), "Sincronizar historial");
+        set("en");
     }
 
     #[test]

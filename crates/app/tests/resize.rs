@@ -330,3 +330,23 @@ fn status_chips_filter_the_list() {
     assert!(h.query_by_label_contains("Dustfall, Dropped").is_some());
     assert!(h.query_by_label_contains("Lanterns Over Saltmarsh, Watching").is_none());
 }
+
+#[test]
+fn kioku_and_its_review_fit() {
+    for language in ["en", "de", "fr"] {
+        let mut h = app_in(language, 1240.0);
+        act_now(&mut h, Act::Go(Tab::Settings));
+        act_now(&mut h, Act::Push(Route::Kioku));
+        let found = review(h.state(), &history());
+        h.state_mut().kioku.review = Some(found);
+        for w in WIDTHS {
+            resize(&mut h, w, 800.0);
+            check(&h, w, 800.0, &format!("{language} Kioku"));
+        }
+    }
+}
+
+fn act_now(h: &mut H, a: Act) {
+    h.state_mut().act(a);
+    settle(h);
+}

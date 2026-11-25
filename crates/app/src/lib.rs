@@ -7,6 +7,8 @@ pub mod format;
 pub mod i18n;
 pub mod icon;
 pub mod icons;
+#[cfg(windows)]
+pub mod kioku_login;
 pub mod system;
 pub mod textures;
 pub mod theme;

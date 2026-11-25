@@ -291,6 +291,16 @@ fn accounts(app: &mut App, ui: &mut Ui) {
     for s in Service::ALL {
         service(app, ui, s);
     }
+    section(ui, &p, super::kioku::NAME);
+    card(ui, &p, |ui| {
+        let name = super::kioku::NAME;
+        if widgets::nav_row(ui, &p, icons::CLOCK_COUNTER_CLOCKWISE, p.tint, name, "Crunchyroll", false)
+            .clicked()
+        {
+            app.act(Act::Push(Route::Kioku));
+        }
+    });
+    note(ui, &p, t("kioku.settings.note"));
 }
 
 fn service(app: &mut App, ui: &mut Ui, s: Service) {

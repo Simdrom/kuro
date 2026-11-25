@@ -9,6 +9,7 @@ pub mod detail;
 pub mod dialogs;
 pub mod extra;
 pub mod float;
+pub mod kioku;
 pub mod mylist;
 pub mod rows;
 pub mod settings;

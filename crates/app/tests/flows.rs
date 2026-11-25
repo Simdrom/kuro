@@ -483,3 +483,68 @@ fn interactive_elements_have_names() {
         }
     }
 }
+
+#[test]
+fn kioku_opens_from_accounts_and_the_palette() {
+    // Tall enough for the end of the accounts page.
+    let mut h = harness_with(store(), [1240.0, 2400.0], |_| {});
+    act(&mut h, Act::Go(Tab::Settings));
+    act(&mut h, Act::Push(Route::Settings(SettingsPage::Accounts)));
+    h.get_by_role_and_label(egui::accesskit::Role::Button, "Kioku").click();
+    settle(&mut h);
+    assert_eq!(h.state().routes.last(), Some(&Route::Kioku));
+    assert!(h.query_by_label_contains("unofficial integration with Crunchyroll").is_some());
+
+    let mut h = harness();
+    h.state_mut().command = Some("kiok".into());
+    settle(&mut h);
+    click(&mut h, "Kioku · Watch history");
+    assert_eq!(h.state().routes.last(), Some(&Route::Kioku));
+}
+
+#[test]
+fn kioku_reviews_before_writing_and_never_imports_twice() {
+    let mut h = harness();
+    let source = history();
+    let found = review(h.state(), &source);
+    act(&mut h, Act::Push(Route::Kioku));
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(found)));
+    settle(&mut h);
+
+    // Nothing is written until the change is confirmed.
+    assert_eq!(progress(&h, 1), 9);
+    let shown = h.state().kioku.review.clone().unwrap();
+    let ticked: Vec<(u64, bool)> = shown.changes.iter().map(|c| (c.media.id, c.selected)).collect();
+    // The paused title with a gap is offered, but not ticked; the finished one is not offered.
+    assert_eq!(ticked, [(1, true), (5, false)]);
+    assert_eq!(shown.settled, ["I24"]);
+    assert_eq!(shown.unmatched.len(), 1);
+    let boxes: Vec<String> = h
+        .query_all_by_role(egui::accesskit::Role::CheckBox)
+        .map(|n| n.accesskit_node().label().unwrap_or_default())
+        .collect();
+    assert_eq!(boxes, ["Lanterns Over Saltmarsh", "Glass Meridian"]);
+    assert!(h.query_by_label_contains("Paused in your list").is_some());
+    assert!(h.query_by_label_contains("2 episodes in between are not in the history").is_some());
+
+    click(&mut h, "Ignore");
+    click(&mut h, "Mark 1 titles");
+    assert!(h.query_by_label("Mark 1 titles?").is_some());
+    assert_eq!(progress(&h, 1), 9);
+    click(&mut h, "Mark");
+
+    let e = h.state().entry_at(r(1, MediaKind::Anime)).unwrap();
+    assert_eq!((e.status, e.progress), (ListStatus::Current, 11));
+    let done = h.state().entry_at(r(3, MediaKind::Anime)).unwrap();
+    assert_eq!((done.status, done.progress), (ListStatus::Completed, 24));
+    let paused = h.state().entry_at(r(5, MediaKind::Anime)).unwrap();
+    assert_eq!((paused.status, paused.progress), (ListStatus::Paused, 6));
+    assert!(h.state().kioku.review.is_none());
+
+    // The same history again: only what was neither applied nor ignored comes back.
+    let again = review(h.state(), &source);
+    let left: Vec<u64> = again.changes.iter().map(|c| c.media.id).collect();
+    assert_eq!((left, again.unmatched.len(), again.settled.len()), (vec![5], 0, 0));
+    assert_eq!(progress(&h, 1), 11);
+}

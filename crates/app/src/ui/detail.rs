@@ -34,6 +34,7 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         Some(Route::Person(id)) => super::extra::person(app, ui, id),
         Some(Route::Review(r, id)) => super::extra::review(app, ui, r, id),
         Some(Route::Settings(page)) => super::settings::page(app, ui, page),
+        Some(Route::Kioku) => super::kioku::show(app, ui),
     }
 }
 

@@ -151,3 +151,75 @@ pub fn harness() -> Harness<'static, App> {
 pub fn settle(h: &mut Harness<'static, App>) {
     h.run_steps(8);
 }
+
+// Kioku
+
+use kuro_api::kioku::{BoxFuture, HistorySource, Mode};
+use kuro_core::kioku::{Platform, Watched, WatchedItem};
+
+/// A platform that answers with a fixed history, as a real one would.
+pub struct FakeSource(pub Vec<WatchedItem>);
+
+impl HistorySource for FakeSource {
+    fn platform(&self) -> Platform {
+        Platform::Crunchyroll
+    }
+    fn mode(&self) -> Mode {
+        Mode::Account
+    }
+    fn connected(&self) -> bool {
+        true
+    }
+    fn fetch<'a>(
+        &'a self,
+        known: &'a std::collections::HashSet<String>,
+    ) -> BoxFuture<'a, kuro_api::Result<Vec<WatchedItem>>> {
+        let items = self.0.iter().filter(|i| !known.contains(&i.external_id)).cloned().collect();
+        Box::pin(async move { Ok(items) })
+    }
+}
+
+pub fn watched(id: &str, series: &str, season: u32, episode: u32) -> WatchedItem {
+    WatchedItem {
+        platform: Platform::Crunchyroll,
+        series_title: series.into(),
+        season: Some(season),
+        season_title: None,
+        episode: Some(episode),
+        episode_title: None,
+        movie: false,
+        watched_at: Some(now() - 86_400 * i64::from(episode)),
+        progress: Watched::Completed,
+        external_id: id.into(),
+    }
+}
+
+/// History against the titles of [`store`]: two new episodes of a title being
+/// watched, one of a finished title, a gap in a paused one and an unknown show.
+pub fn history() -> FakeSource {
+    FakeSource(vec![
+        watched("L10", "Lanterns Over Saltmarsh", 1, 10),
+        watched("L11", "Lanterns Over Saltmarsh", 1, 11),
+        watched("L11-dub", "Lanterns Over Saltmarsh", 1, 11),
+        watched("I24", "Iron Orchard", 1, 24),
+        watched("G9", "Glass Meridian", 1, 9),
+        watched("U1", "A Show Nobody Has Heard Of", 1, 1),
+    ])
+}
+
+/// What a sync of `source` finds, built the way the backend builds it.
+pub fn review(app: &App, source: &FakeSource) -> kuro_app::backend::KiokuReview {
+    let known = app.bg.store().kioku_known(Service::AniList, Platform::Crunchyroll).unwrap();
+    let rt = tokio::runtime::Builder::new_current_thread().build().unwrap();
+    let items = rt.block_on(source.fetch(&known)).unwrap();
+    let groups = kuro_core::kioku::review::groups(items, &known);
+    let titles: Vec<Media> = app.library(MediaKind::Anime).iter().map(|e| e.media.clone()).collect();
+    kuro_app::backend::kioku_review(
+        Platform::Crunchyroll,
+        Service::AniList,
+        groups,
+        |_| titles.clone(),
+        |m| app.entry_at(m.media_ref()).map(|e| (*e).clone()),
+        kuro_app::app::today(),
+    )
+}

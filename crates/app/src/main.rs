@@ -21,6 +21,15 @@ fn main() {
     let link = args.iter().find(|a| kuro_core::links::parse(a).is_some()).cloned();
     // A separate folder keeps a second, independent profile.
     let profile = std::env::var("KURO_PROFILE_DIR").ok();
+    // Started by the main window for Kioku's sign-in, before the single-instance check.
+    #[cfg(windows)]
+    if args.first().map(String::as_str) == Some(kuro_app::kioku_login::ARG) {
+        let code = match args.get(1).map(String::as_str) {
+            Some("crunchyroll") => kuro_app::kioku_login::run(secrets_name(profile.as_deref())),
+            _ => kuro_app::kioku_login::FAILED,
+        };
+        std::process::exit(code);
+    }
     if system::forward(profile.as_deref(), link.as_deref()) {
         return;
     }
@@ -55,15 +64,21 @@ fn adopt_previous(data: &std::path::Path, default_profile: bool, secrets: &str) 
     }
 }
 
+/// Name of the Credential Manager entries of a profile.
+fn secrets_name(profile: Option<&str>) -> &'static str {
+    if profile.is_some() { "kuro-profile" } else { "kuro" }
+}
+
 fn run(hidden: bool, link: Option<String>, profile: Option<String>) -> Result<(), AnyError> {
-    let (data, cache, secrets) = match &profile {
+    let secrets = secrets_name(profile.as_deref());
+    let (data, cache) = match &profile {
         Some(p) => {
             let p = std::path::PathBuf::from(p);
-            (p.clone(), p.join("cache"), "kuro-profile")
+            (p.clone(), p.join("cache"))
         }
         None => {
             let dirs = directories::ProjectDirs::from("", "", "Kuro").ok_or("no home directory")?;
-            (dirs.data_local_dir().to_owned(), dirs.cache_dir().to_owned(), "kuro")
+            (dirs.data_local_dir().to_owned(), dirs.cache_dir().to_owned())
         }
     };
     std::fs::create_dir_all(&data)?;
