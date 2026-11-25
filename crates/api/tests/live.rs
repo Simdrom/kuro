@@ -67,3 +67,28 @@ async fn crunchyroll_history_is_read() {
     println!("items: {}  films: {films}", items.len());
     assert!(items.iter().all(|i| !i.external_id.is_empty() && !i.series_title.is_empty()));
 }
+
+/// Reads one's own Netflix viewing activity, named by `KURO_KIOKU_NETFLIX_CSV`.
+/// Prints only counts, never titles.
+#[test]
+#[ignore = "needs a Netflix viewing activity file"]
+fn netflix_file_is_read() {
+    use kuro_api::kioku::HistorySource;
+    let Ok(path) = std::env::var("KURO_KIOKU_NETFLIX_CSV") else {
+        panic!("set KURO_KIOKU_NETFLIX_CSV");
+    };
+    let items = kuro_api::kioku::netflix::Netflix.parse(&std::fs::read(path).unwrap()).unwrap();
+    let count = |f: &dyn Fn(&kuro_core::kioku::WatchedItem) -> bool| items.iter().filter(|i| f(i)).count();
+    let groups = kuro_core::kioku::review::groups(items.clone(), &Default::default());
+    println!(
+        "rows: {}  films: {}  with season: {}  counted episodes: {}  given episodes: {}  undated: {}  groups: {}",
+        items.len(),
+        count(&|i| i.movie),
+        count(&|i| i.season.is_some()),
+        count(&|i| i.estimated),
+        count(&|i| !i.movie && !i.estimated),
+        count(&|i| i.watched_at.is_none()),
+        groups.len(),
+    );
+    assert!(items.iter().all(|i| !i.series_title.is_empty()));
+}
