@@ -582,7 +582,15 @@ impl Backend {
     pub fn kioku_sync(&self, platform: Platform, service: Service) {
         let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
         self.spawn(async move {
-            let result = kioku_run(&api, &store, platform, service, &reply).await;
+            // A bug must end the sync with an error, not leave it spinning forever.
+            let run = {
+                let reply = reply.clone();
+                tokio::spawn(async move { kioku_run(&api, &store, platform, service, &reply).await })
+            };
+            let result = run.await.unwrap_or_else(|e| {
+                tracing::error!("kioku: sync stopped unexpectedly: {e}");
+                Err(ApiError::Service("Kioku stopped unexpectedly".into()))
+            });
             if let Err(e) = &result {
                 tracing::warn!("kioku: sync failed: {e}");
             }
