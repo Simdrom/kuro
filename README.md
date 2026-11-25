@@ -1,5 +1,10 @@
 # Kuro 黒
 
+[![CI](https://github.com/Simdrom/kuro/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/Simdrom/kuro/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Release](https://github.com/Simdrom/kuro/actions/workflows/release.yml/badge.svg)](https://github.com/Simdrom/kuro/releases/latest)
+[![Rust 1.95+](https://img.shields.io/badge/rust-1.95%2B-orange?logo=rust)](Cargo.toml)
+![Windows](https://img.shields.io/badge/platform-Windows-0078D4)
+
 *Kuro* is Japanese for black, like the ink of manga.
 
 Unofficial anime and manga tracker for Windows, written in Rust. It works with
@@ -137,3 +142,23 @@ needs a private key.
     cargo clippy --workspace --all-targets -- -D warnings
 
 `KURO_PROFILE_DIR=<folder>` runs a separate profile.
+
+## Branches and releases
+
+Work happens on `develop`, the default branch. `main` holds what is published
+and only moves through a release.
+
+The version is the one in the root `Cargo.toml`, and on `develop` it is always
+the next release. To publish it, run **Actions › Release** from `develop` with
+*dry run* off. It runs the whole CI, fast-forwards `main`, tags it, publishes
+the executable and moves `develop` to the next minor version. Nothing is
+pushed until everything has been built. It needs a write deploy key in the
+`RELEASE_DEPLOY_KEY` secret; the client IDs come from the repository variables
+`KURO_ANILIST_CLIENT_ID` and `KURO_MAL_CLIENT_ID`.
+
+After cloning, turn on the local guard for `main`, `develop` and version tags:
+
+    git config core.hooksPath .githooks
+
+`.github/rulesets/apply.sh` sets the same rules on GitHub, which a private
+repository only allows with GitHub Pro.
