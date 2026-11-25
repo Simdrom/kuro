@@ -1,6 +1,6 @@
 //! SQLite storage: library, pending changes, response cache and settings.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use rusqlite::{Connection, OpenFlags, OptionalExtension, params};
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 use crate::kioku::{Platform, WatchedItem};
-use crate::model::{ListEntry, MediaKind, MediaRef, Service};
+use crate::model::{ListEntry, Media, MediaKind, MediaRef, Service};
 use crate::settings::Settings;
 
 #[derive(Debug, Error)]
@@ -71,7 +71,7 @@ pub struct Store {
     db: Connection,
 }
 
-const SCHEMA_VERSION: i64 = 2;
+const SCHEMA_VERSION: i64 = 3;
 const BACKUP_FORMAT: u32 = 1;
 
 impl Store {
@@ -138,6 +138,17 @@ impl Store {
                     external_id TEXT NOT NULL, json TEXT NOT NULL,
                     PRIMARY KEY(service, platform, external_id)) WITHOUT ROWID;
                  PRAGMA user_version=2;
+                 COMMIT;",
+            )?;
+        }
+        if version < 3 {
+            // Kioku: titles the user chose for a series, by the series' name.
+            db.execute_batch(
+                "BEGIN;
+                 CREATE TABLE kioku_chosen(service TEXT NOT NULL, platform TEXT NOT NULL,
+                    key TEXT NOT NULL, json TEXT NOT NULL,
+                    PRIMARY KEY(service, platform, key)) WITHOUT ROWID;
+                 PRAGMA user_version=3;
                  COMMIT;",
             )?;
         }
@@ -325,6 +336,31 @@ impl Store {
             .prepare_cached("SELECT external_id FROM kioku_imported WHERE service=?1 AND platform=?2")?;
         let rows = q.query_map([service.key(), platform.key()], |r| r.get::<_, String>(0))?;
         Ok(rows.collect::<std::result::Result<_, _>>()?)
+    }
+
+    /// Titles the user chose for series of `platform`, by [`Group::key`](crate::kioku::Group::key).
+    pub fn kioku_chosen(&self, service: Service, platform: Platform) -> Result<HashMap<String, Media>> {
+        let mut q =
+            self.db.prepare_cached("SELECT key,json FROM kioku_chosen WHERE service=?1 AND platform=?2")?;
+        let rows = q.query_map([service.key(), platform.key()], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+        })?;
+        let mut out = HashMap::new();
+        for row in rows {
+            let (k, json) = row?;
+            if let Ok(m) = serde_json::from_str(&json) {
+                out.insert(k, m);
+            }
+        }
+        Ok(out)
+    }
+
+    pub fn kioku_choose(&self, service: Service, platform: Platform, key: &str, media: &Media) -> Result<()> {
+        self.db.execute(
+            "INSERT OR REPLACE INTO kioku_chosen(service,platform,key,json) VALUES(?1,?2,?3,?4)",
+            params![service.key(), platform.key(), key, serde_json::to_string(media)?],
+        )?;
+        Ok(())
     }
 
     /// Items left for review at the last sync.
@@ -679,7 +715,8 @@ mod tests {
         assert_eq!(s.entry(entry(1, 0).media.media_ref()).unwrap().unwrap().progress, 4);
         assert!(s.kioku_known(Service::AniList, Platform::Crunchyroll).unwrap().is_empty());
         let v: i64 = s.db.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
-        assert_eq!(v, 2);
+        assert_eq!(v, 3);
+        assert!(s.kioku_chosen(Service::AniList, Platform::Netflix).unwrap().is_empty());
     }
 
     #[test]
@@ -692,6 +729,7 @@ mod tests {
             season: Some(1),
             season_title: None,
             episode: Some(1),
+            estimated: false,
             episode_title: None,
             movie: false,
             watched_at: None,
@@ -720,6 +758,18 @@ mod tests {
         s.clear_account(Service::AniList).unwrap();
         assert!(s.kioku_known(Service::AniList, Platform::Crunchyroll).unwrap().is_empty());
         assert!(s.kioku_pending(Service::AniList, Platform::Crunchyroll).unwrap().is_empty());
+    }
+
+    #[test]
+    fn chosen_titles_are_remembered_per_list_and_platform() {
+        let s = Store::in_memory().unwrap();
+        let m = Media { id: 7, title: "Iron Orchard".into(), ..Media::default() };
+        s.kioku_choose(Service::AniList, Platform::Netflix, "k", &m).unwrap();
+        s.kioku_choose(Service::AniList, Platform::Netflix, "k", &m).unwrap();
+        let got = s.kioku_chosen(Service::AniList, Platform::Netflix).unwrap();
+        assert_eq!(got.get("k").map(|m| m.id), Some(7));
+        assert!(s.kioku_chosen(Service::Mal, Platform::Netflix).unwrap().is_empty());
+        assert!(s.kioku_chosen(Service::AniList, Platform::Crunchyroll).unwrap().is_empty());
     }
 
     #[test]

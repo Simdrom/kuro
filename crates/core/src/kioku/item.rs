@@ -70,6 +70,10 @@ pub struct WatchedItem {
     pub season_title: Option<String>,
     /// `None` for films and for specials without a number.
     pub episode: Option<u32>,
+    /// The platform gave no number: `episode` is this one's place among the
+    /// season's episodes in the history, counted from the first.
+    #[serde(default)]
+    pub estimated: bool,
     pub episode_title: Option<String>,
     pub movie: bool,
     /// Unix seconds.

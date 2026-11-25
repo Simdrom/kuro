@@ -26,10 +26,36 @@ impl Group {
     pub fn query(&self) -> &str {
         self.items.first().map_or("", |i| i.series_title.as_str())
     }
+
+    /// Stable name of the series and season, to remember a title chosen for it.
+    pub fn key(&self) -> String {
+        self.items
+            .first()
+            .map(|i| {
+                let k = group_key(i);
+                format!("{}|{}|{}|{}|{}", k.0, k.1.map_or(String::new(), |s| s.to_string()), k.2, k.3, k.4)
+            })
+            .unwrap_or_default()
+    }
 }
 
 /// Series, season number, season title, film and film title, normalised.
 type GroupKey = (String, Option<u32>, String, bool, String);
+
+fn group_key(i: &WatchedItem) -> GroupKey {
+    let film = if i.movie {
+        i.episode_title.as_deref().map(matcher::normalize).unwrap_or_default()
+    } else {
+        String::new()
+    };
+    (
+        matcher::normalize(&i.series_title),
+        i.season,
+        i.season_title.as_deref().map(matcher::normalize).unwrap_or_default(),
+        i.movie,
+        film,
+    )
+}
 
 /// Played far enough, not imported before and once per platform id, grouped by
 /// series and season.
@@ -40,15 +66,7 @@ pub fn groups(items: Vec<WatchedItem>, known: &HashSet<String>) -> Vec<Group> {
         if !i.progress.counts() || known.contains(&i.external_id) || !seen.insert(i.external_id.clone()) {
             continue;
         }
-        let film = if i.movie { i.episode_title.clone().unwrap_or_default() } else { String::new() };
-        let key = (
-            matcher::normalize(&i.series_title),
-            i.season,
-            i.season_title.as_deref().map(matcher::normalize).unwrap_or_default(),
-            i.movie,
-            film,
-        );
-        by.entry(key).or_default().push(i);
+        by.entry(group_key(&i)).or_default().push(i);
     }
     by.into_values().map(|items| Group { items }).collect()
 }
@@ -86,6 +104,8 @@ pub struct Proposal {
     pub doubts: Vec<Doubt>,
     /// Ticked in the review: certain and without doubts.
     pub selected: bool,
+    /// Episode numbers were counted, not given by the platform.
+    pub estimated: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -169,6 +189,7 @@ pub fn propose(
         confidence: m.confidence,
         doubts,
         selected,
+        estimated: false,
     })
 }
 
@@ -180,7 +201,18 @@ pub fn review(
     entry: impl Fn(&Media) -> Option<ListEntry>,
     today: Date,
 ) -> Outcome {
-    let Some(m) = matcher::best(&group.items, candidates) else { return Outcome::Unmatched(group) };
+    let found = matcher::best(&group.items, candidates);
+    review_with(group, found, entry, today)
+}
+
+/// [`review`] with the match already decided, such as a title the user chose.
+pub fn review_with(
+    group: Group,
+    found: Option<Match>,
+    entry: impl Fn(&Media) -> Option<ListEntry>,
+    today: Date,
+) -> Outcome {
+    let Some(m) = found else { return Outcome::Unmatched(group) };
     let mut episodes = Vec::new();
     let mut outside = 0u32;
     for i in &group.items {
@@ -197,6 +229,7 @@ pub fn review(
     let before = entry(&m.media);
     match propose(&m, before.as_ref(), &episodes, items.clone(), today) {
         Ok(mut p) => {
+            p.estimated = group.items.iter().any(|i| i.estimated);
             if outside > 0 {
                 p.doubts.push(Doubt::Outside { count: outside });
                 p.selected = false;
@@ -248,6 +281,7 @@ mod tests {
             season: Some(1),
             season_title: None,
             episode: Some(ep),
+            estimated: false,
             episode_title: None,
             movie: false,
             watched_at: Some(1_790_000_000),
@@ -345,6 +379,43 @@ mod tests {
             let _ = review(g[0].clone(), &candidates, |_| None, day());
             assert!(started.elapsed().as_secs() < 1, "{season:?} {ep}");
         }
+    }
+
+    #[test]
+    fn a_chosen_title_matches_what_the_names_do_not() {
+        let renamed = |id: &str, ep| WatchedItem {
+            series_title: "Huerto de hierro".into(),
+            ..item(id, ep, Watched::Completed)
+        };
+        let g = groups(vec![renamed("a", 1), renamed("b", 2)], &HashSet::new());
+        assert!(matches!(review(g[0].clone(), &[media(12)], |_| None, day()), Outcome::Unmatched(_)));
+        let chosen = Some(Match::chosen(media(12)));
+        let Outcome::Change(p) = review_with(g[0].clone(), chosen, |_| None, day()) else { panic!() };
+        assert!(p.selected && p.after.progress == 2);
+        assert_eq!(
+            g[0].key(),
+            groups(vec![item("b", 9, Watched::Completed)], &HashSet::new())[0]
+                .key()
+                .replace("iron orchard", "huerto de hierro")
+        );
+    }
+
+    #[test]
+    fn counted_episodes_are_marked_but_still_ticked() {
+        let mut items = vec![item("a", 1, Watched::Completed), item("b", 2, Watched::Completed)];
+        for i in &mut items {
+            i.estimated = true;
+        }
+        let g = groups(items, &HashSet::new());
+        let Outcome::Change(p) = review(g[0].clone(), &[media(12)], |_| None, day()) else { panic!() };
+        assert!(p.estimated && p.selected);
+        // More counted episodes than the title has: not ticked.
+        let many: Vec<WatchedItem> = (1..=14)
+            .map(|n| WatchedItem { estimated: true, ..item(&n.to_string(), n, Watched::Completed) })
+            .collect();
+        let g = groups(many, &HashSet::new());
+        let Outcome::Change(p) = review(g[0].clone(), &[media(12)], |_| None, day()) else { panic!() };
+        assert!(!p.selected);
     }
 
     #[test]

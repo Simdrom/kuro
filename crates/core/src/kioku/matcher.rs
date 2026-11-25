@@ -25,6 +25,8 @@ pub enum Basis {
     /// Similar title, nothing else agrees.
     TitleOnly,
     Movie,
+    /// Chosen by the user.
+    Chosen,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -39,6 +41,11 @@ pub struct Match {
 }
 
 impl Match {
+    /// The title the user picked for a series: certain, and never shifted.
+    pub fn chosen(media: Media) -> Self {
+        Self { media, offset: 0, confidence: 1.0, basis: Basis::Chosen }
+    }
+
     pub fn sure(&self) -> bool {
         self.confidence >= THRESHOLD
     }
@@ -345,6 +352,7 @@ mod tests {
             season,
             season_title: season_title.map(Into::into),
             episode: Some(episode),
+            estimated: false,
             episode_title: None,
             movie: false,
             watched_at: None,
