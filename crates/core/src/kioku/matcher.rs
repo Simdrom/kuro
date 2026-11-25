@@ -181,6 +181,16 @@ fn closeness(m: &Media, text: &str) -> f32 {
     titles(m).map(|t| similarity(&t, text)).fold(0.0, f32::max)
 }
 
+/// [`closeness`] counting only titles that name the same season as `text`, when
+/// `text` names one: "Season 0" is not "Season 2", however alike they look.
+fn season_closeness(m: &Media, text: &str) -> f32 {
+    let wanted = split_season(text).1;
+    titles(m)
+        .filter(|t| wanted.is_none_or(|w| split_season(t).1.unwrap_or(1) == w))
+        .map(|t| similarity(&t, text))
+        .fold(0.0, f32::max)
+}
+
 /// Best similarity of the season-free base of `text` to any base of `m`, and
 /// the season `m` names in that title.
 fn base_closeness(m: &Media, base: &str) -> (f32, Option<u32>) {
@@ -225,7 +235,7 @@ pub fn best(items: &[WatchedItem], candidates: &[Media]) -> Option<Match> {
         && let Some((m, s)) = anime
             .iter()
             .filter(|m| serial(m.format))
-            .map(|m| (*m, closeness(m, st)))
+            .map(|m| (*m, season_closeness(m, st)))
             .max_by(|a, b| a.1.total_cmp(&b.1))
             .filter(|(_, s)| *s >= SAME)
     {
@@ -253,9 +263,10 @@ pub fn best(items: &[WatchedItem], candidates: &[Media]) -> Option<Match> {
             found = Some(pick(m, 0.75 + 0.2 * exact.min(1.0), Basis::SeasonNumber));
         }
     }
-    // The n-th season by date: plausible, never certain.
+    // The n-th season by date: plausible, never certain. Season 0 holds
+    // specials, which have no place in that order.
     if found.is_none()
-        && let Some((m, _)) = franchise.get(wanted as usize - 1)
+        && let Some((m, _)) = (wanted as usize).checked_sub(1).and_then(|i| franchise.get(i))
     {
         found = Some(pick(m, 0.6, Basis::SeasonOrder));
     }
@@ -455,6 +466,15 @@ mod tests {
         let m = best(&[it], &franchise()).unwrap();
         assert_eq!((m.media.id, m.basis), (13, Basis::Movie));
         assert!(m.sure());
+    }
+
+    #[test]
+    fn season_zero_does_not_break_matching() {
+        // Platforms number specials as season 0, in the number or in the title.
+        let m = best(&[item("Lanterns Over Saltmarsh", Some(0), None, 1)], &franchise());
+        assert!(m.is_none_or(|m| !m.sure() || m.media.id == 10));
+        let it = item("Lanterns Over Saltmarsh", None, Some("Lanterns Over Saltmarsh Season 0"), 1);
+        assert!(best(&[it], &franchise()).is_none_or(|m| !m.sure()));
     }
 
     #[test]

@@ -137,7 +137,9 @@ pub fn propose(
         doubts.push(Doubt::Unsure);
     }
     let watched: BTreeSet<u32> = ahead.iter().map(|(e, _)| *e).collect();
-    let missing = (current + 1..=top).filter(|e| !watched.contains(e)).count() as u32;
+    // Every watched episode lies in current+1..=top, so this counts the rest
+    // without walking a range that a bogus episode number could make huge.
+    let missing = (top - current).saturating_sub(u32::try_from(watched.len()).unwrap_or(u32::MAX));
     if missing > 0 {
         doubts.push(Doubt::Gap { missing });
     }
@@ -328,6 +330,21 @@ mod tests {
         let g = groups(items, &HashSet::new());
         assert_eq!(g.len(), 1);
         assert_eq!(g[0].items.iter().map(|i| i.external_id.as_str()).collect::<Vec<_>>(), ["a", "b"]);
+    }
+
+    #[test]
+    fn odd_numbers_from_a_platform_never_panic_or_hang() {
+        let open = Media { episodes: None, ..media(12) };
+        let candidates = [open, Media { id: 2, format: Format::Movie, ..media(1) }];
+        for (season, ep) in [(Some(0), 0), (Some(0), 1), (None, u32::MAX), (Some(u32::MAX), 1), (Some(1), 0)]
+        {
+            let mut i = item("x", ep, Watched::Completed);
+            i.season = season;
+            let g = groups(vec![i], &HashSet::new());
+            let started = std::time::Instant::now();
+            let _ = review(g[0].clone(), &candidates, |_| None, day());
+            assert!(started.elapsed().as_secs() < 1, "{season:?} {ep}");
+        }
     }
 
     #[test]
