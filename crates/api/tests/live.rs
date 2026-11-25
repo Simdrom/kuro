@@ -92,3 +92,31 @@ fn netflix_file_is_read() {
     );
     assert!(items.iter().all(|i| !i.series_title.is_empty()));
 }
+
+/// Reads one's own Prime Video watch history, saved by the community script
+/// and named by `KURO_KIOKU_AMAZON_FILE`. Prints only counts, never titles.
+#[test]
+#[ignore = "needs a Prime Video watch history file"]
+fn amazon_file_is_read() {
+    use kuro_api::kioku::HistorySource;
+    let Ok(path) = std::env::var("KURO_KIOKU_AMAZON_FILE") else {
+        panic!("set KURO_KIOKU_AMAZON_FILE");
+    };
+    let items = kuro_api::kioku::amazon::Amazon.parse(&std::fs::read(path).unwrap()).unwrap();
+    let count = |f: &dyn Fn(&kuro_core::kioku::WatchedItem) -> bool| items.iter().filter(|i| f(i)).count();
+    let groups = kuro_core::kioku::review::groups(items.clone(), &Default::default());
+    println!(
+        "rows: {}  films: {}  with season: {}  episode numbers: {}  counted: {}  nameless: {}  undated: {}  groups: {}",
+        items.len(),
+        count(&|i| i.movie),
+        count(&|i| i.season.is_some()),
+        count(&|i| !i.movie && i.episode.is_some() && !i.estimated),
+        count(&|i| i.estimated),
+        count(&|i| !i.movie && i.series_title.to_lowercase().starts_with("temporada")),
+        count(&|i| i.watched_at.is_none()),
+        groups.len(),
+    );
+    let unique: std::collections::HashSet<&str> = items.iter().map(|i| i.external_id.as_str()).collect();
+    println!("distinct ids: {}", unique.len());
+    assert!(items.iter().all(|i| !i.series_title.is_empty()));
+}
