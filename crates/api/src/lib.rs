@@ -115,6 +115,8 @@ pub struct Api {
     secrets: Arc<dyn SecretStore>,
     ids: Arc<RwLock<ClientIds>>,
     users: Arc<Mutex<HashMap<Service, u64>>>,
+    /// Whether a token is stored, so the interface can ask on every frame.
+    signed: Arc<Mutex<HashMap<Service, bool>>>,
     /// Serialises token refreshes: a refresh token works only once.
     refreshing: Arc<tokio::sync::Mutex<()>>,
     mal_endpoints: oauth::Endpoints,
@@ -139,6 +141,7 @@ impl Api {
             secrets,
             ids: Arc::new(RwLock::new(ids)),
             users: Arc::default(),
+            signed: Arc::default(),
             refreshing: Arc::default(),
             mal_endpoints: oauth::Endpoints::of(Service::Mal),
             clock: now,
@@ -167,7 +170,8 @@ impl Api {
     }
 
     pub fn is_signed_in(&self, s: Service) -> bool {
-        matches!(self.secrets.load(s), Ok(Some(_)))
+        let mut signed = self.signed.lock().unwrap_or_else(|e| e.into_inner());
+        *signed.entry(s).or_insert_with(|| matches!(self.secrets.load(s), Ok(Some(_))))
     }
 
     // Sign-in
@@ -196,13 +200,16 @@ impl Api {
 
     pub fn accept_login(&self, s: Service, user: &UserProfile, tokens: &Tokens) -> Result<()> {
         self.secrets.save(s, tokens)?;
+        self.signed.lock().unwrap_or_else(|e| e.into_inner()).insert(s, true);
         self.users.lock().unwrap_or_else(|e| e.into_inner()).insert(s, user.id);
         Ok(())
     }
 
     pub fn sign_out(&self, s: Service) -> Result<()> {
         self.users.lock().unwrap_or_else(|e| e.into_inner()).remove(&s);
-        self.secrets.delete(s)
+        self.secrets.delete(s)?;
+        self.signed.lock().unwrap_or_else(|e| e.into_inner()).insert(s, false);
+        Ok(())
     }
 
     async fn token(&self, s: Service) -> Result<Tokens> {
@@ -474,6 +481,7 @@ mod tests {
             secrets,
             ids: Arc::new(RwLock::new(ClientIds { anilist: "1".into(), mal: "cid".into() })),
             users: Arc::default(),
+            signed: Arc::default(),
             refreshing: Arc::default(),
             mal_endpoints: oauth::Endpoints { authorize: String::new(), token: format!("{uri}/token") },
             clock: || 1000,

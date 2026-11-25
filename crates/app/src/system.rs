@@ -12,15 +12,24 @@ pub const APP_ID: &str = "MangoDesktop.Tracker";
 const MAX_LINE: u64 = 4096;
 const SHOW: &str = "show";
 
-fn pipe_name() -> String {
+fn pipe_name(profile: Option<&str>) -> String {
     let user = std::env::var("USERNAME").or_else(|_| std::env::var("USER")).unwrap_or_default();
     let user: String = user.chars().filter(char::is_ascii_alphanumeric).collect();
-    format!("mango-desktop-{user}")
+    match profile {
+        // Pipe names allow only a few characters, so use a hash of the folder.
+        Some(p) => {
+            use std::hash::{Hash, Hasher};
+            let mut h = std::hash::DefaultHasher::new();
+            p.hash(&mut h);
+            format!("mango-desktop-{user}-{:x}", h.finish())
+        }
+        None => format!("mango-desktop-{user}"),
+    }
 }
 
 /// Passes `link` to a running instance. Returns false when there is none.
-pub fn forward(link: Option<&str>) -> bool {
-    forward_to(&pipe_name(), link)
+pub fn forward(profile: Option<&str>, link: Option<&str>) -> bool {
+    forward_to(&pipe_name(profile), link)
 }
 
 fn forward_to(name: &str, link: Option<&str>) -> bool {
@@ -31,8 +40,8 @@ fn forward_to(name: &str, link: Option<&str>) -> bool {
 }
 
 /// Receives links from later instances.
-pub fn listen(reply: Reply) {
-    listen_on(&pipe_name(), reply);
+pub fn listen(profile: Option<&str>, reply: Reply) {
+    listen_on(&pipe_name(profile), reply);
 }
 
 fn listen_on(name: &str, reply: Reply) {
@@ -252,6 +261,17 @@ mod tests {
         {
             assert!(!is_web_url(bad), "{bad}");
         }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    #[ignore = "shows a notification"]
+    fn toast_is_accepted() {
+        let api = Api::new(Arc::new(MemorySecrets::default()), ClientIds::default()).unwrap();
+        let ctx = eframe::egui::Context::default();
+        let bg = Backend::new(api, Store::in_memory().unwrap(), std::env::temp_dir(), ctx, false);
+        let _sys = WindowsSystem::new(bg.reply());
+        tauri_winrt_notification::Toast::new(APP_ID).title("Mango Desktop").text1("Test").show().unwrap();
     }
 
     #[test]

@@ -19,9 +19,9 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let hidden = args.iter().any(|a| a == "--hidden");
     let link = args.iter().find(|a| mango_core::links::parse(a).is_some()).cloned();
-    // Tests of the real program use their own folder and skip the single-instance check.
-    let profile = std::env::var_os("MANGO_PROFILE_DIR");
-    if profile.is_none() && system::forward(link.as_deref()) {
+    // A separate folder keeps a second, independent profile.
+    let profile = std::env::var("MANGO_PROFILE_DIR").ok();
+    if system::forward(profile.as_deref(), link.as_deref()) {
         return;
     }
     if let Err(e) = run(hidden, link, profile) {
@@ -35,7 +35,7 @@ fn main() {
     }
 }
 
-fn run(hidden: bool, link: Option<String>, profile: Option<std::ffi::OsString>) -> Result<(), AnyError> {
+fn run(hidden: bool, link: Option<String>, profile: Option<String>) -> Result<(), AnyError> {
     let (data, cache, secrets) = match &profile {
         Some(p) => {
             let p = std::path::PathBuf::from(p);
@@ -70,9 +70,7 @@ fn run(hidden: bool, link: Option<String>, profile: Option<std::ffi::OsString>) 
         Box::new(move |cc| {
             let bg = Backend::new(api, store, cache.join("images"), cc.egui_ctx.clone(), true);
             let reply = bg.reply();
-            if profile.is_none() {
-                system::listen(reply.clone());
-            }
+            system::listen(profile.as_deref(), reply.clone());
             #[cfg(windows)]
             let sys: Box<dyn system::System> = Box::new(system::WindowsSystem::new(reply));
             #[cfg(not(windows))]

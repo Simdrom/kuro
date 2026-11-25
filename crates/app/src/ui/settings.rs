@@ -595,12 +595,13 @@ fn data(app: &mut App, ui: &mut Ui) {
             widgets::dim(ui, &p, format::bytes(n));
         });
         separator(ui, &p);
-        let n = app.bg.store().cache_bytes().unwrap_or(0);
+        let n = *app.cache_bytes.get_or_insert_with(|| app.bg.store().cache_bytes().unwrap_or(0));
         row(ui, &p, icons::DATABASE, t("Titles and rankings"), |ui| {
             if widgets::button(ui, &p, "", t("Clear"), false).clicked() {
                 if let Err(e) = app.bg.store().clear_cache() {
                     tracing::error!("cache could not be cleared: {e}");
                 }
+                app.cache_bytes = None;
                 app.details.clear();
                 app.overviews.clear();
                 app.people.clear();

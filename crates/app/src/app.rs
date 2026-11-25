@@ -8,13 +8,13 @@ use eframe::egui::{self, Key, Modifiers, Vec2};
 use mango_api::music::Track;
 use mango_api::{ApiError, Page, Ranking, RankingQuery, SeasonQuery, Tokens};
 use mango_core::links::{self, Link};
-use mango_core::list::Filter;
+use mango_core::list::{Filter, SortKey};
 use mango_core::notify;
 use mango_core::overview::Section;
 use mango_core::settings::{GestureAction, Settings};
 use mango_core::{
     ListEntry, ListStatus, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, SeasonYear, Service, Theme,
-    UserProfile, progress,
+    TitleLanguage, UserProfile, progress,
 };
 
 use crate::backend::{Backend, Event, now};
@@ -239,6 +239,13 @@ pub struct Toast {
 
 pub struct ListView {
     pub filter: Filter,
+    pub cache: Option<ListCache>,
+}
+
+/// Filtered and sorted rows, kept between frames.
+pub struct ListCache {
+    pub key: (u64, Filter, SortKey, bool, TitleLanguage),
+    pub items: Rc<Vec<crate::ui::rows::Item>>,
 }
 
 pub struct App {
@@ -252,6 +259,8 @@ pub struct App {
     pub routes: Vec<Route>,
     pub lists: [ListView; 2],
     lib: [Vec<Rc<ListEntry>>; 2],
+    /// Grows with every change to `lib`.
+    pub lib_version: u64,
     index: HashMap<MediaRef, usize>,
     pub season: SeasonView,
     pub ranking: RankingView,
@@ -275,6 +284,7 @@ pub struct App {
     pub unsynced: usize,
     pub sync_error: Option<(Service, ApiError)>,
     pub image_bytes: Option<u64>,
+    pub cache_bytes: Option<u64>,
     acts: Vec<Act>,
     next_tick: f64,
     airing_at: i64,
@@ -305,7 +315,10 @@ impl App {
         i18n::set(&s.language);
         theme::install_fonts(ctx);
         let p = Palette::new(s.theme, true, s.tint);
-        let list = || ListView { filter: Filter { status: Some(ListStatus::Current), ..Filter::default() } };
+        let list = || ListView {
+            filter: Filter { status: Some(ListStatus::Current), ..Filter::default() },
+            cache: None,
+        };
         let mut app = Self {
             tab: if s.default_kind == MediaKind::Anime { Tab::Anime } else { Tab::Manga },
             saved: s.clone(),
@@ -317,6 +330,7 @@ impl App {
             routes: Vec::new(),
             lists: [list(), list()],
             lib: Default::default(),
+            lib_version: 0,
             index: HashMap::new(),
             season: SeasonView {
                 at: SeasonYear::of_date(today()),
@@ -364,6 +378,7 @@ impl App {
             unsynced: 0,
             sync_error: None,
             image_bytes: None,
+            cache_bytes: None,
             acts: Vec::new(),
             next_tick: 0.0,
             airing_at: 0,
@@ -413,6 +428,7 @@ impl App {
     }
 
     fn reindex(&mut self) {
+        self.lib_version += 1;
         self.index.clear();
         for list in &self.lib {
             for (i, e) in list.iter().enumerate() {
@@ -476,6 +492,7 @@ impl App {
         }
         let done = e.status == ListStatus::Completed
             && before.as_ref().is_none_or(|b| b.status != ListStatus::Completed || b.repeating);
+        self.lib_version += 1;
         let k = slot(e.media.kind);
         let r = e.media.media_ref();
         match self.index.get(&r) {
@@ -687,6 +704,7 @@ impl App {
                 self.routes.pop();
             }
             Act::Go(tab) => {
+                self.cache_bytes = None;
                 if self.tab != tab {
                     self.routes.clear();
                 }

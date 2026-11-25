@@ -1,13 +1,14 @@
 //! The user's own list.
 
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use eframe::egui::{self, Ui};
-use mango_core::list::{self, SortKey};
+use mango_core::list::{self, Filter, SortKey};
 use mango_core::{Format, ListEntry, ListStatus, MediaKind, Service};
 
 use super::rows::{self, Item, Style};
-use crate::app::{Act, App, Route, SettingsPage, Tab};
+use crate::app::{Act, App, ListCache, Route, SettingsPage, Tab};
 use crate::i18n::{t, tf};
 use crate::widgets;
 use crate::{format, icons};
@@ -62,21 +63,12 @@ pub fn show(app: &mut App, ui: &mut Ui, kind: MediaKind) {
     if !filter.query.trim().is_empty() {
         filter.status = None;
     }
-    let found: Vec<Rc<ListEntry>> = app.library(kind).iter().filter(|e| filter.accepts(e)).cloned().collect();
-    let mut sorted: Vec<&ListEntry> = found.iter().map(|e| &**e).collect();
-    list::sort(&mut sorted, app.s.sort, app.s.sort_asc, app.s.title_language);
-    let by_ptr: std::collections::HashMap<*const ListEntry, &Rc<ListEntry>> =
-        found.iter().map(|e| (Rc::as_ptr(e), e)).collect();
-    let items: Vec<Item> = sorted
-        .iter()
-        .filter_map(|e| by_ptr.get(&std::ptr::from_ref(*e)))
-        .map(|e| Item { media: Rc::new(e.media.clone()), entry: Some((*e).clone()), rank: None })
-        .collect();
+    let style = Style::Mine { show_status: filter.status.is_none() };
+    let items = rows_of(app, kind, filter);
     if items.is_empty() {
         widgets::empty(ui, &p, icons::STACK, t("Nothing here"));
         return;
     }
-    let style = Style::Mine { show_status: filter.status.is_none() };
     let count = items.len();
     let foot = move |app: &mut App, ui: &mut Ui| {
         ui.add_space(6.0);
@@ -89,6 +81,28 @@ pub fn show(app: &mut App, ui: &mut Ui, kind: MediaKind) {
     } else {
         rows::list(app, ui, &id, &items, style, foot);
     }
+}
+
+fn rows_of(app: &mut App, kind: MediaKind, filter: Filter) -> Rc<Vec<Item>> {
+    let key = (app.lib_version, filter, app.s.sort, app.s.sort_asc, app.s.title_language);
+    if let Some(c) = &app.lists[slot(kind)].cache
+        && c.key == key
+    {
+        return c.items.clone();
+    }
+    let found: Vec<&Rc<ListEntry>> = app.library(kind).iter().filter(|e| key.1.accepts(e)).collect();
+    let mut sorted: Vec<&ListEntry> = found.iter().map(|e| &***e).collect();
+    list::sort(&mut sorted, key.2, key.3, key.4);
+    let by_ptr: HashMap<*const ListEntry, &Rc<ListEntry>> =
+        found.iter().map(|e| (Rc::as_ptr(e), *e)).collect();
+    let items: Vec<Item> = sorted
+        .iter()
+        .filter_map(|e| by_ptr.get(&std::ptr::from_ref(*e)))
+        .map(|e| Item { media: Rc::new(e.media.clone()), entry: Some((*e).clone()), rank: None })
+        .collect();
+    let items = Rc::new(items);
+    app.lists[slot(kind)].cache = Some(ListCache { key, items: items.clone() });
+    items
 }
 
 fn toolbar(app: &mut App, ui: &mut Ui, kind: MediaKind) {
