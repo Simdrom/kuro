@@ -196,6 +196,7 @@ Open mango:// links in this app|Abrir enlaces mango:// en esta app|Ouvrir les li
 Open on {}|Abrir en {}|Ouvrir sur {}|Auf {} öffnen|Apri su {}|Åpne på {}|{}에서 열기
 Open the developer page|Abrir la página de desarrollador|Ouvrir la page développeur|Entwicklerseite öffnen|Apri la pagina sviluppatore|Åpne utviklersiden|개발자 페이지 열기
 Opening|Opening|Opening|Opening|Sigla iniziale|Åpning|오프닝
+Openings and endings are not available right now.|Los openings y endings no están disponibles ahora mismo.|Les openings et endings ne sont pas disponibles pour le moment.|Openings und Endings sind gerade nicht verfügbar.|Le sigle non sono disponibili al momento.|Åpninger og avslutninger er ikke tilgjengelige akkurat nå.|지금은 오프닝과 엔딩을 불러올 수 없습니다.
 Openings & endings|Openings y endings|Openings et endings|Openings & Endings|Sigle iniziali e finali|Åpninger og avslutninger|오프닝 및 엔딩
 Opening…|Abriendo…|Ouverture…|Wird geöffnet…|Apertura…|Åpner…|여는 중…
 Original work|Obra original|Œuvre originale|Vorlage|Opera originale|Originalverk|원작

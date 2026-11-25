@@ -138,6 +138,7 @@ fn swipe_color(app: &App, g: GestureAction) -> egui::Color32 {
 }
 
 const SWIPE: f32 = 70.0;
+const PILL: f32 = 108.0;
 
 fn row(app: &mut App, ui: &mut Ui, rect: Rect, round: CornerRadius, item: &Item, style: Style) {
     let p = app.p;
@@ -221,16 +222,25 @@ fn row(app: &mut App, ui: &mut Ui, rect: Rect, round: CornerRadius, item: &Item,
                 let s = format::status(e.status, m.kind).to_uppercase();
                 y += paint_text(ui, pos2(x, y), &s, theme::semibold(10.5), p.status(e.status), width, 1).y;
             }
-            let rows = if show_status { 1 } else { 2 };
+            let score = score_text(app, e);
+            // Two title lines leave room for the score only beside the progress.
+            let beside = score.as_ref().is_some_and(|s| {
+                let w = widgets::galley(ui, s, theme::semibold(11.5), p.text, 999.0, 1).size().x + 30.0;
+                PILL + 6.0 + w <= width
+            });
+            let rows =
+                if show_status || m.kind == MediaKind::Manga || (score.is_some() && !beside) { 1 } else { 2 };
             y += paint_text(ui, pos2(x, y), &title, theme::semibold(14.0), p.text, width, rows).y;
             let sub = subtitle(m);
             paint_text(ui, pos2(x, y + 1.0), &sub, theme::regular(12.0), p.dim, width, 1);
             let pr = progress_pill(app, ui, e, pos2(x, shown.bottom() - 10.0), width);
-            if let Some(s) = score_text(app, e) {
+            if let Some(s) = score {
                 let top = pr.top() - 23.0;
-                if top > y + 14.0 || width > 260.0 {
-                    let pos = if top > y + 14.0 { pos2(x, top) } else { pos2(pr.right() + 6.0, pr.top()) };
-                    pill(&painter, pos, icons::STAR, &s, p.yellow, p.on_yellow);
+                if top > y + 14.0 {
+                    pill(&painter, pos2(x, top), icons::STAR, &s, p.yellow, p.on_yellow);
+                } else if beside {
+                    let at = pos2(pr.right() + 6.0, pr.center().y - 10.0);
+                    pill(&painter, at, icons::STAR, &s, p.yellow, p.on_yellow);
                 }
             }
         }
@@ -374,7 +384,7 @@ fn progress_pill(app: &App, ui: &Ui, e: &ListEntry, bottom_left: egui::Pos2, wid
     let manga = e.media.kind == MediaKind::Manga;
     let fill = status_fill(app, e.status);
     let fg = egui::Color32::WHITE;
-    let w = 118.0_f32.min(width);
+    let w = PILL.min(width);
     let h = if manga { 42.0 } else { 27.0 };
     let rect = Rect::from_min_size(bottom_left - vec2(0.0, h), vec2(w, h));
     let pt = ui.painter();

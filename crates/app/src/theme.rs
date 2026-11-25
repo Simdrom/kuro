@@ -185,7 +185,12 @@ fn system_font(files: &[&str]) -> Option<FontData> {
 
 pub fn install_fonts(ctx: &egui::Context) {
     let mut f = FontDefinitions::default();
-    let base = f.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
+    let mut base = f.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
+    // Symbols such as stars and notes that appear in titles.
+    if let Some(d) = system_font(&["seguisym.ttf"]) {
+        f.font_data.insert("symbols".into(), Arc::new(d));
+        base.push("symbols".into());
+    }
     let add = |name: &str, key: FontFamily, data: Option<FontData>, f: &mut FontDefinitions| {
         let mut list = base.clone();
         if let Some(d) = data {

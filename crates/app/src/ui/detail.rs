@@ -435,7 +435,8 @@ fn themes(app: &mut App, ui: &mut Ui, m: &Rc<Media>) {
     widgets::card(ui, &p, |ui| match themes {
         Err(e) => {
             ui.horizontal_wrapped(|ui| {
-                widgets::dim(ui, &p, format::error(&e));
+                let text = t("Openings and endings are not available right now.");
+                widgets::dim(ui, &p, text).on_hover_text(format::error(&e));
                 if ui.link(t("Retry")).clicked() {
                     let d = app.details.entry(r).or_default();
                     d.themes = None;
