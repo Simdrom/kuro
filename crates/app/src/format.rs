@@ -274,6 +274,10 @@ fn clock(z: &ZonedDateTime) -> String {
     format!("{:02}:{:02}", z.hour(), z.minute())
 }
 
+pub fn day(at: i64) -> String {
+    local(at).map(|z| current().date(z.date(), true)).unwrap_or_default()
+}
+
 pub fn date_time(at: i64) -> String {
     local(at).map(|z| format!("{} {}", current().date(z.date(), true), clock(&z))).unwrap_or_default()
 }

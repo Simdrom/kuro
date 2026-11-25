@@ -209,8 +209,6 @@ Play on Apple Music|Escuchar en Apple Music|Écouter sur Apple Music|Auf Apple M
 Popularity|Popularidad|Popularité|Beliebtheit|Popolarità|Popularitet|인기
 Poster size|Tamaño del póster|Taille des affiches|Postergröße|Dimensione poster|Plakatstørrelse|포스터 크기
 Posters|Pósteres|Affiches|Poster|Poster|Plakater|포스터
-Posters in my list|Pósteres en mi lista|Affiches dans ma liste|Poster in meiner Liste|Poster nella mia lista|Plakater i listen min|내 목록을 포스터로
-Posters in seasonal|Pósteres en temporadas|Affiches dans les saisons|Poster in Saisons|Poster nelle stagioni|Plakater i sesonger|시즌을 포스터로
 Preferences|Preferencias|Préférences|Einstellungen|Preferenze|Preferanser|환경설정
 Preferred hour when only the date is known|Hora preferida si solo se conoce la fecha|Heure préférée si seule la date est connue|Bevorzugte Uhrzeit, wenn nur das Datum bekannt ist|Ora preferita se è nota solo la data|Foretrukket tid når bare datoen er kjent|날짜만 알 때 선호하는 시각
 Premieres|Estrenos|Premières|Premieren|Debutti|Premierer|첫 방영
@@ -275,8 +273,6 @@ Settings|Ajustes|Réglages|Einstellungen|Impostazioni|Innstillinger|설정
 Share|Compartir|Partager|Teilen|Condividi|Del|공유
 Shared characters|Personajes en común|Personnages communs|Gemeinsame Figuren|Personaggi in comune|Felles figurer|공통 캐릭터
 Show adult titles|Mostrar títulos para adultos|Afficher les titres pour adultes|Titel für Erwachsene anzeigen|Mostra titoli per adulti|Vis titler for voksne|성인 작품 표시
-Show as list|Ver como lista|Afficher en liste|Als Liste anzeigen|Mostra come lista|Vis som liste|목록으로 보기
-Show as posters|Ver como pósteres|Afficher en affiches|Als Poster anzeigen|Mostra come poster|Vis som plakater|포스터로 보기
 Show edit button|Mostrar botón de editar|Afficher le bouton modifier|Bearbeiten-Knopf anzeigen|Mostra pulsante modifica|Vis redigeringsknapp|편집 버튼 표시
 Show less|Ver menos|Voir moins|Weniger anzeigen|Mostra meno|Vis mindre|간단히
 Show more|Ver más|Voir plus|Mehr anzeigen|Mostra altro|Vis mer|더 보기
@@ -375,3 +371,17 @@ Your session has expired. Sign in again.|Tu sesión ha caducado. Vuelve a inicia
 {} titles imported|{} títulos importados|{} titres importés|{} Titel importiert|{} titoli importati|{} titler importert|작품 {}개를 가져왔습니다
 {} unsent changes will be lost.|Se perderán {} cambios sin enviar.|{} changements non envoyés seront perdus.|{} nicht gesendete Änderungen gehen verloren.|{} modifiche non inviate andranno perse.|{} usendte endringer går tapt.|보내지 않은 변경 사항 {}개가 사라집니다.
 {} vol, {} ch|{} tomos, {} caps.|{} tomes, {} ch.|{} Bde., {} Kap.|{} vol., {} cap.|{} bind, {} kap.|{}권, {}화
+Add|Añadir|Ajouter|Hinzufügen|Aggiungi|Legg til|추가
+Average|Media|Moyenne|Schnitt|Media|Snitt|평균
+Cards|Tarjetas|Cartes|Karten|Schede|Kort|카드
+Ch {}|Cap. {}|Ch. {}|Kap. {}|Cap. {}|Kap. {}|{}화
+Ep {}|Ep. {}|Ép. {}|Folge {}|Ep. {}|Ep. {}|{}화
+Length|Duración|Longueur|Umfang|Durata|Lengde|분량
+Members|Miembros|Membres|Mitglieder|Membri|Medlemmer|회원
+Repeat|Repetición|Répétition|Wiederholung|Ripetizione|Gjentakelse|재감상
+Seasonal, ranking and search|Temporadas, ranking y búsqueda|Saisons, classement et recherche|Saisons, Rangliste und Suche|Stagioni, classifica e ricerca|Sesonger, rangering og søk|시즌, 순위, 검색
+Show beside the list|Mostrar junto a la lista|Afficher à côté de la liste|Neben der Liste anzeigen|Mostra accanto alla lista|Vis ved siden av listen|목록 옆에 표시
+Table|Tabla|Tableau|Tabelle|Tabella|Tabell|표
+Use the whole window|Usar toda la ventana|Utiliser toute la fenêtre|Ganzes Fenster nutzen|Usa tutta la finestra|Bruk hele vinduet|창 전체 사용
+Vol {}|Tomo {}|Tome {}|Band {}|Vol. {}|Bind {}|{}권
+{} behind|{} sin ver|{} en retard|{} offen|{} da vedere|{} bak|{}화 밀림

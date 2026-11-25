@@ -77,7 +77,8 @@ pub fn master(app: &mut App, ui: &mut Ui) {
                 if i > 0 {
                     separator(ui, &p);
                 }
-                let on = app.routes.last() == Some(&Route::Settings(page));
+                let first = app.routes.is_empty() && app.can_split && page == SettingsPage::General;
+                let on = first || app.routes.last() == Some(&Route::Settings(page));
                 if widgets::nav_row(ui, &p, page_icon(page), p.green, page_label(page), "", on).clicked() {
                     app.routes.clear();
                     app.act(Act::Push(Route::Settings(page)));
@@ -110,7 +111,7 @@ fn account_card(app: &mut App, ui: &mut Ui) {
 pub fn page(app: &mut App, ui: &mut Ui, page: SettingsPage) {
     super::header(app, ui, page_label(page), |_, _| {});
     super::scroll(ui, ("page", page), |ui| {
-        ui.set_max_width(ui.available_width().min(640.0));
+        ui.set_max_width(ui.available_width().min(720.0));
         match page {
             SettingsPage::General => general(app, ui),
             SettingsPage::Lists => lists(app, ui),
@@ -222,9 +223,11 @@ fn lists(app: &mut App, ui: &mut Ui) {
     let s = &mut app.s;
     section(ui, &p, t("Lists"));
     card(ui, &p, |ui| {
-        toggle_row(ui, &p, icons::SQUARES_FOUR, t("Posters in my list"), &mut s.list_grid);
+        row(ui, &p, icons::BOOKS, t("My List"), |ui| super::rows::layout_switch(ui, &p, &mut s.list_layout));
         separator(ui, &p);
-        toggle_row(ui, &p, icons::SQUARES_FOUR, t("Posters in seasonal"), &mut s.seasonal_grid);
+        row(ui, &p, icons::STAR, t("Seasonal, ranking and search"), |ui| {
+            super::rows::layout_switch(ui, &p, &mut s.browse_layout);
+        });
         separator(ui, &p);
         let label = t("Scores");
         select_row(ui, &p, icons::STAR, label, &mut s.score_display, &ScoreDisplay::ALL, |v| {
@@ -235,7 +238,7 @@ fn lists(app: &mut App, ui: &mut Ui) {
     });
     section(ui, &p, t("Posters"));
     card(ui, &p, |ui| {
-        row(ui, &p, icons::IMAGE, t("Poster size"), |ui| {
+        widgets::wide_row(ui, &p, icons::IMAGE, t("Poster size"), |ui| {
             let r =
                 ui.add(egui::Slider::new(&mut s.poster_width, 90.0..=240.0).step_by(10.0).show_value(false));
             r.widget_info(|| WidgetInfo::labeled(Role::Slider, true, t("Poster size")));
@@ -308,16 +311,22 @@ fn service(app: &mut App, ui: &mut Ui, s: Service) {
                 .is_some_and(|(x, e)| *x == s && *e == mango_api::ApiError::Unauthorized)
             {
                 separator(ui, &p);
-                row(ui, &p, icons::WARNING, t("Your session has expired. Sign in again."), |ui| {
-                    if widgets::button(ui, &p, icons::SIGN_IN, t("Sign in"), true).clicked() {
-                        app.act(Act::Login(s));
-                    }
-                });
+                widgets::wide_row(
+                    ui,
+                    &p,
+                    icons::WARNING,
+                    t("Your session has expired. Sign in again."),
+                    |ui| {
+                        if widgets::button(ui, &p, icons::SIGN_IN, t("Sign in"), true).clicked() {
+                            app.act(Act::Login(s));
+                        }
+                    },
+                );
             }
             return;
         }
         let ready = app.bg.api.can_sign_in(s);
-        row(ui, &p, icons::USER, t("Not signed in"), |ui| {
+        widgets::wide_row(ui, &p, icons::USER, t("Not signed in"), |ui| {
             ui.add_enabled_ui(ready, |ui| {
                 if widgets::button(ui, &p, icons::SIGN_IN, t("Sign in"), true).clicked() && ready {
                     app.act(Act::Login(s));
@@ -329,8 +338,9 @@ fn service(app: &mut App, ui: &mut Ui, s: Service) {
             Service::AniList => &mut app.s.anilist_client_id,
             Service::Mal => &mut app.s.mal_client_id,
         };
-        row(ui, &p, icons::KEY, t("Client ID"), |ui| {
-            let r = ui.add(egui::TextEdit::singleline(id).desired_width(220.0).char_limit(128));
+        widgets::wide_row(ui, &p, icons::KEY, t("Client ID"), |ui| {
+            let w = (ui.available_width() - 40.0).clamp(80.0, 220.0);
+            let r = ui.add(egui::TextEdit::singleline(id).desired_width(w).char_limit(128));
             let label = format!("{} {}", s.name(), t("Client ID"));
             r.widget_info(|| WidgetInfo::labeled(Role::TextInput, true, &label));
             // A pasted id may carry spaces or a line break.
@@ -338,7 +348,7 @@ fn service(app: &mut App, ui: &mut Ui, s: Service) {
         });
         separator(ui, &p);
         let redirect = oauth::redirect_uri(s);
-        row(ui, &p, icons::LINK, t("Redirect URL"), |ui| {
+        widgets::wide_row(ui, &p, icons::LINK, t("Redirect URL"), |ui| {
             if widgets::icon_button(ui, &p, icons::COPY, t("Copy")).clicked() {
                 app.act(Act::Copy(redirect.clone()));
             }
@@ -587,7 +597,7 @@ fn data(app: &mut App, ui: &mut Ui) {
     section(ui, &p, t("Caches"));
     card(ui, &p, |ui| {
         let n = app.image_bytes.unwrap_or(0);
-        row(ui, &p, icons::IMAGE, t("Images"), |ui| {
+        widgets::wide_row(ui, &p, icons::IMAGE, t("Images"), |ui| {
             if widgets::button(ui, &p, "", t("Clear"), false).clicked() {
                 app.bg.images.clear();
                 app.image_bytes = None;
@@ -596,7 +606,7 @@ fn data(app: &mut App, ui: &mut Ui) {
         });
         separator(ui, &p);
         let n = *app.cache_bytes.get_or_insert_with(|| app.bg.store().cache_bytes().unwrap_or(0));
-        row(ui, &p, icons::DATABASE, t("Titles and rankings"), |ui| {
+        widgets::wide_row(ui, &p, icons::DATABASE, t("Titles and rankings"), |ui| {
             if widgets::button(ui, &p, "", t("Clear"), false).clicked() {
                 if let Err(e) = app.bg.store().clear_cache() {
                     tracing::error!("cache could not be cleared: {e}");
@@ -612,13 +622,13 @@ fn data(app: &mut App, ui: &mut Ui) {
     });
     section(ui, &p, t("Backup"));
     card(ui, &p, |ui| {
-        row(ui, &p, icons::EXPORT, t("Save your list to a file"), |ui| {
+        widgets::wide_row(ui, &p, icons::EXPORT, t("Save your list to a file"), |ui| {
             if widgets::button(ui, &p, "", t("Export…"), false).clicked() {
                 app.bg.export(app.s.primary);
             }
         });
         separator(ui, &p);
-        row(ui, &p, icons::TRAY_ARROW_DOWN, t("Restore a list from a file"), |ui| {
+        widgets::wide_row(ui, &p, icons::TRAY_ARROW_DOWN, t("Restore a list from a file"), |ui| {
             if widgets::button(ui, &p, "", t("Import…"), false).clicked() {
                 app.bg.import();
             }
@@ -626,7 +636,7 @@ fn data(app: &mut App, ui: &mut Ui) {
     });
     section(ui, &p, t("Sync"));
     card(ui, &p, |ui| {
-        row(ui, &p, icons::CLOUD_ARROW_UP, t("Changes waiting to sync"), |ui| {
+        widgets::wide_row(ui, &p, icons::CLOUD_ARROW_UP, t("Changes waiting to sync"), |ui| {
             if widgets::button(ui, &p, "", t("Sync now"), false).clicked() {
                 app.bg.sync();
             }

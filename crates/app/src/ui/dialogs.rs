@@ -71,7 +71,7 @@ fn editor(app: &mut App, ctx: &Context) {
     let (mut close, mut save, mut delete) = (false, false, false);
     let mut valid = true;
     let modal = Modal::new(Id::unique("editor")).frame(frame(app)).show(ctx, |ui| {
-        ui.set_width(430.0_f32.min(ctx.content_rect().width() - 70.0));
+        ui.set_width(430.0_f32.min((ctx.content_rect().width() - 64.0).max(200.0)));
         let m = ed.entry.media.clone();
         let kind = m.kind;
         ui.horizontal(|ui| {
@@ -85,76 +85,83 @@ fn editor(app: &mut App, ctx: &Context) {
             });
         });
         ui.add_space(8.0);
-        egui::ScrollArea::vertical().max_height(ctx.content_rect().height() - 230.0).show(ui, |ui| {
-            let e = &mut ed.entry;
-            widgets::card(ui, &p, |ui| {
-                let before = e.status;
-                let mut status = e.status;
-                let label = t("Status");
-                widgets::select_row(ui, &p, "", label, &mut status, &ListStatus::ALL, |s| {
-                    format::status(s, kind).to_owned()
-                });
-                if status != before {
-                    *e = progress::set_status(e, status, today());
-                    let text = |d: Option<FuzzyDate>| d.map(|d| d.iso()).unwrap_or_default();
-                    ed.start = text(e.start);
-                    ed.finish = text(e.finish);
-                }
-                widgets::separator(ui, &p);
-                let total = e.media.total();
-                if kind == MediaKind::Manga {
-                    counter(ui, &p, t("Volumes"), &mut e.progress_volumes, e.media.volumes);
+        egui::ScrollArea::vertical().max_height((ctx.content_rect().height() - 230.0).max(120.0)).show(
+            ui,
+            |ui| {
+                let e = &mut ed.entry;
+                widgets::card(ui, &p, |ui| {
+                    let before = e.status;
+                    let mut status = e.status;
+                    let label = t("Status");
+                    widgets::select_row(ui, &p, "", label, &mut status, &ListStatus::ALL, |s| {
+                        format::status(s, kind).to_owned()
+                    });
+                    if status != before {
+                        *e = progress::set_status(e, status, today());
+                        let text = |d: Option<FuzzyDate>| d.map(|d| d.iso()).unwrap_or_default();
+                        ed.start = text(e.start);
+                        ed.finish = text(e.finish);
+                    }
                     widgets::separator(ui, &p);
-                }
-                let label = if kind == MediaKind::Anime { t("Episodes") } else { t("Chapters") };
-                counter(ui, &p, label, &mut e.progress, total);
-            });
-            ui.add_space(8.0);
-            widgets::card(ui, &p, |ui| {
-                widgets::row(ui, &p, icons::STAR, t("Score"), |ui| {
-                    let mut v = e.score10();
-                    let shown = if e.score == 0 { "–".into() } else { decimal(v, 1) };
-                    ui.add_sized(
-                        [34.0, 20.0],
-                        egui::Label::new(RichText::new(shown).font(theme::bold(15.0))),
-                    );
-                    ui.spacing_mut().slider_width = 150.0;
-                    let r = ui.add(egui::Slider::new(&mut v, 0.0..=10.0).step_by(0.5).show_value(false));
-                    r.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, t("Score")));
-                    if r.changed() {
-                        e.score = (v * 10.0).round() as u8;
+                    let total = e.media.total();
+                    if kind == MediaKind::Manga {
+                        counter(ui, &p, t("Volumes"), &mut e.progress_volumes, e.media.volumes);
+                        widgets::separator(ui, &p);
+                    }
+                    let label = if kind == MediaKind::Anime { t("Episodes") } else { t("Chapters") };
+                    counter(ui, &p, label, &mut e.progress, total);
+                });
+                ui.add_space(8.0);
+                widgets::card(ui, &p, |ui| {
+                    widgets::row(ui, &p, icons::STAR, t("Score"), |ui| {
+                        let mut v = e.score10();
+                        let shown = if e.score == 0 { "–".into() } else { decimal(v, 1) };
+                        ui.add_sized(
+                            [34.0, 20.0],
+                            egui::Label::new(RichText::new(shown).font(theme::bold(15.0))),
+                        );
+                        ui.spacing_mut().slider_width = (ui.available_width() - 60.0).clamp(60.0, 150.0);
+                        let r = ui.add(egui::Slider::new(&mut v, 0.0..=10.0).step_by(0.5).show_value(false));
+                        r.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, t("Score")));
+                        if r.changed() {
+                            e.score = (v * 10.0).round() as u8;
+                        }
+                    });
+                    if app.s.save_both || app.s.primary == mango_core::Service::Mal {
+                        widgets::note(ui, &p, t("MyAnimeList rounds scores to whole numbers."));
                     }
                 });
-                if app.s.save_both || app.s.primary == mango_core::Service::Mal {
-                    widgets::note(ui, &p, t("MyAnimeList rounds scores to whole numbers."));
-                }
-            });
-            ui.add_space(8.0);
-            widgets::card(ui, &p, |ui| {
-                valid &= date_row(ui, &p, t("Started"), &mut ed.start);
-                widgets::separator(ui, &p);
-                valid &= date_row(ui, &p, t("Finished"), &mut ed.finish);
-            });
-            ui.add_space(8.0);
-            widgets::card(ui, &p, |ui| {
-                let label = if kind == MediaKind::Anime { t("Rewatching") } else { t("Rereading") };
-                if widgets::toggle_row(ui, &p, icons::REPEAT, label, &mut e.repeating) && e.repeating {
-                    *e = progress::start_repeat(e);
-                }
-                widgets::separator(ui, &p);
-                let label = if kind == MediaKind::Anime { t("Times rewatched") } else { t("Times reread") };
-                counter(ui, &p, label, &mut e.repeat_count, None);
-            });
-            ui.add_space(8.0);
-            widgets::card(ui, &p, |ui| {
-                ui.label(t("Notes"));
-                let w = ui.available_width();
-                let r = ui.add(
-                    egui::TextEdit::multiline(&mut e.notes).desired_rows(3).desired_width(w).char_limit(5000),
-                );
-                r.widget_info(|| egui::WidgetInfo::labeled(egui::Role::TextInput, true, t("Notes")));
-            });
-        });
+                ui.add_space(8.0);
+                widgets::card(ui, &p, |ui| {
+                    valid &= date_row(ui, &p, t("Started"), &mut ed.start);
+                    widgets::separator(ui, &p);
+                    valid &= date_row(ui, &p, t("Finished"), &mut ed.finish);
+                });
+                ui.add_space(8.0);
+                widgets::card(ui, &p, |ui| {
+                    let label = if kind == MediaKind::Anime { t("Rewatching") } else { t("Rereading") };
+                    if widgets::toggle_row(ui, &p, icons::REPEAT, label, &mut e.repeating) && e.repeating {
+                        *e = progress::start_repeat(e);
+                    }
+                    widgets::separator(ui, &p);
+                    let label =
+                        if kind == MediaKind::Anime { t("Times rewatched") } else { t("Times reread") };
+                    counter(ui, &p, label, &mut e.repeat_count, None);
+                });
+                ui.add_space(8.0);
+                widgets::card(ui, &p, |ui| {
+                    ui.label(t("Notes"));
+                    let w = ui.available_width();
+                    let r = ui.add(
+                        egui::TextEdit::multiline(&mut e.notes)
+                            .desired_rows(3)
+                            .desired_width(w)
+                            .char_limit(5000),
+                    );
+                    r.widget_info(|| egui::WidgetInfo::labeled(egui::Role::TextInput, true, t("Notes")));
+                });
+            },
+        );
         ui.add_space(12.0);
         if !valid {
             ui.label(RichText::new(t("Write dates as YYYY-MM-DD.")).color(p.red));
@@ -193,7 +200,7 @@ fn confirm(app: &mut App, ctx: &Context) {
     let p = app.p;
     let (mut yes, mut no) = (false, false);
     let modal = Modal::new(Id::unique("confirm")).frame(frame(app)).show(ctx, |ui| {
-        ui.set_width(360.0_f32.min(ctx.content_rect().width() - 70.0));
+        ui.set_width(360.0_f32.min((ctx.content_rect().width() - 64.0).max(200.0)));
         ui.label(RichText::new(&c.title).font(theme::bold(18.0)));
         ui.add_space(4.0);
         ui.add(egui::Label::new(RichText::new(&c.body).color(p.dim)).wrap());
@@ -227,7 +234,7 @@ fn login(app: &mut App, ctx: &Context) {
     }
     let p = app.p;
     let modal = Modal::new(Id::unique("login")).frame(frame(app)).show(ctx, |ui| {
-        ui.set_width(340.0);
+        ui.set_width(340.0_f32.min((ctx.content_rect().width() - 64.0).max(200.0)));
         ui.vertical_centered(|ui| {
             ui.add(egui::Spinner::new().size(28.0).color(p.tint));
             ui.add_space(8.0);
@@ -249,7 +256,7 @@ fn command(app: &mut App, ctx: &Context) {
     let p = app.p;
     let mut picked: Option<Act> = None;
     let modal = Modal::new(Id::unique("command")).frame(frame(app)).show(ctx, |ui| {
-        ui.set_width(480.0_f32.min(ctx.content_rect().width() - 70.0));
+        ui.set_width(480.0_f32.min((ctx.content_rect().width() - 64.0).max(200.0)));
         let r = widgets::search_field(ui, &p, &mut text, t("Go to a title, page or link"));
         if !r.has_focus() {
             r.request_focus();
@@ -304,28 +311,30 @@ fn command(app: &mut App, ctx: &Context) {
         at = at.min(rows.len().saturating_sub(1));
         ui.data_mut(|d| d.insert_temp(id, at));
         let enter = ui.input(|i| i.key_pressed(Key::Enter));
-        egui::ScrollArea::vertical().max_height(340.0).show(ui, |ui| {
-            for (i, (name, icon, act)) in rows.into_iter().enumerate() {
-                let hit = widgets::nav_row(ui, &p, icon, p.tint, &name, "", i == at).clicked();
-                if hit || (enter && i == at) {
-                    picked = Some(act);
-                    if icon == icons::LINK {
-                        picked = None;
-                        let link = text.clone();
-                        app.open_link(&link);
-                        text.clear();
-                        ui.close();
-                    } else if icon == icons::MAGNIFYING_GLASS
-                        && let Some(Act::Random(k)) = picked
-                    {
-                        app.search.kind = k;
-                        app.search.text = text.trim().to_owned();
-                        app.start_search();
-                        picked = Some(Act::Go(Tab::Search));
+        egui::ScrollArea::vertical()
+            .max_height(340.0_f32.min((ctx.content_rect().height() - 140.0).max(100.0)))
+            .show(ui, |ui| {
+                for (i, (name, icon, act)) in rows.into_iter().enumerate() {
+                    let hit = widgets::nav_row(ui, &p, icon, p.tint, &name, "", i == at).clicked();
+                    if hit || (enter && i == at) {
+                        picked = Some(act);
+                        if icon == icons::LINK {
+                            picked = None;
+                            let link = text.clone();
+                            app.open_link(&link);
+                            text.clear();
+                            ui.close();
+                        } else if icon == icons::MAGNIFYING_GLASS
+                            && let Some(Act::Random(k)) = picked
+                        {
+                            app.search.kind = k;
+                            app.search.text = text.trim().to_owned();
+                            app.start_search();
+                            picked = Some(Act::Go(Tab::Search));
+                        }
                     }
                 }
-            }
-        });
+            });
     });
     match picked {
         Some(a) => app.act(a),
@@ -353,7 +362,7 @@ fn toast(app: &mut App, ctx: &Context) {
                 .corner_radius(12)
                 .inner_margin(egui::Margin::symmetric(16, 10))
                 .show(ui, |ui| {
-                    ui.set_max_width(460.0);
+                    ui.set_max_width(460.0_f32.min(ctx.content_rect().width() - 70.0));
                     let fg: Color32 = theme::on(fill);
                     ui.add(egui::Label::new(RichText::new(&toast.text).color(fg)).wrap());
                 });

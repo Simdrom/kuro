@@ -8,7 +8,7 @@ use std::rc::Rc;
 use common::*;
 use mango_app::app::{Act, App, Load, Route, SettingsPage, Tab};
 use mango_core::overview::Section;
-use mango_core::settings::Theme;
+use mango_core::settings::{ListLayout, Theme};
 use mango_core::{MediaKind, Store};
 
 fn shot(h: &mut egui_kittest::Harness<'static, App>, name: &str) {
@@ -49,7 +49,7 @@ fn screens() {
     h.state_mut().act(Act::Open(Rc::new(media(20, MediaKind::Manga, "Ink & Ember"))));
     shot(&mut h, "manga-light");
     h.state_mut().s.sidebar = false;
-    h.state_mut().s.list_grid = true;
+    h.state_mut().s.list_layout = ListLayout::Posters;
     h.state_mut().act(Act::Go(Tab::Anime));
     shot(&mut h, "grid-light");
     h.state_mut().command = Some("i".into());
@@ -59,4 +59,60 @@ fn screens() {
     shot(&mut h, "narrow");
     let mut h = harness_with(Store::in_memory().unwrap(), [1000.0, 700.0], |_| {});
     shot(&mut h, "welcome");
+}
+
+#[test]
+#[ignore = "needs a GPU"]
+fn sizes() {
+    let titles =
+        ["Lanterns Over Saltmarsh", "Iron Orchard", "The Slowly Moving Northern Coast", "Glass Meridian"];
+    let s = store();
+    for i in 100..130u64 {
+        let status = mango_core::ListStatus::ALL[i as usize % 5];
+        let mut e = entry(i, MediaKind::Anime, titles[i as usize % 4], status, (i % 23) as u32);
+        if i % 3 == 0 {
+            let at = mango_app::backend::now() + 90_000;
+            e.media.next_airing = Some(mango_core::Airing { episode: 22, at });
+        }
+        s.put_entry(&e).unwrap();
+    }
+    let mut h = harness_with(s, [1426.0, 1000.0], |s| s.theme = Theme::Dark);
+    let items: Vec<_> = (200..230u64)
+        .map(|i| {
+            let mut m = media(i, MediaKind::Anime, titles[i as usize % 4]);
+            m.synopsis = Some("A lighthouse keeper finds a map that redraws itself every night. ".repeat(6));
+            Rc::new(m)
+        })
+        .collect();
+    let feed = || mango_app::app::Feed { items: items.clone(), started: true, page: 1, ..Default::default() };
+    h.state_mut().season.feed = feed();
+    h.state_mut().ranking.feed = feed();
+    let m = Rc::new(media(1, MediaKind::Anime, "Lanterns Over Saltmarsh"));
+    let r = m.media_ref();
+    h.state_mut().details.entry(r).or_default().data =
+        Some(Rc::new(detail(1, MediaKind::Anime, "Lanterns Over Saltmarsh")));
+    shot(&mut h, "s-1426-cards");
+    h.state_mut().lists[0].filter.status = None;
+    h.state_mut().act(Act::Open(m.clone()));
+    shot(&mut h, "s-1426-open");
+    h.state_mut().detail_full = true;
+    shot(&mut h, "s-1426-full");
+    h.state_mut().detail_full = false;
+    h.state_mut().routes.clear();
+    h.state_mut().s.list_layout = ListLayout::Table;
+    shot(&mut h, "s-1426-table");
+    h.state_mut().s.list_layout = ListLayout::Posters;
+    h.set_size(egui::vec2(2200.0, 1100.0));
+    shot(&mut h, "s-2200-posters");
+    h.state_mut().act(Act::Go(Tab::Seasonal));
+    shot(&mut h, "s-2200-season");
+    h.set_size(egui::vec2(760.0, 800.0));
+    shot(&mut h, "s-760-season");
+    h.state_mut().act(Act::Go(Tab::Anime));
+    h.state_mut().s.list_layout = ListLayout::Cards;
+    shot(&mut h, "s-760-cards");
+    h.set_size(egui::vec2(360.0, 700.0));
+    shot(&mut h, "s-360-cards");
+    h.state_mut().act(Act::Open(m));
+    shot(&mut h, "s-360-open");
 }

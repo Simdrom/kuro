@@ -80,6 +80,20 @@ impl PosterProgress {
     pub const ALL: [Self; 4] = [Self::None, Self::Badge, Self::Bar, Self::Both];
 }
 
+/// How titles are laid out.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum ListLayout {
+    #[default]
+    Cards,
+    Posters,
+    Table,
+}
+
+impl ListLayout {
+    pub const ALL: [Self; 3] = [Self::Cards, Self::Posters, Self::Table];
+}
+
 /// What a swipe, double-click or middle-click on a title does.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -205,8 +219,8 @@ pub struct Settings {
     pub watch_clipboard: bool,
     // My List
     pub score_display: ScoreDisplay,
-    pub list_grid: bool,
-    pub seasonal_grid: bool,
+    pub list_layout: ListLayout,
+    pub browse_layout: ListLayout,
     pub poster_width: f32,
     pub poster_progress: PosterProgress,
     pub poster_scores: bool,
@@ -252,8 +266,8 @@ impl Default for Settings {
             confirm_delete: true,
             watch_clipboard: false,
             score_display: ScoreDisplay::Both,
-            list_grid: false,
-            seasonal_grid: false,
+            list_layout: ListLayout::Cards,
+            browse_layout: ListLayout::Cards,
             poster_width: 130.0,
             poster_progress: PosterProgress::Both,
             poster_scores: true,

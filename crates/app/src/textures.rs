@@ -65,10 +65,21 @@ impl Textures {
 
     /// Paints an image that fills `rect`, cropping what does not fit.
     pub fn paint(&mut self, ui: &Ui, p: &Palette, bg: &Backend, url: Option<&str>, rect: Rect, radius: u8) {
+        self.paint_rounded(ui, p, bg, url, rect, CornerRadius::same(radius));
+    }
+
+    pub fn paint_rounded(
+        &mut self,
+        ui: &Ui,
+        p: &Palette,
+        bg: &Backend,
+        url: Option<&str>,
+        rect: Rect,
+        cr: CornerRadius,
+    ) {
         if !ui.is_rect_visible(rect) {
             return;
         }
-        let cr = CornerRadius::same(radius);
         match url.filter(|u| !u.is_empty()).and_then(|u| self.get(bg, u)) {
             Some(t) => {
                 let size = t.size_vec2();

@@ -1,8 +1,8 @@
-//! Seasonal, ranking and search columns.
+//! Seasonal, ranking and search.
 
 use std::rc::Rc;
 
-use eframe::egui::{self, Ui};
+use eframe::egui::{self, Ui, vec2};
 use mango_api::Ranking;
 use mango_core::links;
 use mango_core::{Format, Media, MediaKind, Season, SeasonYear, Service, season};
@@ -13,6 +13,9 @@ use crate::i18n::t;
 use crate::widgets;
 use crate::{format, icons};
 
+/// From this width a toolbar fits on one line.
+const WIDE: f32 = 820.0;
+
 fn items(app: &App, list: &[Rc<Media>], ranked: bool) -> Vec<Item> {
     list.iter()
         .enumerate()
@@ -22,7 +25,7 @@ fn items(app: &App, list: &[Rc<Media>], ranked: bool) -> Vec<Item> {
 }
 
 /// Draws a feed. Returns true when its next page is needed.
-fn feed(app: &mut App, ui: &mut Ui, id: &str, f: &Feed, list: &[Item], grid: bool) -> bool {
+fn feed(app: &mut App, ui: &mut Ui, id: &str, f: &Feed, list: &[Item]) -> bool {
     let p = app.p;
     if list.is_empty() {
         if f.loading || !f.started {
@@ -45,11 +48,8 @@ fn feed(app: &mut App, ui: &mut Ui, id: &str, f: &Feed, list: &[Item], grid: boo
             retry = widgets::failure(ui, &p, &format::error(e));
         }
     };
-    let near = if grid {
-        rows::grid(app, ui, id, list, false, foot)
-    } else {
-        rows::list(app, ui, id, list, Style::Browse, foot)
-    };
+    let layout = app.s.browse_layout;
+    let near = rows::show(app, ui, id, list, layout, Style::Browse, foot);
     retry || (near && f.more && !f.loading && f.error.is_none())
 }
 
@@ -62,79 +62,106 @@ fn browse_sort(s: BrowseSort) -> &'static str {
     }
 }
 
-pub fn seasonal(app: &mut App, ui: &mut Ui) {
+/// Season and year pickers with arrows.
+fn season_picker(app: &mut App, ui: &mut Ui) {
     let p = app.p;
-    widgets::title(ui, &p, &format::season_year(app.season.at));
-    ui.horizontal(|ui| {
-        ui.set_max_width(ui.available_width() - 8.0);
-        widgets::search_field(ui, &p, &mut app.season.text, t("Filter by title"));
-    });
-    let before = (app.season.at, app.season.continuing);
-    ui.horizontal(|ui| {
-        if widgets::icon_button(ui, &p, icons::CARET_LEFT, t("Previous season")).clicked() {
-            app.season.at = app.season.at.prev();
+    if widgets::icon_button(ui, &p, icons::CARET_LEFT, t("Previous season")).clicked() {
+        app.season.at = app.season.at.prev();
+    }
+    let r = widgets::icon_button(ui, &p, format::season_icon(app.season.at.season), t("Season"));
+    egui::Popup::menu(&r).show(|ui| {
+        for s in Season::ALL {
+            if ui.selectable_label(app.season.at.season == s, format::season(s)).clicked() {
+                app.season.at.season = s;
+                ui.close();
+            }
         }
-        let r = widgets::icon_button(ui, &p, format::season_icon(app.season.at.season), t("Season"));
-        egui::Popup::menu(&r).show(|ui| {
-            for s in Season::ALL {
-                if ui.selectable_label(app.season.at.season == s, format::season(s)).clicked() {
-                    app.season.at.season = s;
+    });
+    let r = widgets::icon_button(ui, &p, icons::CALENDAR, t("Year"));
+    egui::Popup::menu(&r).show(|ui| {
+        egui::ScrollArea::vertical().max_height(320.0).show(ui, |ui| {
+            for y in season::years(today()) {
+                if ui.selectable_label(app.season.at.year == y, y.to_string()).clicked() {
+                    app.season.at.year = y;
                     ui.close();
                 }
             }
         });
-        let r = widgets::icon_button(ui, &p, icons::CALENDAR, t("Year"));
-        egui::Popup::menu(&r).show(|ui| {
-            egui::ScrollArea::vertical().max_height(320.0).show(ui, |ui| {
-                for y in season::years(today()) {
-                    if ui.selectable_label(app.season.at.year == y, y.to_string()).clicked() {
-                        app.season.at.year = y;
-                        ui.close();
-                    }
-                }
-            });
-        });
-        if widgets::icon_button(ui, &p, icons::CARET_RIGHT, t("Next season")).clicked() {
-            app.season.at = app.season.at.next();
-        }
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.add_space(8.0);
-            let r = widgets::icon_button(ui, &p, icons::SORT_ASCENDING, t("Sort by"));
-            egui::Popup::menu(&r).show(|ui| {
-                for s in BrowseSort::ALL {
-                    if ui.selectable_label(app.season.sort == s, browse_sort(s)).clicked() {
-                        app.season.sort = s;
-                        ui.close();
-                    }
-                }
-            });
-            let on = app.season.format.is_some() || app.season.mine_only;
-            let color = if on { p.orange } else { p.tint };
-            let r = widgets::icon_button_colored(ui, &p, icons::FUNNEL, t("Filter"), color, true);
-            egui::Popup::menu(&r).show(|ui| {
-                ui.set_min_width(180.0);
-                let v = &mut app.season;
-                ui.checkbox(&mut v.mine_only, t("Only titles in my list"));
-                ui.separator();
-                ui.selectable_value(&mut v.format, None, t("All formats"));
-                for f in
-                    [Format::Tv, Format::TvShort, Format::Movie, Format::Ona, Format::Ova, Format::Special]
-                {
-                    ui.selectable_value(&mut v.format, Some(f), format::format(f));
-                }
-            });
-            let (icon, text) = if app.s.seasonal_grid {
-                (icons::LIST_BULLETS, t("Show as list"))
-            } else {
-                (icons::SQUARES_FOUR, t("Show as posters"))
-            };
-            if widgets::icon_button(ui, &p, icon, text).clicked() {
-                app.s.seasonal_grid = !app.s.seasonal_grid;
-            }
-        });
     });
-    widgets::segmented(ui, &p, &mut app.season.continuing, &[(false, t("New")), (true, t("Continuing"))]);
-    ui.add_space(4.0);
+    if widgets::icon_button(ui, &p, icons::CARET_RIGHT, t("Next season")).clicked() {
+        app.season.at = app.season.at.next();
+    }
+}
+
+fn season_tools(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    rows::layout_switch(ui, &p, &mut app.s.browse_layout);
+    let r = widgets::icon_button(ui, &p, icons::SORT_ASCENDING, t("Sort by"));
+    egui::Popup::menu(&r).show(|ui| {
+        for s in BrowseSort::ALL {
+            if ui.selectable_label(app.season.sort == s, browse_sort(s)).clicked() {
+                app.season.sort = s;
+                ui.close();
+            }
+        }
+    });
+    let on = app.season.format.is_some() || app.season.mine_only;
+    let color = if on { p.orange } else { p.tint };
+    let r = widgets::icon_button_colored(ui, &p, icons::FUNNEL, t("Filter"), color, true);
+    egui::Popup::menu(&r).show(|ui| {
+        ui.set_min_width(180.0);
+        let v = &mut app.season;
+        ui.checkbox(&mut v.mine_only, t("Only titles in my list"));
+        ui.separator();
+        ui.selectable_value(&mut v.format, None, t("All formats"));
+        for f in [Format::Tv, Format::TvShort, Format::Movie, Format::Ona, Format::Ova, Format::Special] {
+            ui.selectable_value(&mut v.format, Some(f), format::format(f));
+        }
+    });
+}
+
+pub fn seasonal(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    let before = (app.season.at, app.season.continuing);
+    let wide = ui.available_width() >= WIDE;
+    let name = format::season_year(app.season.at);
+    let segments = [(false, t("New")), (true, t("Continuing"))];
+    if wide {
+        ui.horizontal(|ui| {
+            ui.set_min_height(36.0);
+            rows::trailing(ui, |ui| {
+                season_tools(app, ui);
+                let w = (ui.available_width() * 0.45).clamp(180.0, 320.0);
+                ui.allocate_ui(vec2(w, 32.0), |ui| {
+                    widgets::search_field(ui, &p, &mut app.season.text, t("Filter by title"));
+                });
+                super::heading(ui, &p, &name);
+            });
+        });
+        ui.add_space(4.0);
+        ui.horizontal(|ui| {
+            season_picker(app, ui);
+            ui.add_space(8.0);
+            widgets::segmented(ui, &p, &mut app.season.continuing, &segments);
+        });
+    } else {
+        widgets::title(ui, &p, &name);
+        ui.horizontal(|ui| {
+            ui.set_max_width(ui.available_width() - 8.0);
+            widgets::search_field(ui, &p, &mut app.season.text, t("Filter by title"));
+        });
+        if ui.available_width() >= 400.0 {
+            ui.horizontal(|ui| {
+                season_picker(app, ui);
+                rows::trailing(ui, |ui| season_tools(app, ui));
+            });
+        } else {
+            ui.horizontal(|ui| season_picker(app, ui));
+            ui.horizontal(|ui| season_tools(app, ui));
+        }
+        widgets::segmented(ui, &p, &mut app.season.continuing, &segments);
+    }
+    ui.add_space(6.0);
     if before != (app.season.at, app.season.continuing) {
         app.season.feed.reset();
     }
@@ -159,7 +186,7 @@ pub fn seasonal(app: &mut App, ui: &mut Ui) {
     // Sorting and filtering need the whole season, which is a few pages.
     let whole = v.sort != BrowseSort::Popularity || v.format.is_some() || v.mine_only || !v.text.is_empty();
     let f = std::mem::take(&mut app.season.feed);
-    let more = feed(app, ui, "season", &f, &list, app.s.seasonal_grid);
+    let more = feed(app, ui, "season", &f, &list);
     app.season.feed = f;
     let f = &app.season.feed;
     if more || (whole && f.more && !f.loading && f.error.is_none()) {
@@ -167,51 +194,69 @@ pub fn seasonal(app: &mut App, ui: &mut Ui) {
     }
 }
 
+fn ranking_filters(app: &mut App, ui: &mut Ui) {
+    let options = Ranking::options(app.ranking.kind, app.s.primary);
+    let r = &mut app.ranking;
+    widgets::select(ui, "ranking", t("Ranking"), &mut r.ranking, &options, |v| format::ranking(v).to_owned());
+    if app.s.primary != Service::AniList {
+        return;
+    }
+    if !r.genres_started {
+        r.genres_started = true;
+        app.bg.genres();
+    }
+    let r = &mut app.ranking;
+    let combo = egui::ComboBox::from_id_salt("genre")
+        .width(110.0)
+        .selected_text(r.genre.as_deref().unwrap_or(t("All genres")))
+        .show_ui(ui, |ui| {
+            ui.selectable_value(&mut r.genre, None, t("All genres"));
+            for g in &r.genres {
+                // Only shown on request, like the rest of the adult catalogue.
+                if app.s.show_adult || g != "Hentai" {
+                    ui.selectable_value(&mut r.genre, Some(g.clone()), g);
+                }
+            }
+        });
+    widgets::label_a11y(&combo.response, egui::Role::ComboBox, t("Genre"));
+    let mut years = vec![None];
+    years.extend((1960..=i32::from(today().year()) + 1).rev().map(Some));
+    widgets::select(ui, "year", t("Year"), &mut r.year, &years, |y| {
+        y.map_or(t("All years").to_owned(), |y| y.to_string())
+    });
+}
+
 pub fn ranking(app: &mut App, ui: &mut Ui) {
     let p = app.p;
-    widgets::title(ui, &p, t("Ranking"));
     let before = app.ranking_query();
+    let wide = ui.available_width() >= WIDE;
     let mut kind = app.ranking.kind;
     let kinds = MediaKind::ALL.map(|k| (k, format::kind(k)));
-    if widgets::segmented(ui, &p, &mut kind, &kinds) {
-        app.ranking.kind = kind;
-        app.ranking.ranking = Ranking::All;
-    }
-    ui.add_space(2.0);
-    let anilist = app.s.primary == Service::AniList;
-    ui.horizontal_wrapped(|ui| {
-        let options = Ranking::options(kind, app.s.primary);
-        let r = &mut app.ranking;
-        widgets::select(ui, "ranking", t("Ranking"), &mut r.ranking, &options, |v| {
-            format::ranking(v).to_owned()
-        });
-        if !anilist {
-            return;
-        }
-        if !r.genres_started {
-            r.genres_started = true;
-            app.bg.genres();
-        }
-        let r = &mut app.ranking;
-        egui::ComboBox::from_id_salt("genre")
-            .width(110.0)
-            .selected_text(r.genre.as_deref().unwrap_or(t("All genres")))
-            .show_ui(ui, |ui| {
-                ui.selectable_value(&mut r.genre, None, t("All genres"));
-                for g in &r.genres {
-                    // Only shown on request, like the rest of the adult catalogue.
-                    if app.s.show_adult || g != "Hentai" {
-                        ui.selectable_value(&mut r.genre, Some(g.clone()), g);
-                    }
-                }
-            });
-        let mut years = vec![None];
-        years.extend((1960..=i32::from(today().year()) + 1).rev().map(Some));
-        widgets::select(ui, "year", t("Year"), &mut r.year, &years, |y| {
-            y.map_or(t("All years").to_owned(), |y| y.to_string())
+    ui.horizontal(|ui| {
+        ui.set_min_height(36.0);
+        rows::trailing(ui, |ui| {
+            rows::layout_switch(ui, &p, &mut app.s.browse_layout);
+            super::heading(ui, &p, t("Ranking"));
         });
     });
     ui.add_space(4.0);
+    let mut switched = false;
+    if wide {
+        ui.horizontal(|ui| {
+            ui.allocate_ui(vec2(240.0, 32.0), |ui| switched = widgets::segmented(ui, &p, &mut kind, &kinds));
+            ui.add_space(8.0);
+            ranking_filters(app, ui);
+        });
+    } else {
+        switched = widgets::segmented(ui, &p, &mut kind, &kinds);
+        ui.add_space(2.0);
+        ui.horizontal_wrapped(|ui| ranking_filters(app, ui));
+    }
+    if switched {
+        app.ranking.kind = kind;
+        app.ranking.ranking = Ranking::All;
+    }
+    ui.add_space(6.0);
     if before != app.ranking_query() {
         app.ranking.feed.reset();
     }
@@ -220,7 +265,7 @@ pub fn ranking(app: &mut App, ui: &mut Ui) {
     }
     let list = items(app, &app.ranking.feed.items, true);
     let f = std::mem::take(&mut app.ranking.feed);
-    let more = feed(app, ui, "ranking", &f, &list, false);
+    let more = feed(app, ui, "ranking", &f, &list);
     app.ranking.feed = f;
     if more {
         app.load_ranking();
@@ -230,39 +275,54 @@ pub fn ranking(app: &mut App, ui: &mut Ui) {
 pub fn search(app: &mut App, ui: &mut Ui) {
     let p = app.p;
     ui.horizontal(|ui| {
-        widgets::title(ui, &p, t("Search"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.add_space(8.0);
-            let label = t("Random title");
-            let busy = app.search.random_busy;
-            if busy {
+        ui.set_min_height(36.0);
+        rows::trailing(ui, |ui| {
+            rows::layout_switch(ui, &p, &mut app.s.browse_layout);
+            if app.search.random_busy {
                 ui.add(egui::Spinner::new().size(18.0).color(p.tint));
-            } else if widgets::icon_button(ui, &p, icons::SHUFFLE, label).clicked() {
+            } else if widgets::icon_button(ui, &p, icons::SHUFFLE, t("Random title")).clicked() {
                 let k = app.search.kind;
                 app.act(Act::Random(k));
             }
+            super::heading(ui, &p, t("Search"));
         });
     });
+    ui.add_space(4.0);
     let now = ui.input(|i| i.time);
-    let r = ui
-        .horizontal(|ui| {
-            ui.set_max_width(ui.available_width() - 8.0);
-            widgets::search_field(ui, &p, &mut app.search.text, t("Title, or an AniList or MyAnimeList link"))
+    let wide = ui.available_width() >= 640.0;
+    let mut kind = app.search.kind;
+    let kinds = MediaKind::ALL.map(|k| (k, format::kind(k)));
+    let mut switched = false;
+    let hint = t("Title, or an AniList or MyAnimeList link");
+    let r = if wide {
+        ui.horizontal(|ui| {
+            ui.allocate_ui(vec2(220.0, 32.0), |ui| switched = widgets::segmented(ui, &p, &mut kind, &kinds));
+            let w = (ui.available_width() - 8.0).min(620.0);
+            ui.allocate_ui(vec2(w, 32.0), |ui| widgets::search_field(ui, &p, &mut app.search.text, hint))
+                .inner
         })
-        .inner;
+        .inner
+    } else {
+        let r = ui
+            .horizontal(|ui| {
+                ui.set_max_width(ui.available_width() - 8.0);
+                widgets::search_field(ui, &p, &mut app.search.text, hint)
+            })
+            .inner;
+        switched = widgets::segmented(ui, &p, &mut kind, &kinds);
+        r
+    };
     if std::mem::take(&mut app.search.focus) {
         r.request_focus();
     }
     if r.changed() {
         app.search.typed_at = now;
     }
-    let mut kind = app.search.kind;
-    let kinds = MediaKind::ALL.map(|k| (k, format::kind(k)));
-    if widgets::segmented(ui, &p, &mut kind, &kinds) {
+    if switched {
         app.search.kind = kind;
         app.start_search();
     }
-    ui.add_space(4.0);
+    ui.add_space(6.0);
 
     let text = app.search.text.trim().to_owned();
     if text != app.search.sent {
@@ -285,7 +345,7 @@ pub fn search(app: &mut App, ui: &mut Ui) {
     }
     let list = items(app, &app.search.feed.items, false);
     let f = std::mem::take(&mut app.search.feed);
-    let more = feed(app, ui, "search", &f, &list, false);
+    let more = feed(app, ui, "search", &f, &list);
     app.search.feed = f;
     if more {
         app.load_search();

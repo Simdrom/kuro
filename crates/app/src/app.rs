@@ -278,6 +278,10 @@ pub struct App {
     pub command: Option<String>,
     pub binge: Option<MediaRef>,
     pub widget: bool,
+    /// An open title uses the whole window.
+    pub detail_full: bool,
+    /// Content and an open title fit side by side.
+    pub can_split: bool,
     pub profiles: HashMap<Service, UserProfile>,
     pub login: Option<Service>,
     pending_login: Option<(Service, UserProfile, Tokens)>,
@@ -374,6 +378,8 @@ impl App {
             command: None,
             binge: None,
             widget: false,
+            detail_full: false,
+            can_split: true,
             profiles: HashMap::new(),
             login: None,
             pending_login: None,
@@ -561,6 +567,17 @@ impl App {
             .map(|e| e.media.media_ref())
             .collect();
         self.bg.airing(refs);
+    }
+
+    /// Sorts by `key`, or flips the direction when it is already in use.
+    pub fn sort_by(&mut self, key: SortKey) {
+        if self.s.sort == key {
+            self.s.sort_asc = !self.s.sort_asc;
+        } else {
+            // Start with the direction people expect.
+            self.s.sort_asc = matches!(key, SortKey::Title | SortKey::NextEpisode);
+            self.s.sort = key;
+        }
     }
 
     // Feedback
@@ -1239,6 +1256,7 @@ impl App {
             self.applied = Some(look);
             theme::apply(ctx, &self.p, self.s.animations);
             ctx.set_zoom_factor(self.s.zoom);
+            ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(min_size()));
         }
         let icon_changed = self.icon_applied != Some(self.s.icon);
         if icon_changed {
@@ -1300,5 +1318,5 @@ impl eframe::App for App {
 }
 
 pub fn min_size() -> Vec2 {
-    Vec2::new(420.0, 520.0)
+    Vec2::new(340.0, 400.0)
 }

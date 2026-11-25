@@ -37,14 +37,9 @@ pub fn overview(app: &mut App, ui: &mut Ui, r: MediaRef) {
             super::scroll(ui, ("overview", r), |ui| {
                 for (s, list) in v.iter() {
                     widgets::section(ui, &p, format::section(*s, r.kind));
-                    widgets::card(ui, &p, |ui| {
-                        let shown: Vec<_> = list.iter().filter(|m| app.s.show_adult || !m.adult).collect();
-                        for (i, m) in shown.into_iter().enumerate() {
-                            if i > 0 {
-                                widgets::separator(ui, &p);
-                            }
-                            overview_row(app, ui, m);
-                        }
+                    let shown: Vec<_> = list.iter().filter(|m| app.s.show_adult || !m.adult).collect();
+                    cells(app, ui, shown.len(), 300.0, 74.0, |app, ui, rect, i| {
+                        overview_cell(app, ui, rect, shown[i])
                     });
                 }
             });
@@ -52,41 +47,78 @@ pub fn overview(app: &mut App, ui: &mut Ui, r: MediaRef) {
     }
 }
 
-fn overview_row(app: &mut App, ui: &mut Ui, m: &Media) {
-    let p = app.p;
-    let (rect, r) = ui.allocate_exact_size(vec2(ui.available_width(), 62.0), Sense::click());
-    let title = m.display_title(app.s.title_language).to_owned();
-    widgets::label_a11y(&r, Role::Button, &title);
-    if r.hovered() || r.has_focus() {
-        ui.painter().rect_filled(rect.expand2(vec2(8.0, 0.0)), 8, p.hover);
+/// A plain grid of cells, as many columns as fit.
+fn cells(
+    app: &mut App,
+    ui: &mut Ui,
+    count: usize,
+    min: f32,
+    height: f32,
+    mut draw: impl FnMut(&mut App, &mut Ui, Rect, usize),
+) {
+    let gap = 10.0;
+    let avail = ui.available_width();
+    let (cols, w) = super::rows::columns(avail, min, gap);
+    let rows = count.div_ceil(cols);
+    let (area, _) = ui.allocate_exact_size(vec2(avail, rows as f32 * (height + gap)), Sense::hover());
+    for i in 0..count {
+        let at = area.min + vec2((i % cols) as f32 * (w + gap), (i / cols) as f32 * (height + gap));
+        let rect = Rect::from_min_size(at, vec2(w, height));
+        if ui.is_rect_visible(rect) {
+            draw(app, ui, rect, i);
+        }
     }
-    let pic = Rect::from_min_size(rect.min + vec2(0.0, 4.0), vec2(38.0, 54.0));
+}
+
+/// A clickable card background. Returns its response.
+fn cell_base(
+    app: &App,
+    ui: &Ui,
+    rect: Rect,
+    id: impl std::hash::Hash + std::fmt::Debug,
+    name: &str,
+) -> egui::Response {
+    let p = app.p;
+    let r = ui.interact(rect, ui.scope_id().with(id), Sense::click());
+    widgets::label_a11y(&r, Role::Button, name);
+    ui.painter().rect_filled(rect, widgets::RADIUS, if r.hovered() { p.hover } else { p.card });
+    if r.has_focus() {
+        let s = egui::Stroke::new(2.0, p.tint);
+        ui.painter().rect_stroke(rect, widgets::RADIUS, s, egui::StrokeKind::Inside);
+    }
+    r.on_hover_cursor(CursorIcon::PointingHand)
+}
+
+fn overview_cell(app: &mut App, ui: &mut Ui, rect: Rect, m: &Media) {
+    let p = app.p;
+    let title = m.display_title(app.s.title_language).to_owned();
+    let r = cell_base(app, ui, rect, ("overview", m.media_ref()), &title);
+    let pic = Rect::from_min_size(rect.min + vec2(10.0, 8.0), vec2(40.0, 58.0));
     app.tex.paint(ui, &p, &app.bg, m.cover.as_deref(), pic, 5);
     let x = pic.right() + 12.0;
+    let w = rect.right() - x - 10.0;
     let when = match (m.kind, m.season_year(), m.start) {
         (MediaKind::Anime, Some(s), _) => format::season_year(s),
         (_, _, Some(d)) => format::month(d),
         _ => format::release(m.release, m.kind).to_owned(),
     };
-    let size = widgets::paint_text(
-        ui,
-        pos2(x, rect.top() + 12.0),
-        &when.to_uppercase(),
-        theme::semibold(11.0),
-        p.text,
-        200.0,
-        1,
-    );
+    let y = rect.top() + 10.0;
+    let size = widgets::paint_text(ui, pos2(x, y), &when.to_uppercase(), theme::semibold(11.0), p.dim, w, 1);
     if let Some(e) = app.entry(m) {
         let s = format!("·  {}", format::status(e.status, m.kind).to_uppercase());
-        let at = pos2(x + size.x + 8.0, rect.top() + 12.0);
-        widgets::paint_text(ui, at, &s, theme::semibold(11.0), p.status(e.status), 200.0, 1);
+        let room = (w - size.x - 8.0).max(1.0);
+        widgets::paint_text(
+            ui,
+            pos2(x + size.x + 8.0, y),
+            &s,
+            theme::semibold(11.0),
+            p.status(e.status),
+            room,
+            1,
+        );
     }
-    let w = rect.right() - x - 24.0;
-    widgets::paint_text(ui, pos2(x, rect.top() + 31.0), &title, theme::regular(13.5), p.text, w, 1);
-    let c = pos2(rect.right() - 6.0, rect.center().y);
-    ui.painter().text(c, egui::Align2::CENTER_CENTER, icons::CARET_RIGHT, theme::icon(13.0), p.faint);
-    if r.on_hover_cursor(CursorIcon::PointingHand).clicked() {
+    widgets::paint_text(ui, pos2(x, y + 16.0), &title, theme::semibold(13.5), p.text, w, 2);
+    if r.clicked() {
         app.act(Act::Open(Rc::new(m.clone())));
     }
 }
@@ -157,44 +189,29 @@ pub fn person(app: &mut App, ui: &mut Ui, id: u64) {
             widgets::empty(ui, &p, icons::MICROPHONE, t("Nothing here"));
             return;
         }
-        widgets::card(ui, &p, |ui| {
-            for (i, role) in roles.into_iter().enumerate() {
-                if i > 0 {
-                    widgets::separator(ui, &p);
-                }
-                let (rect, r) = ui.allocate_exact_size(vec2(ui.available_width(), 66.0), Sense::click());
-                let title = role.media.display_title(app.s.title_language).to_owned();
-                widgets::label_a11y(&r, Role::Button, &format!("{}, {title}", role.character));
-                if r.hovered() || r.has_focus() {
-                    ui.painter().rect_filled(rect.expand2(vec2(8.0, 0.0)), 8, p.hover);
-                }
-                let a = Rect::from_min_size(rect.min + vec2(0.0, 4.0), vec2(42.0, 58.0));
-                app.tex.paint(ui, &p, &app.bg, role.character_image.as_deref(), a, 6);
-                let b = Rect::from_min_size(pos2(rect.right() - 42.0, rect.top() + 4.0), vec2(42.0, 58.0));
-                app.tex.paint(ui, &p, &app.bg, role.media.cover.as_deref(), b, 6);
-                let w = b.left() - a.right() - 24.0;
-                let x = a.right() + 12.0;
-                widgets::paint_text(
-                    ui,
-                    pos2(x, rect.top() + 14.0),
-                    &role.character,
-                    theme::semibold(13.5),
-                    p.text,
-                    w,
-                    1,
-                );
-                widgets::paint_text(
-                    ui,
-                    pos2(x, rect.top() + 34.0),
-                    &title,
-                    theme::regular(12.5),
-                    p.dim,
-                    w,
-                    1,
-                );
-                if r.on_hover_cursor(CursorIcon::PointingHand).clicked() {
-                    app.act(Act::Open(Rc::new(role.media.clone())));
-                }
+        cells(app, ui, roles.len(), 320.0, 78.0, |app, ui, rect, i| {
+            let role = roles[i];
+            let title = role.media.display_title(app.s.title_language).to_owned();
+            let r = cell_base(app, ui, rect, ("role", i), &format!("{}, {title}", role.character));
+            let a = Rect::from_min_size(rect.min + vec2(10.0, 9.0), vec2(43.0, 60.0));
+            app.tex.paint(ui, &p, &app.bg, role.character_image.as_deref(), a, 6);
+            let b = Rect::from_min_size(pos2(rect.right() - 53.0, rect.top() + 9.0), vec2(43.0, 60.0));
+            app.tex.paint(ui, &p, &app.bg, role.media.cover.as_deref(), b, 6);
+            let x = a.right() + 12.0;
+            let w = (b.left() - x - 12.0).max(1.0);
+            let top = rect.top();
+            widgets::paint_text(
+                ui,
+                pos2(x, top + 18.0),
+                &role.character,
+                theme::semibold(13.5),
+                p.text,
+                w,
+                1,
+            );
+            widgets::paint_text(ui, pos2(x, top + 40.0), &title, theme::regular(12.5), p.dim, w, 1);
+            if r.clicked() {
+                app.act(Act::Open(Rc::new(role.media.clone())));
             }
         });
     });

@@ -1,8 +1,8 @@
 //! Translations. English text is the key; `strings.txt` holds the rest.
 
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::sync::OnceLock;
-use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct Language {
     pub code: &'static str,
@@ -89,7 +89,10 @@ impl Language {
     }
 }
 
-static CURRENT: AtomicUsize = AtomicUsize::new(0);
+// Text is only produced on the interface thread.
+thread_local! {
+    static CURRENT: Cell<usize> = const { Cell::new(0) };
+}
 
 type Table = HashMap<&'static str, Vec<&'static str>>;
 
@@ -116,15 +119,15 @@ pub fn set(code: &str) {
         let l = l.split(['-', '_']).next().unwrap_or_default().to_owned();
         find(if l == "no" || l == "nn" { "nb" } else { &l })
     };
-    CURRENT.store(find(code).or_else(system).unwrap_or(0), Ordering::Relaxed);
+    CURRENT.set(find(code).or_else(system).unwrap_or(0));
 }
 
 pub fn current() -> &'static Language {
-    &LANGUAGES[CURRENT.load(Ordering::Relaxed)]
+    &LANGUAGES[CURRENT.get()]
 }
 
 pub fn t(key: &'static str) -> &'static str {
-    let i = CURRENT.load(Ordering::Relaxed);
+    let i = CURRENT.get();
     if i == 0 {
         return key;
     }

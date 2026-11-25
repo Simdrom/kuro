@@ -17,7 +17,7 @@ use crate::theme;
 use crate::widgets;
 use crate::{format, icons};
 
-pub fn show(app: &mut App, ui: &mut Ui, _narrow: bool) {
+pub fn show(app: &mut App, ui: &mut Ui) {
     match app.routes.last().cloned() {
         None => {
             let p = app.p;
@@ -64,28 +64,44 @@ fn media(app: &mut App, ui: &mut Ui, r: MediaRef) {
         }
     });
     super::scroll(ui, ("detail", r), |ui| {
+        let w = ui.available_width();
+        if w >= TWO_COLUMNS {
+            let side = (w * 0.28).clamp(260.0, 320.0);
+            ui.horizontal_top(|ui| {
+                ui.spacing_mut().item_spacing.x = 20.0;
+                super::column(ui, side, |ui| {
+                    let (rect, _) = ui.allocate_exact_size(vec2(side, side * 1.42), Sense::hover());
+                    app.tex.paint(ui, &p, &app.bg, m.cover.as_deref(), rect, 14);
+                    ui.add_space(8.0);
+                    my_card(app, ui, &m);
+                    info(app, ui, &d);
+                    titles(app, ui, &m);
+                    links(app, ui, &d);
+                });
+                super::column(ui, w - side - 20.0, |ui| {
+                    facts(app, ui, &m, 28.0);
+                    ui.add_space(12.0);
+                    numbers(app, ui, &m);
+                    story(app, ui, &m, &d, &error);
+                    if m.kind == MediaKind::Anime && app.s.show_themes {
+                        themes(app, ui, &m);
+                    }
+                    cast(app, ui, &d);
+                    shelves(app, ui, &d);
+                    stats(app, ui, &d);
+                    if app.s.show_reviews {
+                        reviews(app, ui, r, &d);
+                    }
+                });
+            });
+            return;
+        }
         hero(app, ui, &m);
         ui.add_space(8.0);
         numbers(app, ui, &m);
         ui.add_space(8.0);
         my_card(app, ui, &m);
-        if let Some(e) = &error {
-            ui.add_space(6.0);
-            widgets::card(ui, &p, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label(RichText::new(format::error(e)).color(p.orange));
-                    if widgets::button(ui, &p, "", t("Retry"), false).clicked() {
-                        app.act(Act::Retry(r));
-                    }
-                });
-            });
-        }
-        overview_button(app, ui, &m, &d);
-        synopsis(app, ui, &m);
-        if let Some(b) = &m.background {
-            widgets::section(ui, &p, t("Background"));
-            widgets::card(ui, &p, |ui| ui.add(egui::Label::new(b).wrap().selectable(true)));
-        }
+        story(app, ui, &m, &d, &error);
         info(app, ui, &d);
         if m.kind == MediaKind::Anime && app.s.show_themes {
             themes(app, ui, &m);
@@ -99,6 +115,31 @@ fn media(app: &mut App, ui: &mut Ui, r: MediaRef) {
         }
         links(app, ui, &d);
     });
+}
+
+/// From this width the cover, entry and facts get a column of their own.
+const TWO_COLUMNS: f32 = 860.0;
+
+/// Errors, franchise and synopsis.
+fn story(app: &mut App, ui: &mut Ui, m: &Rc<Media>, d: &MediaDetail, error: &Option<mango_api::ApiError>) {
+    let p = app.p;
+    if let Some(e) = error {
+        ui.add_space(6.0);
+        widgets::card(ui, &p, |ui| {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(RichText::new(format::error(e)).color(p.orange));
+                if widgets::button(ui, &p, "", t("Retry"), false).clicked() {
+                    app.act(Act::Retry(m.media_ref()));
+                }
+            });
+        });
+    }
+    overview_button(app, ui, m, d);
+    synopsis(app, ui, m);
+    if let Some(b) = &m.background {
+        widgets::section(ui, &p, t("Background"));
+        widgets::card(ui, &p, |ui| ui.add(egui::Label::new(b).wrap().selectable(true)));
+    }
 }
 
 fn share_button(app: &mut App, ui: &mut Ui, m: &Rc<Media>) {
@@ -141,34 +182,41 @@ fn more_button(app: &mut App, ui: &mut Ui, m: &Rc<Media>) {
 
 fn hero(app: &mut App, ui: &mut Ui, m: &Rc<Media>) {
     let p = app.p;
+    let cover = (ui.available_width() * 0.34).clamp(96.0, 170.0);
     ui.horizontal_top(|ui| {
-        let (rect, _) = ui.allocate_exact_size(vec2(150.0, 214.0), Sense::hover());
+        let (rect, _) = ui.allocate_exact_size(vec2(cover, cover * 1.42), Sense::hover());
         app.tex.paint(ui, &p, &app.bg, m.cover.as_deref(), rect, 10);
         ui.add_space(6.0);
-        ui.vertical(|ui| {
-            let title = m.display_title(app.s.title_language).to_owned();
-            ui.add(egui::Label::new(RichText::new(&title).font(theme::bold(20.0))).wrap().selectable(true));
-            let other = [Some(&m.title), m.title_english.as_ref(), m.title_native.as_ref()];
-            if let Some(x) = other.into_iter().flatten().find(|x| **x != title) {
-                ui.add(egui::Label::new(RichText::new(x).color(p.dim)).wrap());
-            }
-            ui.add_space(4.0);
-            let line = format!("{} · {}", format::format(m.format), format::length(m));
-            ui.label(RichText::new(line).color(p.dim));
-            if let Some(a) = m.next_airing.filter(|a| a.at > now()) {
-                ui.add_space(6.0);
-                let text = tf("Episode {} in {}", &[&a.episode, &format::countdown(a.at, now())]);
-                ui.label(RichText::new(text).font(theme::semibold(13.5)).color(p.tint))
-                    .on_hover_text(format::date_time(a.at));
-            }
-            ui.add_space(10.0);
-            ui.label(RichText::new(format::release(m.release, m.kind)).color(p.dim));
-            ui.label(RichText::new(format::dates(m)).color(p.dim));
-            if let Some(n) = m.members {
-                ui.label(RichText::new(tf("{} members", &[&number(n)])).color(p.dim));
-            }
-        });
+        let size = if cover < 130.0 { 17.0 } else { 20.0 };
+        ui.vertical(|ui| facts(app, ui, m, size));
     });
+}
+
+/// Titles, format, next episode and dates.
+fn facts(app: &mut App, ui: &mut Ui, m: &Rc<Media>, size: f32) {
+    let p = app.p;
+    let title = m.display_title(app.s.title_language).to_owned();
+    ui.add(egui::Label::new(RichText::new(&title).font(theme::bold(size))).wrap().selectable(true));
+    let other = [Some(&m.title), m.title_english.as_ref(), m.title_native.as_ref()];
+    if let Some(x) = other.into_iter().flatten().find(|x| **x != title) {
+        ui.add(egui::Label::new(RichText::new(x).color(p.dim)).wrap());
+    }
+    ui.add_space(4.0);
+    let line = format!("{} · {}", format::format(m.format), format::length(m));
+    ui.add(egui::Label::new(RichText::new(line).color(p.dim)).wrap());
+    if let Some(a) = m.next_airing.filter(|a| a.at > now()) {
+        ui.add_space(4.0);
+        let text = tf("Episode {} in {}", &[&a.episode, &format::countdown(a.at, now())]);
+        let text = RichText::new(text).font(theme::semibold(13.5)).color(p.tint);
+        ui.add(egui::Label::new(text).wrap()).on_hover_text(format::date_time(a.at));
+    }
+    ui.add_space(6.0);
+    let mut parts = vec![format::release(m.release, m.kind).to_owned(), format::dates(m)];
+    if let Some(n) = m.members {
+        parts.push(tf("{} members", &[&number(n)]));
+    }
+    parts.retain(|s| !s.is_empty());
+    ui.add(egui::Label::new(RichText::new(parts.join("  ·  ")).color(p.dim)).wrap());
 }
 
 fn numbers(app: &mut App, ui: &mut Ui, m: &Media) {
@@ -233,17 +281,22 @@ fn my_card(app: &mut App, ui: &mut Ui, m: &Rc<Media>) {
     let p = app.p;
     let Some(e) = app.entry(m) else {
         widgets::card(ui, &p, |ui| {
-            ui.horizontal(|ui| {
+            let stack = ui.available_width() < widgets::STACK;
+            if stack {
                 ui.label(RichText::new(t("Not in your list")).color(p.dim));
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if widgets::button(ui, &p, icons::PENCIL_SIMPLE, t("Add…"), false).clicked() {
-                        app.act(Act::Edit(m.clone()));
-                    }
-                    let plan = format::status(ListStatus::Planning, m.kind);
-                    if widgets::button(ui, &p, icons::PLUS, plan, true).clicked() {
-                        app.act(Act::SetStatus(m.clone(), ListStatus::Planning));
-                    }
-                });
+            }
+            ui.horizontal_wrapped(|ui| {
+                if !stack {
+                    ui.label(RichText::new(t("Not in your list")).color(p.dim));
+                    ui.add_space(8.0);
+                }
+                let plan = format::status(ListStatus::Planning, m.kind);
+                if widgets::button(ui, &p, icons::PLUS, plan, true).clicked() {
+                    app.act(Act::SetStatus(m.clone(), ListStatus::Planning));
+                }
+                if widgets::button(ui, &p, icons::PENCIL_SIMPLE, t("Add…"), false).clicked() {
+                    app.act(Act::Edit(m.clone()));
+                }
             });
         });
         return;
@@ -286,17 +339,25 @@ fn my_card(app: &mut App, ui: &mut Ui, m: &Rc<Media>) {
         ui.add_space(6.0);
         let of = |n: Option<u32>| n.map_or("?".into(), |n| n.to_string());
         let can = e.status != ListStatus::Completed || e.repeating;
-        ui.horizontal_wrapped(|ui| {
+        let side_by_side = ui.available_width() >= 440.0;
+        let steppers = |ui: &mut Ui| {
             if m.kind == MediaKind::Manga {
                 let v = format!("{} / {}", e.progress_volumes, of(m.volumes));
                 let (a, b) = (Act::StepVolumes(m.clone(), -1), Act::StepVolumes(m.clone(), 1));
                 stepper(app, ui, t("Volumes"), v, a, b, can);
-                ui.add_space(14.0);
+                if side_by_side {
+                    ui.add_space(14.0);
+                }
             }
             let label = if m.kind == MediaKind::Anime { t("Episodes") } else { t("Chapters") };
             let v = format!("{} / {}", e.progress, of(e.media.total().or(m.total())));
             stepper(app, ui, label, v, Act::Step(m.clone(), -1), Act::Step(m.clone(), 1), can);
-        });
+        };
+        if side_by_side {
+            ui.horizontal(steppers);
+        } else {
+            ui.vertical(steppers);
+        }
         if let Some(f) = e.fraction() {
             ui.add_space(4.0);
             let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 5.0), Sense::hover());

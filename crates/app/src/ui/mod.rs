@@ -1,4 +1,8 @@
-//! Window layout: navigation, list column and detail column.
+//! Window layout. Everything follows the space that is available:
+//!
+//! - navigation is a sidebar, a rail of icons or a bottom bar;
+//! - content fills the window, and an open title takes a resizable panel
+//!   beside it, or the whole width when both do not fit.
 
 pub mod browse;
 pub mod detail;
@@ -10,18 +14,24 @@ pub mod rows;
 pub mod settings;
 
 use eframe::egui::{
-    self, Align2, CentralPanel, CornerRadius, CursorIcon, Frame, Margin, Panel, Role, Sense, Ui, WidgetInfo,
-    pos2, vec2,
+    self, Align, Align2, CentralPanel, CornerRadius, CursorIcon, Frame, Layout, Margin, Panel, RichText,
+    Role, Sense, Ui, WidgetInfo, pos2, vec2,
 };
 use mango_core::{MediaKind, SeasonYear};
 
-use crate::app::{Act, App, Route, Tab, today};
+use crate::app::{Act, App, Route, SettingsPage, Tab, today};
 use crate::i18n::t;
 use crate::theme::{self, Palette};
 use crate::{format, icons, widgets};
 
-/// Below this width only one column fits.
-const NARROW: f32 = 820.0;
+/// Below this width navigation moves to the bottom.
+const BOTTOM: f32 = 620.0;
+/// Below this width the sidebar shrinks to icons.
+const RAIL: f32 = 1000.0;
+/// Content and an open title fit side by side from this width.
+const SPLIT: f32 = 860.0;
+const CONTENT_MIN: f32 = 360.0;
+const DETAIL_MIN: f32 = 400.0;
 
 pub fn tab_label(tab: Tab) -> &'static str {
     match tab {
@@ -58,42 +68,69 @@ fn tabs(app: &App) -> Vec<Tab> {
 }
 
 pub fn show(app: &mut App, ui: &mut Ui) {
-    let p = app.p;
     let width = ui.available_width();
-    let narrow = width < NARROW;
-    if narrow {
+    if width < BOTTOM {
         bottom_bar(app, ui);
+    } else if width < RAIL {
+        rail(app, ui);
     } else if app.s.sidebar {
         sidebar(app, ui);
     } else {
         top_bar(app, ui);
     }
-    let column = Frame::new().fill(p.bg).inner_margin(Margin { left: 14, right: 8, top: 12, bottom: 0 });
-    if narrow {
-        CentralPanel::no_frame()
-            .frame(column)
-            .show(ui, |ui| if app.routes.is_empty() { master(app, ui) } else { detail::show(app, ui, true) });
-    } else {
-        let max = (width * 0.45).max(320.0);
-        Panel::left("master")
-            .resizable(true)
-            .show_separator_line(false)
-            .default_size(370.0)
-            .size_range(300.0..=max)
-            .frame(column)
-            .show(ui, |ui| {
-                ui.set_width(ui.available_width());
-                master(app, ui);
-            });
-        let frame = Frame::new().fill(p.bg).inner_margin(Margin { left: 14, right: 6, top: 10, bottom: 0 });
-        CentralPanel::no_frame().frame(frame).show(ui, |ui| detail::show(app, ui, false));
-    }
+    panels(app, ui);
     let ctx = ui.ctx().clone();
     dialogs::show(app, &ctx);
     float::show(app, &ctx);
 }
 
-fn master(app: &mut App, ui: &mut Ui) {
+fn frame(p: &Palette) -> Frame {
+    Frame::new().fill(p.bg).inner_margin(Margin { left: 16, right: 8, top: 12, bottom: 0 })
+}
+
+fn panels(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    let avail = ui.available_width();
+    app.can_split = avail >= SPLIT;
+    let column = frame(&p);
+    if app.tab == Tab::Settings && app.can_split {
+        // Settings always show a page when there is room for it.
+        Panel::left("settings")
+            .resizable(false)
+            .show_separator_line(false)
+            .exact_size(340.0)
+            .frame(column)
+            .show(ui, |ui| settings::master(app, ui));
+        CentralPanel::no_frame().frame(frame(&p)).show(ui, |ui| {
+            if app.routes.is_empty() {
+                settings::page(app, ui, SettingsPage::General);
+            } else {
+                detail::show(app, ui);
+            }
+        });
+        return;
+    }
+    let open = !app.routes.is_empty();
+    if open && (!app.can_split || app.detail_full) {
+        CentralPanel::no_frame().frame(column).show(ui, |ui| detail::show(app, ui));
+        return;
+    }
+    if open {
+        let max = (avail - CONTENT_MIN).max(DETAIL_MIN);
+        Panel::right("detail")
+            .resizable(true)
+            .default_size((avail * 0.42).clamp(DETAIL_MIN, 620.0))
+            .size_range(DETAIL_MIN..=max)
+            .frame(frame(&p))
+            .show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                detail::show(app, ui);
+            });
+    }
+    CentralPanel::no_frame().frame(column).show(ui, |ui| content(app, ui));
+}
+
+fn content(app: &mut App, ui: &mut Ui) {
     match app.tab {
         Tab::Anime => mylist::show(app, ui, MediaKind::Anime),
         Tab::Manga => mylist::show(app, ui, MediaKind::Manga),
@@ -104,23 +141,73 @@ fn master(app: &mut App, ui: &mut Ui) {
     }
 }
 
-fn nav_item(ui: &mut Ui, p: &Palette, icon: &str, label: &str, on: bool) -> egui::Response {
-    let (rect, r) = ui.allocate_exact_size(vec2(ui.available_width(), 36.0), Sense::click());
+/// A page title that gives way to the controls beside it.
+pub fn heading(ui: &mut Ui, p: &Palette, text: &str) {
+    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+        ui.add(egui::Label::new(RichText::new(text).font(theme::bold(26.0)).color(p.text)).truncate());
+    });
+}
+
+/// A column of at most `max` points in the middle.
+pub fn centered<R>(ui: &mut Ui, max: f32, add: impl FnOnce(&mut Ui) -> R) -> R {
+    let avail = ui.available_width();
+    let w = avail.min(max);
+    ui.horizontal_top(|ui| {
+        ui.spacing_mut().item_spacing.x = 0.0;
+        ui.add_space((avail - w) / 2.0);
+        column(ui, w, add)
+    })
+    .inner
+}
+
+/// A top-down column of a fixed width.
+pub fn column<R>(ui: &mut Ui, w: f32, add: impl FnOnce(&mut Ui) -> R) -> R {
+    ui.allocate_ui_with_layout(vec2(w, 0.0), Layout::top_down(Align::Min), |ui| {
+        ui.spacing_mut().item_spacing.x = 8.0;
+        ui.set_width(w);
+        add(ui)
+    })
+    .inner
+}
+
+// Navigation
+
+fn nav_item(ui: &mut Ui, p: &Palette, icon: &str, label: &str, on: bool, text: bool) -> egui::Response {
+    let (rect, r) =
+        ui.allocate_exact_size(vec2(ui.available_width(), if text { 36.0 } else { 42.0 }), Sense::click());
     r.widget_info(|| WidgetInfo::selected(Role::Tab, true, on, label));
     if on || r.hovered() || r.has_focus() {
-        let fill =
-            if on { theme::blend(p.sidebar, p.text, 0.12) } else { theme::blend(p.sidebar, p.text, 0.06) };
+        let fill = theme::blend(p.sidebar, p.text, if on { 0.12 } else { 0.06 });
         ui.painter().rect_filled(rect, CornerRadius::same(9), fill);
     }
     let font = if on { theme::icon_fill(19.0) } else { theme::icon(19.0) };
-    ui.painter().text(pos2(rect.left() + 20.0, rect.center().y), Align2::CENTER_CENTER, icon, font, p.tint);
-    let font = if on { theme::semibold(14.0) } else { theme::regular(14.0) };
-    ui.painter().text(pos2(rect.left() + 40.0, rect.center().y), Align2::LEFT_CENTER, label, font, p.text);
-    r.on_hover_cursor(CursorIcon::PointingHand)
+    let x = if text { rect.left() + 20.0 } else { rect.center().x };
+    ui.painter().text(pos2(x, rect.center().y), Align2::CENTER_CENTER, icon, font, p.tint);
+    if text {
+        let font = if on { theme::semibold(14.0) } else { theme::regular(14.0) };
+        let g = widgets::galley(ui, label, font, p.text, rect.width() - 46.0, 1);
+        ui.painter().galley(pos2(rect.left() + 40.0, rect.center().y - g.size().y / 2.0), g, p.text);
+    }
+    let r = r.on_hover_cursor(CursorIcon::PointingHand);
+    if text { r } else { r.on_hover_text(label) }
 }
 
 fn label_for(app: &App, tab: Tab) -> &'static str {
     if app.s.separate_tabs || !matches!(tab, Tab::Anime | Tab::Manga) { tab_label(tab) } else { t("My List") }
+}
+
+fn nav_list(app: &mut App, ui: &mut Ui, text: bool) {
+    let p = app.p;
+    for tab in tabs(app) {
+        if tab == Tab::Search {
+            ui.add_space(8.0);
+            widgets::separator(ui, &p);
+            ui.add_space(8.0);
+        }
+        if nav_item(ui, &p, tab_icon(app, tab), label_for(app, tab), app.tab == tab, text).clicked() {
+            app.act(Act::Go(tab));
+        }
+    }
 }
 
 fn sidebar(app: &mut App, ui: &mut Ui) {
@@ -132,58 +219,76 @@ fn sidebar(app: &mut App, ui: &mut Ui) {
         .frame(Frame::new().fill(p.sidebar).inner_margin(Margin::symmetric(10, 12)))
         .show(ui, |ui| {
             ui.spacing_mut().item_spacing.y = 3.0;
-            ui.horizontal(|ui| {
-                if widgets::icon_button_colored(
-                    ui,
-                    &p,
-                    icons::SIDEBAR_SIMPLE,
-                    t("Hide sidebar"),
-                    p.tint,
-                    false,
-                )
-                .clicked()
-                {
-                    app.s.sidebar = false;
-                }
+            ui.with_layout(Layout::bottom_up(Align::Min), |ui| {
+                status(app, ui, true);
+                ui.with_layout(Layout::top_down(Align::Min), |ui| {
+                    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+                        let label = t("Hide sidebar");
+                        if widgets::icon_button_colored(ui, &p, icons::SIDEBAR_SIMPLE, label, p.tint, false)
+                            .clicked()
+                        {
+                            app.s.sidebar = false;
+                        }
+                        ui.add_space(4.0);
+                        ui.horizontal(|ui| {
+                            ui.add_space(8.0);
+                            ui.label(RichText::new("Mango").font(theme::bold(24.0)));
+                        });
+                        ui.add_space(8.0);
+                        nav_list(app, ui, true);
+                    });
+                });
             });
-            ui.add_space(4.0);
-            ui.horizontal(|ui| {
-                ui.add_space(8.0);
-                ui.label(egui::RichText::new("Mango").font(theme::bold(24.0)));
-            });
-            ui.add_space(8.0);
-            for tab in tabs(app) {
-                if tab == Tab::Search {
-                    ui.add_space(8.0);
-                    widgets::separator(ui, &p);
-                    ui.add_space(8.0);
-                }
-                if nav_item(ui, &p, tab_icon(app, tab), label_for(app, tab), app.tab == tab).clicked() {
-                    app.act(Act::Go(tab));
-                }
-            }
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| status(app, ui));
         });
 }
 
-/// Sync state at the bottom of the sidebar.
-fn status(app: &mut App, ui: &mut Ui) {
+fn rail(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    Panel::left("rail")
+        .resizable(false)
+        .show_separator_line(false)
+        .exact_size(64.0)
+        .frame(Frame::new().fill(p.sidebar).inner_margin(Margin::symmetric(8, 12)))
+        .show(ui, |ui| {
+            ui.spacing_mut().item_spacing.y = 4.0;
+            ui.with_layout(Layout::bottom_up(Align::Min), |ui| {
+                status(app, ui, false);
+                ui.with_layout(Layout::top_down(Align::Min), |ui| {
+                    egui::ScrollArea::vertical()
+                        .auto_shrink([false, false])
+                        .show(ui, |ui| nav_list(app, ui, false));
+                });
+            });
+        });
+}
+
+/// Sync state at the bottom of the navigation.
+fn status(app: &mut App, ui: &mut Ui, text: bool) {
     let p = app.p;
     if app.refreshing > 0 {
         ui.horizontal(|ui| {
-            ui.add(egui::Spinner::new().size(14.0).color(p.dim));
-            widgets::dim(ui, &p, t("Updating…"));
+            ui.add_space(if text { 0.0 } else { 14.0 });
+            ui.add(egui::Spinner::new().size(16.0).color(p.dim));
+            if text {
+                widgets::dim(ui, &p, t("Updating…"));
+            }
         });
         return;
     }
-    if let Some((s, e)) = &app.sync_error {
-        let text = format!("{}: {}", s.name(), format::error(e));
-        ui.add(egui::Label::new(egui::RichText::new(text).size(12.0).color(p.orange)).wrap());
+    let mut hint = "F5".to_owned();
+    let problem = app.sync_error.as_ref().map(|(s, e)| format!("{}: {}", s.name(), format::error(e)));
+    if let Some(s) = &problem {
+        hint = s.clone();
     } else if app.unsynced > 0 {
-        widgets::dim(ui, &p, crate::i18n::tf("{} changes waiting to sync", &[&app.unsynced]));
+        hint = crate::i18n::tf("{} changes waiting to sync", &[&app.unsynced]);
     }
-    if nav_item(ui, &p, icons::ARROWS_CLOCKWISE, t("Refresh"), false).on_hover_text("F5").clicked() {
+    // Bottom-up: the button comes first, its explanation above it.
+    if nav_item(ui, &p, icons::ARROWS_CLOCKWISE, t("Refresh"), false, text).on_hover_text(&hint).clicked() {
         app.act(Act::Refresh);
+    }
+    if text && hint != "F5" {
+        let color = if problem.is_some() { p.orange } else { p.dim };
+        ui.add(egui::Label::new(RichText::new(hint).size(12.0).color(color)).wrap());
     }
 }
 
@@ -227,7 +332,7 @@ fn top_bar(app: &mut App, ui: &mut Ui) {
                     let r = ui.interact(rect, ui.scope_id().with(tab), Sense::click());
                     let on = app.tab == tab;
                     r.widget_info(|| WidgetInfo::selected(Role::Tab, true, on, tab_label(tab)));
-                    if on || r.hovered() {
+                    if on || r.hovered() || r.has_focus() {
                         let fill = theme::blend(p.card, p.text, if on { 0.16 } else { 0.06 });
                         ui.painter().rect_filled(rect, CornerRadius::same(14), fill);
                     }
@@ -265,20 +370,14 @@ fn bottom_bar(app: &mut App, ui: &mut Ui) {
                     let color = if on { p.tint } else { p.dim };
                     let font = if on { theme::icon_fill(21.0) } else { theme::icon(21.0) };
                     let c = rect.center();
-                    ui.painter().text(
-                        c - vec2(0.0, 9.0),
-                        Align2::CENTER_CENTER,
-                        tab_icon(app, tab),
-                        font,
-                        color,
-                    );
-                    ui.painter().text(
-                        c + vec2(0.0, 13.0),
-                        Align2::CENTER_CENTER,
-                        label_for(app, tab),
-                        theme::regular(10.5),
-                        color,
-                    );
+                    let icon_at = c - vec2(0.0, 9.0);
+                    ui.painter().text(icon_at, Align2::CENTER_CENTER, tab_icon(app, tab), font, color);
+                    let g = widgets::galley(ui, label_for(app, tab), theme::regular(10.5), color, w - 4.0, 1);
+                    ui.painter().galley(c + vec2(-g.size().x / 2.0, 6.0), g, color);
+                    if r.has_focus() {
+                        let s = egui::Stroke::new(2.0, p.tint);
+                        ui.painter().rect_stroke(rect.shrink(1.0), 8, s, egui::StrokeKind::Inside);
+                    }
                     if r.on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         app.act(Act::Go(tab));
                     }
@@ -287,22 +386,33 @@ fn bottom_bar(app: &mut App, ui: &mut Ui) {
         });
 }
 
-/// Header of the detail column. Returns the area for trailing buttons.
+/// Header of an open title or page, with trailing buttons.
 pub fn header(app: &mut App, ui: &mut Ui, title: &str, right: impl FnOnce(&mut App, &mut Ui)) {
     let p = app.p;
     ui.horizontal(|ui| {
         ui.set_min_height(36.0);
-        let label = if app.routes.len() > 1 { t("Back") } else { t("Close") };
-        let icon = if app.routes.len() > 1 { icons::CARET_LEFT } else { icons::X };
-        if widgets::icon_button(ui, &p, icon, label).clicked() {
-            app.act(Act::Back);
+        if !app.routes.is_empty() {
+            let deeper = app.routes.len() > 1 || !app.can_split;
+            let (icon, label) = if deeper { (icons::CARET_LEFT, t("Back")) } else { (icons::X, t("Close")) };
+            if widgets::icon_button(ui, &p, icon, label).clicked() {
+                app.act(Act::Back);
+            }
         }
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.add_space(8.0);
+        rows::trailing(ui, |ui| {
+            if app.can_split && app.tab != Tab::Settings {
+                let (icon, label) = if app.detail_full {
+                    (icons::ARROWS_IN_SIMPLE, t("Show beside the list"))
+                } else {
+                    (icons::ARROWS_OUT_SIMPLE, t("Use the whole window"))
+                };
+                if widgets::icon_button_colored(ui, &p, icon, label, p.tint, false).clicked() {
+                    app.detail_full = !app.detail_full;
+                }
+            }
             right(app, ui);
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                 ui.add_space(6.0);
-                ui.add(egui::Label::new(egui::RichText::new(title).font(theme::semibold(15.0))).truncate());
+                ui.add(egui::Label::new(RichText::new(title).font(theme::semibold(15.0))).truncate());
             });
         });
     });
@@ -319,7 +429,7 @@ pub fn scroll<R>(
         .id_salt(id)
         .auto_shrink([false, false])
         .show(ui, |ui| {
-            ui.set_max_width(ui.available_width() - 8.0);
+            ui.set_max_width((ui.available_width() - 10.0).max(1.0));
             let r = add(ui);
             ui.add_space(24.0);
             r

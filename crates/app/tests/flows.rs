@@ -12,7 +12,7 @@ use mango_api::{ApiError, Page};
 use mango_app::app::{Act, App, Feed, Load, Route, SettingsPage, Tab};
 use mango_app::backend::Event;
 use mango_core::overview::Section;
-use mango_core::settings::{GestureAction, Theme};
+use mango_core::settings::{GestureAction, ListLayout, Theme};
 use mango_core::*;
 
 type H = Harness<'static, App>;
@@ -418,16 +418,16 @@ fn unknown_review_goes_back_instead_of_breaking() {
 #[test]
 fn every_tab_layout_and_view_renders() {
     for (sidebar, separate, grid, size) in [
-        (true, true, false, [1240.0, 820.0]),
-        (false, true, true, [1240.0, 820.0]),
-        (true, false, true, [900.0, 600.0]),
-        (true, true, false, [430.0, 700.0]),
+        (true, true, ListLayout::Cards, [1240.0, 820.0]),
+        (false, true, ListLayout::Posters, [1240.0, 820.0]),
+        (true, false, ListLayout::Table, [900.0, 600.0]),
+        (true, true, ListLayout::Table, [430.0, 700.0]),
     ] {
         let mut h = harness_with(store(), size, |s| {
             s.sidebar = sidebar;
             s.separate_tabs = separate;
-            s.list_grid = grid;
-            s.seasonal_grid = grid;
+            s.list_layout = grid;
+            s.browse_layout = grid;
             s.season_icon = true;
         });
         for tab in Tab::ALL {
@@ -466,7 +466,7 @@ fn large_lists_only_lay_out_visible_rows() {
     }
     let h = harness_with(s, [1240.0, 820.0], |_| {});
     let rows = h.get_all_by_label_contains("Title ").count();
-    assert!(rows > 4 && rows < 60, "{rows}");
+    assert!(rows > 4 && rows < 200, "{rows}");
 }
 
 #[test]

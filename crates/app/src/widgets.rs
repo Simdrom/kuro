@@ -90,17 +90,20 @@ pub fn row<R>(ui: &mut Ui, p: &Palette, icon: &str, label: &str, right: impl FnO
 
 /// A read-only fact.
 pub fn fact(ui: &mut Ui, p: &Palette, label: &str, value: &str) {
+    let text = |ui: &mut Ui, align| {
+        let v = egui::RichText::new(value).color(p.dim);
+        ui.add(egui::Label::new(v).wrap().selectable(true).halign(align));
+    };
+    // Long values get their own line when space is short.
+    if ui.available_width() < 300.0 && value.chars().count() > 18 {
+        ui.label(label);
+        text(ui, Align::LEFT);
+        return;
+    }
     ui.horizontal(|ui| {
         ui.set_min_height(28.0);
         ui.label(label);
-        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            ui.add(
-                egui::Label::new(egui::RichText::new(value).color(p.dim))
-                    .wrap()
-                    .selectable(true)
-                    .halign(Align::RIGHT),
-            );
-        });
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| text(ui, Align::RIGHT));
     });
 }
 
@@ -123,9 +126,13 @@ pub fn nav_row(
     let c = rect.center().y;
     let pt = ui.painter();
     pt.text(pos2(rect.left() + 11.0, c), Align2::CENTER_CENTER, icon, theme::icon(18.0), icon_color);
-    pt.text(pos2(rect.left() + 32.0, c), Align2::LEFT_CENTER, label, theme::regular(14.0), p.text);
     pt.text(pos2(rect.right(), c), Align2::RIGHT_CENTER, icons::CARET_RIGHT, theme::icon(13.0), p.faint);
-    pt.text(pos2(rect.right() - 20.0, c), Align2::RIGHT_CENTER, value, theme::regular(13.0), p.dim);
+    let v = galley(ui, value, theme::regular(13.0), p.dim, rect.width() * 0.6, 1);
+    let left = rect.left() + 32.0;
+    let end = rect.right() - 20.0 - v.size().x;
+    let l = galley(ui, label, theme::regular(14.0), p.text, end - left - 8.0, 1);
+    ui.painter().galley(pos2(end, c - v.size().y / 2.0), v, p.dim);
+    ui.painter().galley(pos2(left, c - l.size().y / 2.0), l, p.text);
     focus_ring(ui, p, &r, 8);
     r.on_hover_cursor(CursorIcon::PointingHand)
 }
@@ -215,11 +222,14 @@ pub fn select<T: PartialEq + Copy>(
     name: impl Fn(T) -> String,
 ) -> bool {
     let before = *value;
-    let r = egui::ComboBox::from_id_salt(id).selected_text(name(*value)).height(360.0).show_ui(ui, |ui| {
-        for o in options {
-            ui.selectable_value(value, *o, name(*o));
-        }
-    });
+    let r = egui::ComboBox::from_id_salt(id).selected_text(name(*value)).height(360.0).width(60.0).show_ui(
+        ui,
+        |ui| {
+            for o in options {
+                ui.selectable_value(value, *o, name(*o));
+            }
+        },
+    );
     let shown = format!("{label}: {}", name(*value));
     r.response.widget_info(|| WidgetInfo::labeled(Role::ComboBox, true, &shown));
     before != *value
@@ -234,7 +244,24 @@ pub fn select_row<T: PartialEq + Copy>(
     options: &[T],
     name: impl Fn(T) -> String,
 ) -> bool {
-    row(ui, p, icon, label, |ui| select(ui, label, label, value, options, name))
+    wide_row(ui, p, icon, label, |ui| select(ui, label, label, value, options, name))
+}
+
+/// Below this width a wide control moves under its label.
+pub const STACK: f32 = 420.0;
+
+pub fn wide_row<R>(
+    ui: &mut Ui,
+    p: &Palette,
+    icon: &str,
+    label: &str,
+    control: impl FnOnce(&mut Ui) -> R,
+) -> R {
+    if ui.available_width() >= STACK {
+        return row(ui, p, icon, label, control);
+    }
+    row(ui, p, icon, label, |_| {});
+    ui.with_layout(Layout::right_to_left(Align::Min), control).inner
 }
 
 /// Mutually exclusive choices in one capsule.
@@ -245,13 +272,13 @@ pub fn segmented<T: PartialEq + Copy>(
     options: &[(T, &str)],
 ) -> bool {
     let mut changed = false;
-    let total = ui.available_width().min(options.len() as f32 * 150.0);
+    let total = (ui.available_width() - 8.0).min(options.len() as f32 * 150.0).max(1.0);
     let w = total / options.len().max(1) as f32;
-    let (bar, _) = ui.allocate_exact_size(vec2(total, 32.0), Sense::hover());
+    let (bar, base) = ui.allocate_exact_size(vec2(total, 32.0), Sense::hover());
     ui.painter().rect_filled(bar, CornerRadius::same(9), p.raised);
     for (i, (v, text)) in options.iter().enumerate() {
         let rect = Rect::from_min_size(bar.min + vec2(w * i as f32, 0.0), vec2(w, 32.0)).shrink(2.0);
-        let r = ui.interact(rect, ui.scope_id().with(("seg", text)), Sense::click());
+        let r = ui.interact(rect, base.id.with(i), Sense::click());
         let on = *value == *v;
         r.widget_info(|| WidgetInfo::selected(Role::RadioButton, true, on, *text));
         if on {
