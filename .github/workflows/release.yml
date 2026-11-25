@@ -50,15 +50,14 @@ jobs:
           echo "## Kuro $version" >> "$GITHUB_STEP_SUMMARY"
       - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
         with:
-          tool: git-cliff@2.14.2,cargo-about@0.9.3
+          tool: git-cliff@2.14.2
           fallback: none
-      - name: Notes and third-party licences
+      - name: Notes
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir out
           git cliff --unreleased --tag "v$VERSION" --strip header -o out/notes.md
-          cargo about generate --locked --fail -o out/THIRD-PARTY-LICENSES.html about.hbs
           cat out/notes.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -73,6 +72,8 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/ci.yml # zizmor: ignore[self-repository]
+    with:
+      installer-tests: true
 
   package:
     name: Package
@@ -89,10 +90,6 @@ jobs:
         with:
           name: kuro-${{ github.sha }}
           path: in
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: release-notes
-          path: in
       - name: Zip and installer
         id: build
         shell: pwsh
@@ -104,17 +101,9 @@ jobs:
           New-Item -ItemType Directory $name, dist | Out-Null
           Copy-Item in/kuro.exe, in/THIRD-PARTY-LICENSES.html, README.md, crates/app/assets/fonts/PHOSPHOR-LICENSE.txt $name
           Compress-Archive $name "dist/$name.zip"
-          # Inno Setup comes with the runner.
-          function Build($version, $to) {
-            & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" /Qp "/DAppVersion=$version" "/DFiles=$PWD/$name" "/O$PWD/$to" packaging/windows/kuro.iss
-            if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          }
-          Build $env:VERSION dist
-          # The same files as other versions, only to test moving between them.
-          # 0.2.0 gives 0.12.0, which sorts the wrong way if compared as text.
+          Copy-Item in/kuro-setup.exe "dist/$name-setup.exe"
+          # Built by CI as other versions, to test moving between them.
           $newer = $env:VERSION -replace '^(\d+)\.(\d+)\..*', '$1.1$2.0'
-          Build 0.0.9 test
-          Build $newer test
           "newer=$newer" >> $env:GITHUB_OUTPUT
       - name: Install, update and uninstall
         shell: pwsh
@@ -122,8 +111,8 @@ jobs:
           VERSION: ${{ needs.prepare.outputs.version }}
           NEWER: ${{ steps.build.outputs.newer }}
         run: |
-          Copy-Item "dist/kuro-$env:VERSION-windows-x64-setup.exe" test
-          packaging/windows/test.ps1 -Folder "$PWD/test" -Older 0.0.9 -Version $env:VERSION -Newer $env:NEWER
+          Copy-Item "dist/kuro-$env:VERSION-windows-x64-setup.exe" "in/test/kuro-$env:VERSION-setup.exe"
+          packaging/windows/test.ps1 -Folder "$PWD/in/test" -Older 0.0.9 -Version $env:VERSION -Newer $env:NEWER
       - name: Checksums
         shell: bash
         working-directory: dist

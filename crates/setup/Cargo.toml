@@ -1,0 +1,46 @@
+[package]
+name = "kuro-setup"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Installs, updates and uninstalls Kuro"
+
+# The program goes inside at build time: KURO_PAYLOAD is the folder with kuro.exe and
+# THIRD-PARTY-LICENSES.html. Without it the setup builds, but has nothing to install.
+[[bin]]
+name = "kuro-setup"
+path = "src/main.rs"
+
+[dependencies]
+kuro-core = { path = "../core" }
+kuro-api = { path = "../api" }
+directories = "6"
+eframe = { version = "0.37", default-features = false, features = ["accesskit", "default_fonts", "system_fonts", "wgpu"] }
+miniz_oxide = "0.8"
+sys-locale = "0.3"
+
+[target.'cfg(windows)'.dependencies]
+windows-registry = "0.100"
+windows = { version = "0.62", features = ["Win32_System_Com", "Win32_UI_Shell"] }
+
+[build-dependencies]
+miniz_oxide = "0.8"
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = { version = "0.1", default-features = false }
+
+[dev-dependencies]
+tempfile = "3"
+
+# The workspace forbids unsafe code; shortcuts need COM, so here it is denied and allowed
+# only in that module.
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+dbg_macro = "warn"
+todo = "warn"
+unwrap_used = "warn"
+panic = "warn"

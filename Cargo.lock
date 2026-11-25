@@ -2976,6 +2976,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "kuro-setup"
+version = "0.2.0"
+dependencies = [
+ "directories",
+ "eframe",
+ "kuro-api",
+ "kuro-core",
+ "miniz_oxide 0.8.9",
+ "sys-locale",
+ "tempfile",
+ "windows",
+ "windows-registry 0.100.0",
+ "winresource",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

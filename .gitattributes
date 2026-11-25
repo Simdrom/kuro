@@ -7,5 +7,4 @@
 *.ico binary
 .githooks/* text eol=lf
 *.sh text eol=lf
-*.iss text eol=lf
 *.ps1 text eol=lf

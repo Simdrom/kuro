@@ -71,7 +71,8 @@ pub struct Store {
     db: Connection,
 }
 
-const SCHEMA_VERSION: i64 = 3;
+/// Version of the database layout. A database from a newer one cannot be opened.
+pub const SCHEMA_VERSION: i64 = 3;
 const BACKUP_FORMAT: u32 = 1;
 
 impl Store {
@@ -95,6 +96,16 @@ impl Store {
         db.execute("VACUUM INTO ?1", [temp.to_string_lossy()])?;
         std::fs::rename(&temp, new)?;
         Ok(true)
+    }
+
+    /// Layout version of a database, without changing it. `None` when there is none.
+    pub fn schema_of(path: &Path) -> Result<Option<i64>> {
+        if !path.is_file() {
+            return Ok(None);
+        }
+        let db = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+        db.busy_timeout(std::time::Duration::from_secs(5))?;
+        Ok(Some(db.query_row("PRAGMA user_version", [], |r| r.get(0))?))
     }
 
     pub fn in_memory() -> Result<Self> {
@@ -586,6 +597,9 @@ mod tests {
         Store::open(&path).unwrap();
         Connection::open(&path).unwrap().pragma_update(None, "user_version", 99).unwrap();
         assert!(matches!(Store::open(&path), Err(StoreError::TooNew(99))));
+        // The setup reads it to know whether an older Kuro can still open the lists.
+        assert_eq!(Store::schema_of(&path).unwrap(), Some(99));
+        assert_eq!(Store::schema_of(&dir.path().join("none.db")).unwrap(), None);
     }
 
     #[test]

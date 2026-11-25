@@ -12,6 +12,11 @@ on:
   workflow_dispatch:
   # The release runs these same checks.
   workflow_call:
+    inputs:
+      installer-tests:
+        description: Also build setups of other versions, to test moving between them
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -98,15 +103,48 @@ jobs:
         with:
           key: release
           save-if: ${{ github.ref == 'refs/heads/develop' }}
-      - run: cargo build --release --locked
+      - run: cargo build --release --locked -p kuro
         env:
           # Public identifiers, not secrets. Empty means everyone brings their own.
           KURO_ANILIST_CLIENT_ID: ${{ vars.KURO_ANILIST_CLIENT_ID }}
           KURO_MAL_CLIENT_ID: ${{ vars.KURO_MAL_CLIENT_ID }}
+      - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
+        with:
+          tool: cargo-about@0.9.3
+          fallback: none
+      # The setup carries the program and its licences inside.
+      - name: Setup
+        shell: pwsh
+        env:
+          INSTALLER_TESTS: ${{ inputs.installer-tests }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory out, out/test | Out-Null
+          Copy-Item target/release/kuro.exe out
+          cargo about generate --locked --fail -o out/THIRD-PARTY-LICENSES.html about.hbs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $env:KURO_PAYLOAD = "$PWD/out"
+          function Build($to) {
+            cargo build --release --locked -p kuro-setup
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            Copy-Item target/release/kuro-setup.exe $to
+          }
+          Build out/kuro-setup.exe
+          if ($env:INSTALLER_TESTS -ne 'true') { exit 0 }
+          # The same program as other versions, only to test moving between them. 0.2.0 gives
+          # 0.12.0, which sorts the wrong way if compared as text; 0.0.9 reads older lists only.
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          $newer = $version -replace '^(\d+)\.(\d+)\..*', '$1.1$2.0'
+          $env:KURO_SETUP_VERSION = '0.0.9'
+          $env:KURO_SETUP_SCHEMA = '1'
+          Build out/test/kuro-0.0.9-setup.exe
+          $env:KURO_SETUP_VERSION = $newer
+          Remove-Item Env:KURO_SETUP_SCHEMA
+          Build "out/test/kuro-$newer-setup.exe"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: kuro-${{ github.sha }}
-          path: target/release/kuro.exe
+          path: out
           if-no-files-found: error
           retention-days: 14
 

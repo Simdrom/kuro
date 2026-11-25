@@ -20,18 +20,31 @@ Download `kuro-<version>-windows-x64-setup.exe` from
 your user only, without administrator rights. The `.zip` holds the same
 program without an installer.
 
-The installer looks at the version you have:
+The setup looks at what is on this computer and offers the one action that
+fits:
 
-| Installed | What it does |
-| --- | --- |
-| None | Installs |
-| Older | Updates, closing Kuro first |
-| The same | Asks whether to install it again |
-| Newer | Stops: an older Kuro cannot open a newer database |
+| Installed | Button | What it does |
+| --- | --- | --- |
+| None | **Install** | Installs, with a Start menu shortcut and, if you want, a desktop one |
+| Older | **Update to X** | Closes Kuro and replaces it |
+| The same | **Reinstall** | Writes the program again, which repairs it |
+| Newer | **Go back to X** | Installs this older version, if it can still read your lists; if a newer Kuro changed them, it says so and changes nothing |
+
+Your lists, settings and sessions are kept in every case. The new program is
+written next to the old one and checked before it replaces it.
+
+**Uninstall…**, in the setup or in Settings → Apps, closes Kuro and removes the
+program, its shortcuts and its entries. Your lists and settings, in
+`%LOCALAPPDATA%\Kuro`, and your sessions, in the Windows Credential Manager, stay
+unless you tick *Also delete my lists, settings and sessions*.
 
 The files are not signed, so Windows may warn that the publisher is unknown.
-`SHA256SUMS` has their checksums. Uninstalling keeps your lists and settings,
-in `%LOCALAPPDATA%\Kuro`, and your sessions, in the Windows Credential Manager.
+`SHA256SUMS` has their checksums. The setup writes what it did to
+`%TEMP%\Kuro-Setup.log`.
+
+For scripts: `/S` (silent), `/uninstall`, `/purge` (with `/uninstall`),
+`/desktop=yes|no` and `/downgrade` (silent only goes back when asked). Silent
+mode ends with exit code 1 when it refused or failed.
 
 ## Run from source
 
@@ -136,10 +149,14 @@ needs a private key.
 - `crates/api`: AniList, MyAnimeList and music clients, OAuth, secret storage,
   and Kioku's history sources in `kioku/`.
 - `crates/app`: interface (egui) and Windows integration.
+- `crates/setup`: the setup, with the program inside (`KURO_PAYLOAD` at build
+  time). `packaging/windows/test.ps1` tests it in the release.
 
 ## Security
 
-- `unsafe` code is forbidden in every crate of this workspace.
+- `unsafe` code is forbidden in every crate of this workspace, except the
+  setup's Start menu and desktop shortcuts (`crates/setup/src/win.rs`), which
+  need COM.
 - Tokens are kept in the Windows Credential Manager, never on disk or in logs.
 - Sign-in listens on 127.0.0.1 only while it runs, and checks Host, Origin,
   state and a one-time nonce. MyAnimeList uses PKCE.

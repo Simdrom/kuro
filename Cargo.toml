@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/core", "crates/api", "crates/app"]
+members = ["crates/core", "crates/api", "crates/app", "crates/setup"]
 
 [workspace.package]
 version = "0.2.0"
@@ -26,3 +26,7 @@ lto = "thin"
 codegen-units = 1
 strip = true
 overflow-checks = true
+
+# The setup's build script compresses Kuro; unoptimised that takes minutes.
+[profile.release.package.miniz_oxide]
+opt-level = 3

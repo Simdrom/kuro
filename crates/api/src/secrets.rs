@@ -83,6 +83,15 @@ impl Keyring {
         Ok(())
     }
 
+    /// Removes every session: the setup does it when the user deletes their data.
+    pub fn forget_all(&self) -> Result<()> {
+        let services = Service::ALL.map(SecretKey::Service);
+        for key in services.into_iter().chain(Platform::ALL.map(SecretKey::Kioku)) {
+            self.delete(key)?;
+        }
+        Ok(())
+    }
+
     fn entry(&self, key: SecretKey, i: usize) -> Result<keyring::Entry> {
         keyring::Entry::new(&self.app, &format!("{}.{i}", key.name())).map_err(secret_error)
     }
@@ -200,5 +209,11 @@ mod tests {
         k.delete(Service::Mal.into()).unwrap();
         assert!(k.load(Service::Mal.into()).unwrap().is_none());
         k.delete(Service::Mal.into()).unwrap();
+
+        k.save(Service::AniList.into(), &short).unwrap();
+        k.save(SecretKey::Kioku(Platform::Netflix), &short).unwrap();
+        k.forget_all().unwrap();
+        assert!(k.load(Service::AniList.into()).unwrap().is_none());
+        assert!(k.load(SecretKey::Kioku(Platform::Netflix)).unwrap().is_none());
     }
 }
