@@ -59,12 +59,17 @@ pub fn run(o: &Opts) -> i32 {
             .with_inner_size([560.0, 380.0])
             .with_resizable(false)
             .with_maximize_button(false)
-            .with_icon(crate::icon::render(Default::default(), 64)),
+            .with_icon(icon()),
         centered: true,
         ..Default::default()
     };
     let shown = eframe::run_native("Kuro Setup", options, Box::new(|_| Ok(Box::new(setup))));
     i32::from(shown.is_err() || failed.load(Ordering::Relaxed))
+}
+
+/// 黒 on an ink tile, drawn by assets/make_icon.py.
+fn icon() -> egui::IconData {
+    eframe::icon_data::from_png_bytes(include_bytes!("../assets/setup.png")).unwrap_or_default()
 }
 
 impl Setup {
@@ -100,8 +105,9 @@ impl Setup {
 
     fn header(&mut self, ui: &mut egui::Ui) {
         let icon = self.icon.get_or_insert_with(|| {
-            let i = crate::icon::render(Default::default(), 96);
-            let image = egui::ColorImage::from_rgba_unmultiplied([96, 96], &i.rgba);
+            let i = icon();
+            let size = [i.width as usize, i.height as usize];
+            let image = egui::ColorImage::from_rgba_unmultiplied(size, &i.rgba);
             ui.ctx().load_texture("icon", image, Default::default())
         });
         ui.horizontal(|ui| {

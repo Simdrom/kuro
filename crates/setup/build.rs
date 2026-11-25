@@ -29,7 +29,7 @@ const MANIFEST: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?
 
 fn main() {
     println!("cargo::rerun-if-env-changed=KURO_PAYLOAD");
-    println!("cargo::rerun-if-changed=../app/assets/app.ico");
+    println!("cargo::rerun-if-changed=assets/setup.ico");
     let out = std::env::var("OUT_DIR").expect("cargo sets OUT_DIR");
     let from = std::env::var("KURO_PAYLOAD").ok();
     for name in FILES {
@@ -49,7 +49,7 @@ fn main() {
     #[cfg(windows)]
     {
         let mut res = winresource::WindowsResource::new();
-        res.set_icon("../app/assets/app.ico")
+        res.set_icon("assets/setup.ico")
             .set("ProductName", "Kuro")
             .set("FileDescription", "Kuro Setup")
             .set("CompanyName", "Simdrom")
