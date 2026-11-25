@@ -5,6 +5,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # A bad release is usually found within days. Security fixes do not wait.
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ["*"]
@@ -14,6 +17,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # A bad release is usually found within days. Security fixes do not wait.
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       compatible:

@@ -78,7 +78,9 @@ jobs:
         with:
           key: msrv-${{ steps.msrv.outputs.version }}
           save-if: ${{ github.ref == 'refs/heads/develop' }}
-      - run: cargo +${{ steps.msrv.outputs.version }} check --workspace --all-targets --locked
+      - run: cargo "+$env:MSRV" check --workspace --all-targets --locked
+        env:
+          MSRV: ${{ steps.msrv.outputs.version }}
 
   release:
     name: Release build
