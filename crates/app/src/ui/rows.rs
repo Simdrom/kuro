@@ -586,7 +586,9 @@ fn browse_card(app: &mut App, ui: &mut Ui, rect: Rect, item: &Item) {
     let g2 = widgets::galley(ui, &members, theme::regular(12.0), p.dim, 999.0, 1);
     let mut rx = rect.right() - 14.0;
     let both = g1.size().x + g2.size().x + 54.0;
-    if w - both > 70.0 {
+    let main = item.entry.as_ref().map_or(t("Add"), |e| format::status(e.status, m.kind));
+    let main = widgets::galley(ui, main, theme::semibold(12.5), p.text, 999.0, 1).size().x + 42.0;
+    if w - both > main {
         rx -= g2.size().x;
         ui.painter().galley(pos2(rx, cy - g2.size().y / 2.0), g2, p.dim);
         ui.painter().text(pos2(rx - 11.0, cy), Align2::CENTER_CENTER, icons::USERS, theme::icon(13.0), p.dim);

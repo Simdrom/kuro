@@ -60,13 +60,12 @@ pub fn show(app: &mut App, ui: &mut Ui, kind: MediaKind) {
         statuses(app, ui, kind);
     } else if ui.available_width() >= 460.0 {
         ui.horizontal(|ui| {
-            rows::trailing(ui, |ui| {
-                tools(app, ui, kind);
-                let w = ui.available_width() - 4.0;
-                ui.allocate_ui(vec2(w, 32.0), |ui| {
-                    widgets::search_field(ui, &p, &mut app.lists[k].filter.query, t("Search in your list"));
-                });
+            // The tools are three buttons and the layout switch.
+            let w = (ui.available_width() - 250.0).max(120.0);
+            ui.allocate_ui(vec2(w, 32.0), |ui| {
+                widgets::search_field(ui, &p, &mut app.lists[k].filter.query, t("Search in your list"));
             });
+            rows::trailing(ui, |ui| tools(app, ui, kind));
         });
         ui.add_space(2.0);
         statuses(app, ui, kind);

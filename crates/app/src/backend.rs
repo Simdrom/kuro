@@ -273,7 +273,7 @@ impl Backend {
 
     pub fn season(&self, s: Service, query: SeasonQuery, continuing: bool, page: u32) {
         let api = self.api.clone();
-        let key = format!("season:{s:?}:{query:?}:{continuing}:{page}");
+        let key = format!("season2:{s:?}:{query:?}:{continuing}:{page}");
         let q = query.clone();
         self.cached(
             key,
@@ -292,7 +292,7 @@ impl Backend {
 
     pub fn ranking(&self, s: Service, query: RankingQuery, page: u32) {
         let api = self.api.clone();
-        let key = format!("ranking:{s:?}:{query:?}:{page}");
+        let key = format!("ranking2:{s:?}:{query:?}:{page}");
         let q = query.clone();
         self.cached(
             key,
@@ -307,7 +307,7 @@ impl Backend {
 
     pub fn search(&self, s: Service, kind: MediaKind, text: String, adult: bool, page: u32) {
         let api = self.api.clone();
-        let key = format!("search:{s:?}:{kind:?}:{adult}:{page}:{}", text.to_lowercase());
+        let key = format!("search2:{s:?}:{kind:?}:{adult}:{page}:{}", text.to_lowercase());
         let q = text.clone();
         self.cached(
             key,
