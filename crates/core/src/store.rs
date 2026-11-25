@@ -1,11 +1,13 @@
 //! SQLite storage: library, pending changes, response cache and settings.
 
+use std::collections::HashSet;
 use std::path::Path;
 
 use rusqlite::{Connection, OpenFlags, OptionalExtension, params};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
+use crate::kioku::{Platform, WatchedItem};
 use crate::model::{ListEntry, MediaKind, MediaRef, Service};
 use crate::settings::Settings;
 
@@ -45,6 +47,20 @@ pub struct Pending {
     pub revision: i64,
 }
 
+/// One reviewed Kioku import.
+pub struct KiokuApply<'a> {
+    /// The list the changes belong to.
+    pub service: Service,
+    pub platform: Platform,
+    pub entries: &'a [ListEntry],
+    pub targets: &'a [Service],
+    /// Platform ids written to the list or found to need nothing.
+    pub applied: &'a [String],
+    /// Platform ids the user chose not to import.
+    pub dismissed: &'a [String],
+    pub now: i64,
+}
+
 #[derive(Serialize, Deserialize)]
 struct Backup {
     format: u32,
@@ -55,7 +71,7 @@ pub struct Store {
     db: Connection,
 }
 
-const SCHEMA_VERSION: i64 = 1;
+const SCHEMA_VERSION: i64 = 2;
 const BACKUP_FORMAT: u32 = 1;
 
 impl Store {
@@ -107,6 +123,21 @@ impl Store {
                     stored_at INTEGER NOT NULL) WITHOUT ROWID;
                  CREATE TABLE notified(key TEXT PRIMARY KEY, at INTEGER NOT NULL) WITHOUT ROWID;
                  PRAGMA user_version=1;
+                 COMMIT;",
+            )?;
+        }
+        if version < 2 {
+            // Kioku: platform ids already applied or dismissed, per list, and
+            // items left for review.
+            db.execute_batch(
+                "BEGIN;
+                 CREATE TABLE kioku_imported(service TEXT NOT NULL, platform TEXT NOT NULL,
+                    external_id TEXT NOT NULL, applied INTEGER NOT NULL, at INTEGER NOT NULL,
+                    PRIMARY KEY(service, platform, external_id)) WITHOUT ROWID;
+                 CREATE TABLE kioku_pending(service TEXT NOT NULL, platform TEXT NOT NULL,
+                    external_id TEXT NOT NULL, json TEXT NOT NULL,
+                    PRIMARY KEY(service, platform, external_id)) WITHOUT ROWID;
+                 PRAGMA user_version=2;
                  COMMIT;",
             )?;
         }
@@ -279,6 +310,81 @@ impl Store {
         let tx = self.db.transaction()?;
         tx.execute("DELETE FROM outbox WHERE target=?1", [service.key()])?;
         tx.execute("DELETE FROM entries WHERE service=?1", [service.key()])?;
+        // Another account may have a different list: its history is reviewed anew.
+        tx.execute("DELETE FROM kioku_imported WHERE service=?1", [service.key()])?;
+        tx.execute("DELETE FROM kioku_pending WHERE service=?1", [service.key()])?;
+        Ok(tx.commit()?)
+    }
+
+    // Kioku
+
+    /// Platform ids already applied to or dismissed from the `service` list.
+    pub fn kioku_known(&self, service: Service, platform: Platform) -> Result<HashSet<String>> {
+        let mut q = self
+            .db
+            .prepare_cached("SELECT external_id FROM kioku_imported WHERE service=?1 AND platform=?2")?;
+        let rows = q.query_map([service.key(), platform.key()], |r| r.get::<_, String>(0))?;
+        Ok(rows.collect::<std::result::Result<_, _>>()?)
+    }
+
+    /// Items left for review at the last sync.
+    pub fn kioku_pending(&self, service: Service, platform: Platform) -> Result<Vec<WatchedItem>> {
+        let mut q =
+            self.db.prepare_cached("SELECT json FROM kioku_pending WHERE service=?1 AND platform=?2")?;
+        let rows = q.query_map([service.key(), platform.key()], |r| r.get::<_, String>(0))?;
+        let mut out = Vec::new();
+        for row in rows {
+            // An item saved by another version is simply read again from the platform.
+            if let Ok(i) = serde_json::from_str(&row?) {
+                out.push(i);
+            }
+        }
+        Ok(out)
+    }
+
+    pub fn kioku_set_pending(
+        &mut self,
+        service: Service,
+        platform: Platform,
+        items: &[WatchedItem],
+    ) -> Result<()> {
+        let tx = self.db.transaction()?;
+        tx.execute(
+            "DELETE FROM kioku_pending WHERE service=?1 AND platform=?2",
+            [service.key(), platform.key()],
+        )?;
+        for i in items {
+            tx.execute(
+                "INSERT OR REPLACE INTO kioku_pending(service,platform,external_id,json) VALUES(?1,?2,?3,?4)",
+                params![service.key(), platform.key(), i.external_id, serde_json::to_string(i)?],
+            )?;
+        }
+        Ok(tx.commit()?)
+    }
+
+    /// Saves reviewed changes, queues them for `targets` and remembers which
+    /// platform ids were applied or dismissed, all at once.
+    pub fn kioku_apply(&mut self, a: &KiokuApply<'_>) -> Result<()> {
+        let tx = self.db.transaction()?;
+        for e in a.entries {
+            put_entry(&tx, e)?;
+            for t in a.targets {
+                queue(&tx, *t, e.media.media_ref(), &Change::Save(Box::new(e.clone())))?;
+            }
+        }
+        for (ids, applied) in [(a.applied, true), (a.dismissed, false)] {
+            for id in ids {
+                tx.execute(
+                    "INSERT OR REPLACE INTO kioku_imported(service,platform,external_id,applied,at)
+                     VALUES(?1,?2,?3,?4,?5)",
+                    params![a.service.key(), a.platform.key(), id, applied, a.now],
+                )?;
+                tx.execute(
+                    "DELETE FROM kioku_pending WHERE service=?1 AND platform=?2 AND external_id=?3",
+                    params![a.service.key(), a.platform.key(), id],
+                )?;
+            }
+        }
         Ok(tx.commit()?)
     }
 
@@ -543,6 +649,77 @@ mod tests {
             b.import(r#"{"format":1,"entries":[{"media":{"id":18446744073709551615}}]}"#, &[]),
             Err(StoreError::BadBackup)
         ));
+    }
+
+    #[test]
+    fn version_one_databases_gain_the_kioku_tables() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("t.db");
+        {
+            let db = Connection::open(&path).unwrap();
+            db.execute_batch(
+                "CREATE TABLE settings(id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL);
+                 CREATE TABLE entries(service TEXT NOT NULL, kind TEXT NOT NULL, id INTEGER NOT NULL,
+                    json TEXT NOT NULL, PRIMARY KEY(service, kind, id)) WITHOUT ROWID;
+                 CREATE TABLE outbox(revision INTEGER PRIMARY KEY AUTOINCREMENT, target TEXT NOT NULL,
+                    service TEXT NOT NULL, kind TEXT NOT NULL, id INTEGER NOT NULL, json TEXT NOT NULL,
+                    attempts INTEGER NOT NULL DEFAULT 0, error TEXT, UNIQUE(target, service, kind, id));
+                 CREATE TABLE cache(key TEXT PRIMARY KEY, json TEXT NOT NULL, stored_at INTEGER NOT NULL);
+                 CREATE TABLE notified(key TEXT PRIMARY KEY, at INTEGER NOT NULL);
+                 PRAGMA user_version=1;",
+            )
+            .unwrap();
+            db.execute(
+                "INSERT INTO entries VALUES('anilist','anime',1,?1)",
+                [serde_json::to_string(&entry(1, 4)).unwrap()],
+            )
+            .unwrap();
+        }
+        let s = Store::open(&path).unwrap();
+        assert_eq!(s.entry(entry(1, 0).media.media_ref()).unwrap().unwrap().progress, 4);
+        assert!(s.kioku_known(Service::AniList, Platform::Crunchyroll).unwrap().is_empty());
+        let v: i64 = s.db.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+        assert_eq!(v, 2);
+    }
+
+    #[test]
+    fn kioku_imports_are_atomic_remembered_and_forgotten_on_sign_out() {
+        use crate::kioku::Watched;
+        let mut s = Store::in_memory().unwrap();
+        let item = |id: &str| WatchedItem {
+            platform: Platform::Crunchyroll,
+            series_title: "Iron Orchard".into(),
+            season: Some(1),
+            season_title: None,
+            episode: Some(1),
+            episode_title: None,
+            movie: false,
+            watched_at: None,
+            progress: Watched::Completed,
+            external_id: id.into(),
+        };
+        s.kioku_set_pending(Service::AniList, Platform::Crunchyroll, &[item("p"), item("q")]).unwrap();
+        let (applied, dismissed) = (["a".to_owned(), "p".to_owned()], ["q".to_owned()]);
+        s.kioku_apply(&KiokuApply {
+            service: Service::AniList,
+            platform: Platform::Crunchyroll,
+            entries: &[entry(1, 3)],
+            targets: &[Service::AniList],
+            applied: &applied,
+            dismissed: &dismissed,
+            now: 5,
+        })
+        .unwrap();
+        assert_eq!(s.entry(entry(1, 0).media.media_ref()).unwrap().unwrap().progress, 3);
+        assert_eq!(s.pending().unwrap().len(), 1);
+        let known = s.kioku_known(Service::AniList, Platform::Crunchyroll).unwrap();
+        assert_eq!(known.len(), 3);
+        assert!(s.kioku_known(Service::Mal, Platform::Crunchyroll).unwrap().is_empty());
+        assert!(s.kioku_pending(Service::AniList, Platform::Crunchyroll).unwrap().is_empty());
+        s.kioku_set_pending(Service::AniList, Platform::Crunchyroll, &[item("r")]).unwrap();
+        s.clear_account(Service::AniList).unwrap();
+        assert!(s.kioku_known(Service::AniList, Platform::Crunchyroll).unwrap().is_empty());
+        assert!(s.kioku_pending(Service::AniList, Platform::Crunchyroll).unwrap().is_empty());
     }
 
     #[test]
