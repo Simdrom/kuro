@@ -8,11 +8,11 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use eframe::egui;
-use mango_api::images::ImageCache;
-use mango_api::music::Track;
-use mango_api::{Api, ApiError, Page, RankingQuery, SeasonQuery, Tokens};
-use mango_core::overview::Section;
-use mango_core::{
+use kuro_api::images::ImageCache;
+use kuro_api::music::Track;
+use kuro_api::{Api, ApiError, Page, RankingQuery, SeasonQuery, Tokens};
+use kuro_core::overview::Section;
+use kuro_core::{
     ListEntry, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, Service, Store, Theme, UserProfile,
 };
 
@@ -466,7 +466,7 @@ impl Backend {
         std::thread::spawn(move || {
             let Some(path) = rfd::FileDialog::new()
                 .add_filter("JSON", &["json"])
-                .set_file_name("mango-backup.json")
+                .set_file_name("kuro-backup.json")
                 .save_file()
             else {
                 return;
@@ -497,7 +497,7 @@ fn to_page((items, more): (Vec<Media>, bool)) -> Page<Media> {
 }
 
 async fn add_airing(api: &Api, list: &mut [ListEntry]) {
-    use mango_core::ReleaseStatus as R;
+    use kuro_core::ReleaseStatus as R;
     let refs: Vec<MediaRef> = list
         .iter()
         .filter(|e| matches!(e.media.release, R::Releasing | R::NotYetReleased))
@@ -568,7 +568,7 @@ fn decode_image(bytes: &[u8]) -> Option<egui::ColorImage> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mango_api::{ClientIds, MemorySecrets};
+    use kuro_api::{ClientIds, MemorySecrets};
 
     #[test]
     fn hostile_images_are_rejected() {

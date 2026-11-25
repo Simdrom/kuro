@@ -2429,6 +2429,69 @@ dependencies = [
 ]
 
 [[package]]
+name = "kuro"
+version = "0.1.0"
+dependencies = [
+ "arboard",
+ "directories",
+ "eframe",
+ "egui",
+ "egui_kittest",
+ "image",
+ "interprocess",
+ "jiff",
+ "kuro-api",
+ "kuro-core",
+ "open",
+ "rfd",
+ "serde",
+ "sys-locale",
+ "tauri-winrt-notification",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "tray-icon",
+ "windows-registry 0.100.0",
+ "winresource",
+]
+
+[[package]]
+name = "kuro-api"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "getrandom 0.3.4",
+ "jiff",
+ "keyring",
+ "kuro-core",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "url",
+ "wiremock",
+ "zeroize",
+]
+
+[[package]]
+name = "kuro-core"
+version = "0.1.0"
+dependencies = [
+ "jiff",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "url",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2523,69 +2586,6 @@ name = "log"
 version = "0.4.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
-
-[[package]]
-name = "mango-api"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "getrandom 0.3.4",
- "jiff",
- "keyring",
- "mango-core",
- "reqwest",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
- "url",
- "wiremock",
- "zeroize",
-]
-
-[[package]]
-name = "mango-core"
-version = "0.1.0"
-dependencies = [
- "jiff",
- "rusqlite",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.21",
- "url",
-]
-
-[[package]]
-name = "mango-desktop"
-version = "0.1.0"
-dependencies = [
- "arboard",
- "directories",
- "eframe",
- "egui",
- "egui_kittest",
- "image",
- "interprocess",
- "jiff",
- "mango-api",
- "mango-core",
- "open",
- "rfd",
- "serde",
- "sys-locale",
- "tauri-winrt-notification",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "tray-icon",
- "windows-registry 0.100.0",
- "winresource",
-]
 
 [[package]]
 name = "matchers"

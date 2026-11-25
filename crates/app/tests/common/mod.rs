@@ -4,11 +4,11 @@
 use std::sync::Arc;
 
 use egui_kittest::Harness;
-use mango_api::{Api, ClientIds, MemorySecrets};
-use mango_app::app::App;
-use mango_app::backend::{Backend, now};
-use mango_app::system::NoSystem;
-use mango_core::*;
+use kuro_api::{Api, ClientIds, MemorySecrets};
+use kuro_app::app::App;
+use kuro_app::backend::{Backend, now};
+use kuro_app::system::NoSystem;
+use kuro_core::*;
 
 pub fn media(id: u64, kind: MediaKind, title: &str) -> Media {
     Media {
@@ -118,7 +118,7 @@ pub fn store() -> Store {
 
 pub fn app(ctx: &egui::Context, store: Store) -> App {
     let api = Api::new(Arc::new(MemorySecrets::default()), ClientIds::default()).unwrap();
-    let dir = std::env::temp_dir().join("mango-desktop-tests");
+    let dir = std::env::temp_dir().join("kuro-tests");
     let bg = Backend::new(api, store, dir, ctx.clone(), false);
     App::new(ctx, bg, Box::new(NoSystem), false)
 }
@@ -130,7 +130,7 @@ pub fn harness_with(
 ) -> Harness<'static, App> {
     let mut s = store.settings().unwrap();
     s.language = "en".into();
-    s.theme = mango_core::settings::Theme::Black;
+    s.theme = kuro_core::settings::Theme::Black;
     s.animations = false;
     setup(&mut s);
     store.save_settings(&s).unwrap();

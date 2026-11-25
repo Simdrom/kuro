@@ -1,10 +1,10 @@
 #![allow(clippy::unwrap_used)]
-//! Checks against the real services. Run with `cargo test -p mango-api --test live -- --ignored`.
+//! Checks against the real services. Run with `cargo test -p kuro-api --test live -- --ignored`.
 
 use std::sync::Arc;
 
-use mango_api::{Api, ClientIds, MemorySecrets, Ranking, RankingQuery, SeasonQuery};
-use mango_core::{MediaKind, MediaRef, Season, SeasonYear, Service};
+use kuro_api::{Api, ClientIds, MemorySecrets, Ranking, RankingQuery, SeasonQuery};
+use kuro_core::{MediaKind, MediaRef, Season, SeasonYear, Service};
 
 fn api() -> Api {
     Api::new(Arc::new(MemorySecrets::default()), ClientIds::default()).unwrap()

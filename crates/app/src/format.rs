@@ -2,11 +2,11 @@
 
 use jiff::tz::TimeZone;
 use jiff::{Timestamp, ZonedDateTime};
-use mango_api::{ApiError, Ranking};
-use mango_core::list::SortKey;
-use mango_core::overview::Section;
-use mango_core::settings::{AppIcon, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint};
-use mango_core::{
+use kuro_api::{ApiError, Ranking};
+use kuro_core::list::SortKey;
+use kuro_core::overview::Section;
+use kuro_core::settings::{AppIcon, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint};
+use kuro_core::{
     Format, FuzzyDate, ListStatus, Media, MediaKind, RelationKind, ReleaseStatus, Season, SeasonYear,
     TitleLanguage,
 };
@@ -186,7 +186,7 @@ pub fn theme(v: Theme) -> &'static str {
 pub fn tint(v: Tint) -> &'static str {
     match v {
         Tint::Blue => t("Blue"),
-        Tint::Mango => t("Mango"),
+        Tint::Amber => t("Amber"),
         Tint::Green => t("Green"),
         Tint::Teal => t("Teal"),
         Tint::Indigo => t("Indigo"),
@@ -198,7 +198,7 @@ pub fn tint(v: Tint) -> &'static str {
 
 pub fn app_icon(v: AppIcon) -> &'static str {
     match v {
-        AppIcon::Sunrise => t("Sunrise"),
+        AppIcon::Ink => t("Ink"),
         AppIcon::Night => t("Night"),
         AppIcon::Leaf => t("Leaf"),
         AppIcon::Candy => t("Candy"),

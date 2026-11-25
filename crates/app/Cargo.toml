@@ -1,18 +1,18 @@
 [package]
-name = "mango-desktop"
+name = "kuro"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 description = "Unofficial desktop anime & manga tracker"
-default-run = "mango-desktop"
+default-run = "kuro"
 
 [lib]
-name = "mango_app"
+name = "kuro_app"
 
 [dependencies]
-mango-core = { path = "../core" }
-mango-api = { path = "../api" }
+kuro-core = { path = "../core" }
+kuro-api = { path = "../api" }
 arboard = { version = "3", default-features = false }
 jiff = "1"
 directories = "6"

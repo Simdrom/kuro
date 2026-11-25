@@ -4,11 +4,11 @@ use std::io::{BufRead, BufReader, Read, Write};
 
 use interprocess::local_socket::traits::{ListenerExt, Stream as _};
 use interprocess::local_socket::{GenericNamespaced, ListenerOptions, Stream, ToNsName};
-use mango_core::links;
+use kuro_core::links;
 
 use crate::backend::{Event, Reply};
 
-pub const APP_ID: &str = "MangoDesktop.Tracker";
+pub const APP_ID: &str = "Kuro.Tracker";
 const MAX_LINE: u64 = 4096;
 const SHOW: &str = "show";
 
@@ -21,9 +21,9 @@ fn pipe_name(profile: Option<&str>) -> String {
             use std::hash::{Hash, Hasher};
             let mut h = std::hash::DefaultHasher::new();
             p.hash(&mut h);
-            format!("mango-desktop-{user}-{:x}", h.finish())
+            format!("kuro-{user}-{:x}", h.finish())
         }
-        None => format!("mango-desktop-{user}"),
+        None => format!("kuro-{user}"),
     }
 }
 
@@ -120,8 +120,8 @@ mod windows {
     use windows_registry::CURRENT_USER;
 
     const RUN: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
-    const RUN_VALUE: &str = "MangoDesktop";
-    const PROTOCOL: &str = r"Software\Classes\mango";
+    const RUN_VALUE: &str = "Kuro";
+    const PROTOCOL: &str = r"Software\Classes\kuro";
 
     pub struct WindowsSystem {
         reply: Reply,
@@ -142,9 +142,29 @@ mod windows {
             // Gives toasts the right name.
             let id = CURRENT_USER.create(format!(r"Software\Classes\AppUserModelId\{APP_ID}"));
             if let Ok(k) = id {
-                let _ = k.set_string("DisplayName", "Mango Desktop");
+                let _ = k.set_string("DisplayName", "Kuro");
             }
             Self { reply, tray: None }
+        }
+
+        /// Moves registrations made before the app was renamed.
+        pub fn adopt_previous(&self) {
+            let _ = CURRENT_USER.remove_tree(r"Software\Classes\AppUserModelId\MangoDesktop.Tracker");
+            if let Ok(run) = CURRENT_USER.options().read().write().open(RUN)
+                && run.get_string("MangoDesktop").is_ok()
+                && self.set_autostart(true).is_ok()
+            {
+                let _ = run.remove_value("MangoDesktop");
+            }
+            // The scheme may belong to another program, so look before removing it.
+            const OLD: &str = r"Software\Classes\mango";
+            let command = CURRENT_USER
+                .open(format!(r"{OLD}\shell\open\command"))
+                .and_then(|k| k.get_string(""))
+                .unwrap_or_default();
+            if command.contains("mango-desktop.exe") && self.set_link_handler(true).is_ok() {
+                let _ = CURRENT_USER.remove_tree(OLD);
+            }
         }
     }
 
@@ -181,7 +201,7 @@ mod windows {
                 return Ok(());
             }
             let key = CURRENT_USER.create(PROTOCOL).map_err(err)?;
-            key.set_string("", "URL:Mango Desktop").map_err(err)?;
+            key.set_string("", "URL:Kuro").map_err(err)?;
             key.set_string("URL Protocol", "").map_err(err)?;
             let cmd = key.create(r"shell\open\command").map_err(err)?;
             cmd.set_string("", format!("\"{}\" \"%1\"", exe()?)).map_err(err)
@@ -216,7 +236,7 @@ mod windows {
                 }
             }));
             let tray = TrayIconBuilder::new()
-                .with_tooltip("Mango Desktop")
+                .with_tooltip("Kuro")
                 .with_icon(icon)
                 .with_menu(Box::new(menu))
                 .build()
@@ -249,8 +269,8 @@ mod windows {
 mod tests {
     use super::*;
     use crate::backend::Backend;
-    use mango_api::{Api, ClientIds, MemorySecrets};
-    use mango_core::Store;
+    use kuro_api::{Api, ClientIds, MemorySecrets};
+    use kuro_core::Store;
     use std::sync::Arc;
     use std::time::{Duration, Instant};
 
@@ -271,12 +291,12 @@ mod tests {
         let ctx = eframe::egui::Context::default();
         let bg = Backend::new(api, Store::in_memory().unwrap(), std::env::temp_dir(), ctx, false);
         let _sys = WindowsSystem::new(bg.reply());
-        tauri_winrt_notification::Toast::new(APP_ID).title("Mango Desktop").text1("Test").show().unwrap();
+        tauri_winrt_notification::Toast::new(APP_ID).title("Kuro").text1("Test").show().unwrap();
     }
 
     #[test]
     fn second_instance_hands_over_valid_links_only() {
-        let name = format!("mango-test-{}", std::process::id());
+        let name = format!("kuro-test-{}", std::process::id());
         assert!(!forward_to(&name, None));
         let api = Api::new(Arc::new(MemorySecrets::default()), ClientIds::default()).unwrap();
         let bg = Backend::new(

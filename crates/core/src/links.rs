@@ -1,4 +1,4 @@
-//! Recognises MyAnimeList, AniList and `mango://` links.
+//! Recognises MyAnimeList, AniList and `kuro://` links.
 
 use url::Url;
 
@@ -39,7 +39,7 @@ pub fn parse(text: &str) -> Option<Link> {
     let url = Url::parse(text).ok()?;
     match url.scheme() {
         "http" | "https" => web(&url),
-        "mango" => deep(&url),
+        "kuro" => deep(&url),
         _ => None,
     }
 }
@@ -74,7 +74,7 @@ fn deep(url: &Url) -> Option<Link> {
 }
 
 pub fn to_link(r: MediaRef) -> String {
-    format!("mango://{}/{}/{}", r.service.key(), r.kind.key(), r.id)
+    format!("kuro://{}/{}/{}", r.service.key(), r.kind.key(), r.id)
 }
 
 #[cfg(test)]
@@ -92,16 +92,16 @@ mod tests {
             r(Service::AniList, MediaKind::Anime, 154587)
         );
         assert_eq!(parse(" https://myanimelist.net/manga/2 "), r(Service::Mal, MediaKind::Manga, 2));
-        assert_eq!(parse("mango://mal/anime/1"), r(Service::Mal, MediaKind::Anime, 1));
+        assert_eq!(parse("kuro://mal/anime/1"), r(Service::Mal, MediaKind::Anime, 1));
         assert_eq!(
-            parse("mango://open?url=https%3A%2F%2Fanilist.co%2Fmanga%2F30002"),
+            parse("kuro://open?url=https%3A%2F%2Fanilist.co%2Fmanga%2F30002"),
             r(Service::AniList, MediaKind::Manga, 30002)
         );
         assert_eq!(
-            parse("mango://search/anime?q=one%20piece"),
+            parse("kuro://search/anime?q=one%20piece"),
             Some(Link::Search { kind: MediaKind::Anime, query: "one piece".into() })
         );
-        assert_eq!(parse("mango://tab/ranking"), Some(Link::Tab("ranking".into())));
+        assert_eq!(parse("kuro://tab/ranking"), Some(Link::Tab("ranking".into())));
     }
 
     #[test]
@@ -118,9 +118,9 @@ mod tests {
             "https://anilist.co/user/1",
             "file:///c:/anime/1",
             "javascript:alert(1)",
-            "mango://tab/../../x",
-            "mango://open?url=mango%3A%2F%2Fopen",
-            "mango://search/anime?q=%00",
+            "kuro://tab/../../x",
+            "kuro://open?url=kuro%3A%2F%2Fopen",
+            "kuro://search/anime?q=%00",
         ] {
             assert_eq!(parse(bad), None, "{bad}");
         }

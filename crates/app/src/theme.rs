@@ -5,8 +5,8 @@ use std::sync::Arc;
 use eframe::egui::{
     self, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Margin, Shadow, Stroke, Vec2,
 };
-use mango_core::ListStatus;
-use mango_core::settings::{Theme, Tint};
+use kuro_core::ListStatus;
+use kuro_core::settings::{Theme, Tint};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Palette {
@@ -38,8 +38,8 @@ pub fn tint_color(t: Tint, dark: bool) -> Color32 {
     hex(match (t, dark) {
         (Tint::Blue, true) => 0x2F95FF,
         (Tint::Blue, false) => 0x0966CC,
-        (Tint::Mango, true) => 0xFFA62B,
-        (Tint::Mango, false) => 0x9E5200,
+        (Tint::Amber, true) => 0xFFA62B,
+        (Tint::Amber, false) => 0x9E5200,
         (Tint::Green, true) => 0x36C765,
         (Tint::Green, false) => 0x1B7437,
         (Tint::Teal, true) => 0x35C2CF,

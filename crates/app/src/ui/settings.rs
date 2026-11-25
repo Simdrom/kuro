@@ -1,9 +1,9 @@
 //! Account summary, statistics and every preference.
 
 use eframe::egui::{self, Align2, CornerRadius, RichText, Role, Sense, Ui, WidgetInfo, vec2};
-use mango_api::oauth;
-use mango_core::settings::{AppIcon, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint};
-use mango_core::{ListStatus, MediaKind, Service, TitleLanguage, stats};
+use kuro_api::oauth;
+use kuro_core::settings::{AppIcon, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint};
+use kuro_core::{ListStatus, MediaKind, Service, TitleLanguage, stats};
 
 use crate::app::{Act, App, Route, SettingsPage};
 use crate::i18n::{LANGUAGES, decimal, t, tf};
@@ -195,7 +195,7 @@ fn general(app: &mut App, ui: &mut Ui) {
     });
     section(ui, &p, t("Links"));
     card(ui, &p, |ui| {
-        toggle_row(ui, &p, icons::LINK, t("Open mango:// links in this app"), &mut s.handle_links);
+        toggle_row(ui, &p, icons::LINK, t("Open kuro:// links in this app"), &mut s.handle_links);
         separator(ui, &p);
         toggle_row(
             ui,
@@ -211,7 +211,7 @@ fn general(app: &mut App, ui: &mut Ui) {
         ui.horizontal(|ui| {
             ui.add_space(12.0);
             if ui.link(t("Copy a bookmarklet that opens the current page here")).clicked() {
-                let code = "javascript:location.href='mango://open?url='+encodeURIComponent(location.href)";
+                let code = "javascript:location.href='kuro://open?url='+encodeURIComponent(location.href)";
                 app.act(Act::Copy(code.into()));
             }
         });
@@ -305,10 +305,7 @@ fn service(app: &mut App, ui: &mut Ui, s: Service) {
                     app.act(Act::AskSignOut(s));
                 }
             });
-            if app
-                .sync_error
-                .as_ref()
-                .is_some_and(|(x, e)| *x == s && *e == mango_api::ApiError::Unauthorized)
+            if app.sync_error.as_ref().is_some_and(|(x, e)| *x == s && *e == kuro_api::ApiError::Unauthorized)
             {
                 separator(ui, &p);
                 widgets::wide_row(
@@ -434,7 +431,7 @@ fn notifications(app: &mut App, ui: &mut Ui) {
     }
     ui.add_space(10.0);
     if widgets::button(ui, &p, icons::BELL, t("Send a test notification"), false).clicked() {
-        app.sys.notify("Mango Desktop", t("Notifications are working."), None);
+        app.sys.notify("Kuro", t("Notifications are working."), None);
     }
 }
 
@@ -567,10 +564,10 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
     section(ui, &p, t("Automation"));
     card(ui, &p, |ui| {
         for (i, link) in [
-            "mango://anilist/anime/<id>",
-            "mango://mal/manga/<id>",
-            "mango://search/anime?q=<text>",
-            "mango://tab/seasonal",
+            "kuro://anilist/anime/<id>",
+            "kuro://mal/manga/<id>",
+            "kuro://search/anime?q=<text>",
+            "kuro://tab/seasonal",
         ]
         .into_iter()
         .enumerate()
@@ -647,10 +644,11 @@ fn data(app: &mut App, ui: &mut Ui) {
 
 fn about(app: &mut App, ui: &mut Ui) {
     let p = app.p;
-    section(ui, &p, "Mango Desktop");
+    section(ui, &p, "Kuro");
     card(ui, &p, |ui| {
         widgets::fact(ui, &p, t("Version"), env!("CARGO_PKG_VERSION"));
     });
+    note(ui, &p, t("Kuro is Japanese for black, like the ink of manga."));
     note(
         ui,
         &p,

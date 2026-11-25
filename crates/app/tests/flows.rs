@@ -8,12 +8,12 @@ use std::rc::Rc;
 use common::*;
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
-use mango_api::{ApiError, Page};
-use mango_app::app::{Act, App, Feed, Load, Route, SettingsPage, Tab};
-use mango_app::backend::Event;
-use mango_core::overview::Section;
-use mango_core::settings::{GestureAction, ListLayout, Theme};
-use mango_core::*;
+use kuro_api::{ApiError, Page};
+use kuro_app::app::{Act, App, Feed, Load, Route, SettingsPage, Tab};
+use kuro_app::backend::Event;
+use kuro_core::overview::Section;
+use kuro_core::settings::{GestureAction, ListLayout, Theme};
+use kuro_core::*;
 
 type H = Harness<'static, App>;
 
@@ -256,10 +256,10 @@ fn links_open_titles_searches_and_tabs() {
     assert!(h.state_mut().open_link("https://anilist.co/anime/3"));
     settle(&mut h);
     assert_eq!(h.state().routes.last(), Some(&Route::Media(r(3, MediaKind::Anime))));
-    assert!(h.state_mut().open_link("mango://search/manga?q=ink"));
+    assert!(h.state_mut().open_link("kuro://search/manga?q=ink"));
     settle(&mut h);
     assert_eq!((h.state().tab, h.state().search.sent.as_str()), (Tab::Search, "ink"));
-    assert!(h.state_mut().open_link("mango://tab/ranking"));
+    assert!(h.state_mut().open_link("kuro://tab/ranking"));
     settle(&mut h);
     assert_eq!(h.state().tab, Tab::Ranking);
     assert!(!h.state_mut().open_link("https://example.com/anime/3"));
@@ -337,7 +337,7 @@ fn unverified_sign_in_needs_confirmation() {
     let login = |h: &mut H| {
         h.state_mut().login = Some(Service::AniList);
         let profile = UserProfile { id: 1, name: "someone".into(), avatar: None };
-        let tokens = mango_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX };
+        let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX };
         h.state_mut()
             .handle(&ctx, Event::Login { service: Service::AniList, result: Ok((profile, tokens, false)) });
         settle(h);
@@ -368,7 +368,7 @@ fn a_cancelled_sign_in_is_ignored_when_it_arrives_late() {
     let mut h = harness();
     let ctx = h.ctx.clone();
     let profile = UserProfile { id: 1, name: "late".into(), avatar: None };
-    let tokens = mango_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX };
+    let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX };
     h.state_mut().handle(&ctx, Event::Login { service: Service::Mal, result: Ok((profile, tokens, true)) });
     settle(&mut h);
     assert!(!h.state().bg.api.is_signed_in(Service::Mal));

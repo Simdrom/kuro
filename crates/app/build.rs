@@ -5,7 +5,7 @@ fn main() {
     #[cfg(windows)]
     {
         let mut res = winresource::WindowsResource::new();
-        res.set_icon("assets/app.ico").set("ProductName", "Mango Desktop");
+        res.set_icon("assets/app.ico").set("ProductName", "Kuro");
         if let Err(e) = res.compile() {
             // Without the Windows SDK the program still builds, only without an icon.
             println!("cargo::warning=executable icon skipped: {e}");

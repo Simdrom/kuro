@@ -4,7 +4,7 @@ use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
 use eframe::egui::{self, CursorIcon, Rect, RichText, Role, Sense, Ui, pos2, vec2};
-use mango_core::{ListStatus, Media, MediaKind, MediaRef};
+use kuro_core::{ListStatus, Media, MediaKind, MediaRef};
 
 use crate::app::{Act, App, Load};
 use crate::i18n::t;

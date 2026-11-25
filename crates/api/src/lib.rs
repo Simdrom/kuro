@@ -11,9 +11,9 @@ pub mod secrets;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
 
-use mango_core::overview::{Section, Walk};
-use mango_core::store::{Change, Pending};
-use mango_core::{
+use kuro_core::overview::{Section, Walk};
+use kuro_core::store::{Change, Pending};
+use kuro_core::{
     Format, ListEntry, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, SeasonYear, Service,
     UserProfile,
 };
@@ -93,8 +93,8 @@ impl ClientIds {
         let or =
             |v: &str, d: Option<&str>| if v.is_empty() { d.unwrap_or_default().into() } else { v.to_owned() };
         Self {
-            anilist: or(anilist, option_env!("MANGO_ANILIST_CLIENT_ID")),
-            mal: or(mal, option_env!("MANGO_MAL_CLIENT_ID")),
+            anilist: or(anilist, option_env!("KURO_ANILIST_CLIENT_ID")),
+            mal: or(mal, option_env!("KURO_MAL_CLIENT_ID")),
         }
     }
 

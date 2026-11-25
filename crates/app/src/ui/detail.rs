@@ -5,9 +5,9 @@ use std::rc::Rc;
 use eframe::egui::{
     self, Align, Align2, CornerRadius, CursorIcon, Layout, Rect, RichText, Role, Sense, Ui, pos2, vec2,
 };
-use mango_api::music;
-use mango_core::settings::GestureAction;
-use mango_core::{ListEntry, ListStatus, Media, MediaDetail, MediaKind, MediaRef, Service, Theme, ThemeKind};
+use kuro_api::music;
+use kuro_core::settings::GestureAction;
+use kuro_core::{ListEntry, ListStatus, Media, MediaDetail, MediaKind, MediaRef, Service, Theme, ThemeKind};
 
 use super::rows::{self, Item};
 use crate::app::{Act, App, Route};
@@ -121,7 +121,7 @@ fn media(app: &mut App, ui: &mut Ui, r: MediaRef) {
 const TWO_COLUMNS: f32 = 860.0;
 
 /// Errors, franchise and synopsis.
-fn story(app: &mut App, ui: &mut Ui, m: &Rc<Media>, d: &MediaDetail, error: &Option<mango_api::ApiError>) {
+fn story(app: &mut App, ui: &mut Ui, m: &Rc<Media>, d: &MediaDetail, error: &Option<kuro_api::ApiError>) {
     let p = app.p;
     if let Some(e) = error {
         ui.add_space(6.0);
@@ -406,7 +406,7 @@ fn dates_line(app: &App, ui: &mut Ui, e: &ListEntry) {
 }
 
 fn overview_button(app: &mut App, ui: &mut Ui, m: &Rc<Media>, d: &MediaDetail) {
-    use mango_core::RelationKind as R;
+    use kuro_core::RelationKind as R;
     let p = app.p;
     let related = d.relations.iter().any(|r| {
         r.media.kind == m.kind && !matches!(r.kind, R::Other | R::Character | R::Adaptation | R::Source)
@@ -592,7 +592,7 @@ fn theme_row(app: &mut App, ui: &mut Ui, th: &Theme) {
 fn titles(app: &mut App, ui: &mut Ui, m: &Media) {
     let p = app.p;
     let mut facts: Vec<(&str, String)> = Vec::new();
-    if app.s.title_language != mango_core::TitleLanguage::Romaji {
+    if app.s.title_language != kuro_core::TitleLanguage::Romaji {
         facts.push((t("Romaji"), m.title.clone()));
     }
     for (k, v) in [(t("English"), &m.title_english), (t("Japanese"), &m.title_native)] {

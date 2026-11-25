@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use mango_core::Service;
+use kuro_core::Service;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
@@ -40,6 +40,19 @@ pub struct Keyring {
 impl Keyring {
     pub fn new(app: &str) -> Self {
         Self { app: app.to_owned() }
+    }
+
+    /// Takes over the tokens stored under an older name.
+    pub fn adopt(&self, old: &Keyring) -> Result<()> {
+        for s in Service::ALL {
+            let Some(tokens) = old.load(s)? else { continue };
+            if self.load(s)?.is_none() {
+                self.save(s, &tokens)?;
+            }
+            // Only removed once the new copy is safe.
+            old.delete(s)?;
+        }
+        Ok(())
     }
 
     fn entry(&self, service: Service, i: usize) -> Result<keyring::Entry> {
@@ -126,8 +139,28 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
+    fn adopts_tokens_from_an_older_name() {
+        let pid = std::process::id();
+        let (old, new) =
+            (Keyring::new(&format!("kuro-test-old-{pid}")), Keyring::new(&format!("kuro-test-new-{pid}")));
+        let token = |a: &str| Tokens { access: a.into(), refresh: None, expires_at: 1 };
+        old.save(Service::AniList, &token("a")).unwrap();
+        old.save(Service::Mal, &token("stale")).unwrap();
+        new.save(Service::Mal, &token("newer")).unwrap();
+        new.adopt(&old).unwrap();
+        assert_eq!(new.load(Service::AniList).unwrap().unwrap().access, "a");
+        assert_eq!(new.load(Service::Mal).unwrap().unwrap().access, "newer");
+        for s in Service::ALL {
+            assert!(old.load(s).unwrap().is_none());
+            new.delete(s).unwrap();
+        }
+        new.adopt(&old).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
     fn credential_manager_round_trip_with_long_tokens() {
-        let k = Keyring::new(&format!("mango-desktop-test-{}", std::process::id()));
+        let k = Keyring::new(&format!("kuro-test-{}", std::process::id()));
         let long = Tokens { access: "a".repeat(5000), refresh: Some("b".repeat(3000)), expires_at: 7 };
         k.save(Service::Mal, &long).unwrap();
         assert_eq!(k.load(Service::Mal).unwrap().unwrap().access, long.access);

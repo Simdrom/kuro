@@ -1,4 +1,4 @@
-//! Mango Desktop: interface and system integration.
+//! Kuro: interface and system integration.
 
 pub mod app;
 pub mod backend;

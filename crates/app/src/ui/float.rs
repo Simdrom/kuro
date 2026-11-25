@@ -5,7 +5,7 @@ use std::rc::Rc;
 use eframe::egui::{
     self, Align, CentralPanel, Context, Frame, Layout, RichText, Sense, Ui, ViewportBuilder, ViewportId, vec2,
 };
-use mango_core::{ListStatus, MediaKind, stats};
+use kuro_core::{ListStatus, MediaKind, stats};
 
 use crate::app::{Act, App};
 use crate::i18n::{t, tf};

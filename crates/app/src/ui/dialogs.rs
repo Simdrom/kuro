@@ -1,7 +1,7 @@
 //! Editor, confirmations, command palette, sign-in progress and toasts.
 
 use eframe::egui::{self, Align, Align2, Color32, Context, Id, Key, Layout, Modal, RichText, Ui, vec2};
-use mango_core::{FuzzyDate, ListStatus, MediaKind, progress};
+use kuro_core::{FuzzyDate, ListStatus, MediaKind, progress};
 
 use crate::app::{Act, App, Route, SettingsPage, Tab, today};
 use crate::i18n::{decimal, t, tf};
@@ -127,7 +127,7 @@ fn editor(app: &mut App, ctx: &Context) {
                             e.score = (v * 10.0).round() as u8;
                         }
                     });
-                    if app.s.save_both || app.s.primary == mango_core::Service::Mal {
+                    if app.s.save_both || app.s.primary == kuro_core::Service::Mal {
                         widgets::note(ui, &p, t("MyAnimeList rounds scores to whole numbers."));
                     }
                 });
@@ -264,7 +264,7 @@ fn command(app: &mut App, ctx: &Context) {
         ui.add_space(6.0);
         let q = text.trim().to_lowercase();
         let mut rows: Vec<(String, &'static str, Act)> = Vec::new();
-        if mango_core::links::parse(text.trim()).is_some() {
+        if kuro_core::links::parse(text.trim()).is_some() {
             rows.push((t("Open link").into(), icons::LINK, Act::Back));
         }
         if !q.is_empty() {

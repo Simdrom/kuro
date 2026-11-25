@@ -17,7 +17,7 @@ use eframe::egui::{
     self, Align, Align2, CentralPanel, CornerRadius, CursorIcon, Frame, Layout, Margin, Panel, RichText,
     Role, Sense, Ui, WidgetInfo, pos2, vec2,
 };
-use mango_core::{MediaKind, SeasonYear};
+use kuro_core::{MediaKind, SeasonYear};
 
 use crate::app::{Act, App, Route, SettingsPage, Tab, today};
 use crate::i18n::t;
@@ -232,7 +232,8 @@ fn sidebar(app: &mut App, ui: &mut Ui) {
                         ui.add_space(4.0);
                         ui.horizontal(|ui| {
                             ui.add_space(8.0);
-                            ui.label(RichText::new("Mango").font(theme::bold(24.0)));
+                            ui.label(RichText::new("Kuro").font(theme::bold(24.0)));
+                            ui.label(RichText::new("黒").font(theme::regular(17.0)).color(p.faint));
                         });
                         ui.add_space(8.0);
                         nav_list(app, ui, true);
@@ -437,6 +438,6 @@ pub fn scroll<R>(
         .inner
 }
 
-pub fn is_open(app: &App, r: mango_core::MediaRef) -> bool {
+pub fn is_open(app: &App, r: kuro_core::MediaRef) -> bool {
     app.routes.contains(&Route::Media(r))
 }

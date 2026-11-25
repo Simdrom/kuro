@@ -3,9 +3,9 @@
 use std::rc::Rc;
 
 use eframe::egui::{self, Ui, vec2};
-use mango_api::Ranking;
-use mango_core::links;
-use mango_core::{Format, Media, MediaKind, Season, SeasonYear, Service, season};
+use kuro_api::Ranking;
+use kuro_core::links;
+use kuro_core::{Format, Media, MediaKind, Season, SeasonYear, Service, season};
 
 use super::rows::{self, Item, Style};
 use crate::app::{Act, App, BrowseSort, Feed, today};

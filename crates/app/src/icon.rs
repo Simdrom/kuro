@@ -1,16 +1,16 @@
-//! The app icon, drawn from scratch: a mango with a play mark, in five schemes.
+//! The app icon, drawn from scratch: a drop of ink with a play mark, in five schemes.
 
 use eframe::egui::IconData;
-use mango_core::settings::AppIcon;
+use kuro_core::settings::AppIcon;
 
 type Rgb = [f32; 3];
 
 struct Scheme {
     top: Rgb,
     bottom: Rgb,
-    fruit_a: Rgb,
-    fruit_b: Rgb,
-    leaf: Rgb,
+    ink_a: Rgb,
+    ink_b: Rgb,
+    mark: Rgb,
 }
 
 fn rgb(v: u32) -> Rgb {
@@ -18,19 +18,19 @@ fn rgb(v: u32) -> Rgb {
 }
 
 fn scheme(i: AppIcon) -> Scheme {
-    let s = |top, bottom, a, b, leaf| Scheme {
+    let s = |top, bottom, a, b, mark| Scheme {
         top: rgb(top),
         bottom: rgb(bottom),
-        fruit_a: rgb(a),
-        fruit_b: rgb(b),
-        leaf: rgb(leaf),
+        ink_a: rgb(a),
+        ink_b: rgb(b),
+        mark: rgb(mark),
     };
     match i {
-        AppIcon::Sunrise => s(0x2B2350, 0x6B2D5C, 0xFFC93C, 0xFF6B35, 0x58C27D),
-        AppIcon::Night => s(0x0B1026, 0x1C2754, 0x9DB4FF, 0x5B5FEF, 0x3DD6C6),
-        AppIcon::Leaf => s(0xE9F7D8, 0xB9E3A0, 0xFFD34E, 0xF2841F, 0x2E8B4F),
-        AppIcon::Candy => s(0xFFE3F0, 0xFFC1DD, 0xFF8AB8, 0xE0408A, 0x62C8B0),
-        AppIcon::Mono => s(0x2A2A2E, 0x131316, 0xF2F2F4, 0xB6B6BE, 0x8A8A92),
+        AppIcon::Ink => s(0xFBF8F1, 0xE6E0D2, 0x2C2C33, 0x08080A, 0xFBF8F1),
+        AppIcon::Night => s(0x0B1026, 0x1C2754, 0x9DB4FF, 0x5B5FEF, 0xFFFFFF),
+        AppIcon::Leaf => s(0xE9F7D8, 0xB9E3A0, 0x3FA463, 0x1C6B3C, 0xFFFFFF),
+        AppIcon::Candy => s(0xFFE3F0, 0xFFC1DD, 0xFF8AB8, 0xD93A84, 0xFFFFFF),
+        AppIcon::Mono => s(0x2A2A2E, 0x0C0C0E, 0xFFFFFF, 0xC9C9D0, 0x131316),
     }
 }
 
@@ -49,9 +49,20 @@ fn rounded_box(x: f32, y: f32, half: f32, r: f32) -> f32 {
     qx.max(0.0).hypot(qy.max(0.0)) + qx.max(qy).min(0.0) - r
 }
 
-fn ellipse(x: f32, y: f32, a: f32, b: f32) -> f32 {
-    let k = (x / a).hypot(y / b);
-    (k - 1.0) * a.min(b)
+/// A drop: a circle of radius `r` that narrows to a tip `h` above its centre.
+fn drop(x: f32, y: f32, r: f32, h: f32) -> f32 {
+    const TIP: f32 = 0.015;
+    let x = x.abs();
+    let b = (r - TIP) / h;
+    let a = (1.0 - b * b).sqrt();
+    let k = -b * x + a * y;
+    if k < 0.0 {
+        x.hypot(y) - r
+    } else if k > a * h {
+        x.hypot(y - h) - TIP
+    } else {
+        a * x + b * y - r
+    }
 }
 
 fn rotate(x: f32, y: f32, deg: f32) -> (f32, f32) {
@@ -70,22 +81,22 @@ pub fn render(icon: AppIcon, size: u32) -> IconData {
             let mut c = mix(s.top, s.bottom, (y + 1.0) / 2.0);
             let alpha = cover(rounded_box(x, y, 0.97, 0.44), px);
 
-            // Leaf: the overlap of two circles.
-            let (lx, ly) = rotate(x - 0.30, y + 0.60, -28.0);
-            let leaf = (lx.hypot(ly - 0.22) - 0.34).max(lx.hypot(ly + 0.22) - 0.34);
-            c = mix(c, s.leaf, cover(leaf, px));
-
-            // Fruit: a tilted ellipse with a slimmer tip.
-            let (fx, fy) = rotate(x + 0.02, y - 0.12, 32.0);
-            let fruit = ellipse(fx, fy, 0.66, 0.52 + fx * 0.12);
-            c = mix(c, mix(s.fruit_a, s.fruit_b, (x * 0.35 + y + 0.5) / 1.4), cover(fruit, px));
-            let (hx, hy) = rotate(x + 0.26, y + 0.12, 40.0);
-            c = mix(c, [1.0; 3], 0.28 * cover(ellipse(hx, hy, 0.20, 0.08), px * 6.0));
+            // The drop leans a little, as if it had just left the brush.
+            let (dx, dy) = rotate(x, y - 0.20, 14.0);
+            let ink = mix(s.ink_a, s.ink_b, (x * 0.3 + y + 0.6) / 1.4);
+            c = mix(c, ink, cover(drop(dx, -dy, 0.47, 0.86), px));
+            // Two splashes.
+            c = mix(c, s.ink_b, cover((x + 0.64).hypot(y - 0.56) - 0.085, px));
+            c = mix(c, s.ink_b, cover((x - 0.62).hypot(y + 0.04) - 0.055, px));
+            // Light on the edge of the drop.
+            let shine = ((dx + 0.02).hypot(dy - 0.02) - 0.36).abs() - 0.022;
+            let arc = if dx < -0.12 && dy > -0.16 && dy < 0.26 { 0.35 } else { 0.0 };
+            c = mix(c, s.mark, arc * cover(shine, px * 2.0));
 
             // Play mark.
-            let (tx, ty) = (x - 0.0, y - 0.15);
-            let tri = (-tx - 0.15).max(0.866 * (ty.abs()) + 0.5 * tx - 0.125) - 0.035;
-            c = mix(c, [1.0; 3], 0.95 * cover(tri, px));
+            let (tx, ty) = (x - 0.01, y - 0.22);
+            let tri = (-tx - 0.13).max(0.866 * ty.abs() + 0.5 * tx - 0.11) - 0.03;
+            c = mix(c, s.mark, cover(tri, px));
 
             rgba.extend(c.map(|v| (v * 255.0).round() as u8));
             rgba.push((alpha * 255.0).round() as u8);

@@ -6,10 +6,10 @@ mod common;
 use std::rc::Rc;
 
 use common::*;
-use mango_app::app::{Act, App, Load, Route, SettingsPage, Tab};
-use mango_core::overview::Section;
-use mango_core::settings::{ListLayout, Theme};
-use mango_core::{MediaKind, Store};
+use kuro_app::app::{Act, App, Load, Route, SettingsPage, Tab};
+use kuro_core::overview::Section;
+use kuro_core::settings::{ListLayout, Theme};
+use kuro_core::{MediaKind, Store};
 
 fn shot(h: &mut egui_kittest::Harness<'static, App>, name: &str) {
     settle(h);
@@ -68,11 +68,11 @@ fn sizes() {
         ["Lanterns Over Saltmarsh", "Iron Orchard", "The Slowly Moving Northern Coast", "Glass Meridian"];
     let s = store();
     for i in 100..130u64 {
-        let status = mango_core::ListStatus::ALL[i as usize % 5];
+        let status = kuro_core::ListStatus::ALL[i as usize % 5];
         let mut e = entry(i, MediaKind::Anime, titles[i as usize % 4], status, (i % 23) as u32);
         if i % 3 == 0 {
-            let at = mango_app::backend::now() + 90_000;
-            e.media.next_airing = Some(mango_core::Airing { episode: 22, at });
+            let at = kuro_app::backend::now() + 90_000;
+            e.media.next_airing = Some(kuro_core::Airing { episode: 22, at });
         }
         s.put_entry(&e).unwrap();
     }
@@ -84,7 +84,7 @@ fn sizes() {
             Rc::new(m)
         })
         .collect();
-    let feed = || mango_app::app::Feed { items: items.clone(), started: true, page: 1, ..Default::default() };
+    let feed = || kuro_app::app::Feed { items: items.clone(), started: true, page: 1, ..Default::default() };
     h.state_mut().season.feed = feed();
     h.state_mut().ranking.feed = feed();
     let m = Rc::new(media(1, MediaKind::Anime, "Lanterns Over Saltmarsh"));

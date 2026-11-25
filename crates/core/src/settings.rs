@@ -23,7 +23,8 @@ impl Theme {
 pub enum Tint {
     #[default]
     Blue,
-    Mango,
+    #[serde(alias = "mango")]
+    Amber,
     Green,
     Teal,
     Indigo,
@@ -34,14 +35,15 @@ pub enum Tint {
 
 impl Tint {
     pub const ALL: [Self; 8] =
-        [Self::Blue, Self::Mango, Self::Green, Self::Teal, Self::Indigo, Self::Purple, Self::Pink, Self::Red];
+        [Self::Blue, Self::Amber, Self::Green, Self::Teal, Self::Indigo, Self::Purple, Self::Pink, Self::Red];
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum AppIcon {
     #[default]
-    Sunrise,
+    #[serde(alias = "sunrise")]
+    Ink,
     Night,
     Leaf,
     Candy,
@@ -49,7 +51,7 @@ pub enum AppIcon {
 }
 
 impl AppIcon {
-    pub const ALL: [Self; 5] = [Self::Sunrise, Self::Night, Self::Leaf, Self::Candy, Self::Mono];
+    pub const ALL: [Self; 5] = [Self::Ink, Self::Night, Self::Leaf, Self::Candy, Self::Mono];
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -241,7 +243,7 @@ pub struct Settings {
     // System
     pub close_to_tray: bool,
     pub autostart: bool,
-    /// Handle `mango://` links.
+    /// Handle `kuro://` links.
     pub handle_links: bool,
     pub gestures: Gestures,
     pub notifications: NotificationSettings,
@@ -275,7 +277,7 @@ impl Default for Settings {
             sort_asc: false,
             theme: Theme::System,
             tint: Tint::Blue,
-            icon: AppIcon::Sunrise,
+            icon: AppIcon::Ink,
             zoom: 1.0,
             confetti: true,
             animations: true,
@@ -319,6 +321,12 @@ mod tests {
         let s: Settings = serde_json::from_str(r#"{"tint":"pink"}"#).unwrap();
         assert_eq!(s.tint, Tint::Pink);
         assert!(s.save_both);
+    }
+
+    #[test]
+    fn settings_saved_under_the_old_name_still_load() {
+        let s: Settings = serde_json::from_str(r#"{"tint":"mango","icon":"sunrise","zoom":1.25}"#).unwrap();
+        assert_eq!((s.tint, s.icon, s.zoom), (Tint::Amber, AppIcon::Ink, 1.25));
     }
 
     #[test]

@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use eframe::egui::{self, Align2, CornerRadius, CursorIcon, Role, Sense, Ui, WidgetInfo, pos2, vec2};
-use mango_core::list::{self, Filter, SortKey};
-use mango_core::{Format, ListEntry, ListStatus, MediaKind, Service};
+use kuro_core::list::{self, Filter, SortKey};
+use kuro_core::{Format, ListEntry, ListStatus, MediaKind, Service};
 
 use super::rows::{self, Item, Style};
 use crate::app::{Act, App, ListCache, Route, SettingsPage, Tab};

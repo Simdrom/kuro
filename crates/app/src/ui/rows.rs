@@ -6,9 +6,9 @@ use eframe::egui::{
     self, Align, Align2, Color32, CornerRadius, CursorIcon, Layout, Rect, Response, Role, Sense, Stroke,
     StrokeKind, Ui, WidgetInfo, pos2, vec2,
 };
-use mango_core::list::SortKey;
-use mango_core::settings::{GestureAction, ListLayout, PosterProgress, ScoreDisplay};
-use mango_core::{ListEntry, ListStatus, Media, MediaKind, ReleaseStatus};
+use kuro_core::list::SortKey;
+use kuro_core::settings::{GestureAction, ListLayout, PosterProgress, ScoreDisplay};
+use kuro_core::{ListEntry, ListStatus, Media, MediaKind, ReleaseStatus};
 
 use crate::app::{Act, App};
 use crate::backend::now;
@@ -1143,7 +1143,7 @@ mod tests {
     fn behind_counts_released_episodes_only() {
         let mut e = ListEntry { status: ListStatus::Current, progress: 7, ..ListEntry::default() };
         assert_eq!(behind(&e), None);
-        e.media.next_airing = Some(mango_core::Airing { episode: 10, at: 0 });
+        e.media.next_airing = Some(kuro_core::Airing { episode: 10, at: 0 });
         assert_eq!(behind(&e), Some(2));
         e.progress = 9;
         assert_eq!(behind(&e), None);

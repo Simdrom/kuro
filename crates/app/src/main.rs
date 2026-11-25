@@ -3,11 +3,11 @@
 use std::sync::Arc;
 
 use eframe::egui;
-use mango_api::{Api, ClientIds, Keyring};
-use mango_app::app::{App, min_size};
-use mango_app::backend::Backend;
-use mango_app::{icon, system};
-use mango_core::Store;
+use kuro_api::{Api, ClientIds, Keyring};
+use kuro_app::app::{App, min_size};
+use kuro_app::backend::Backend;
+use kuro_app::{icon, system};
+use kuro_core::Store;
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -18,9 +18,9 @@ fn main() {
 
     let args: Vec<String> = std::env::args().skip(1).collect();
     let hidden = args.iter().any(|a| a == "--hidden");
-    let link = args.iter().find(|a| mango_core::links::parse(a).is_some()).cloned();
+    let link = args.iter().find(|a| kuro_core::links::parse(a).is_some()).cloned();
     // A separate folder keeps a second, independent profile.
-    let profile = std::env::var("MANGO_PROFILE_DIR").ok();
+    let profile = std::env::var("KURO_PROFILE_DIR").ok();
     if system::forward(profile.as_deref(), link.as_deref()) {
         return;
     }
@@ -28,10 +28,30 @@ fn main() {
         tracing::error!("{e}");
         rfd::MessageDialog::new()
             .set_level(rfd::MessageLevel::Error)
-            .set_title("Mango Desktop")
+            .set_title("Kuro")
             .set_description(e.to_string())
             .show();
         std::process::exit(1);
+    }
+}
+
+/// Brings over the list, settings and sessions saved before the app was renamed.
+fn adopt_previous(data: &std::path::Path, default_profile: bool, secrets: &str) {
+    const OLD: &str = "mango.db";
+    let mut places = vec![data.join(OLD)];
+    if default_profile && let Some(d) = directories::ProjectDirs::from("", "", "MangoDesktop") {
+        places.push(d.data_local_dir().join(OLD));
+    }
+    for old in places {
+        match Store::adopt(&old, &data.join("kuro.db")) {
+            Ok(true) => break,
+            Ok(false) => {}
+            Err(e) => tracing::warn!("the previous list could not be brought over: {e}"),
+        }
+    }
+    let old = if default_profile { "mango-desktop" } else { "mango-desktop-profile" };
+    if let Err(e) = Keyring::new(secrets).adopt(&Keyring::new(old)) {
+        tracing::warn!("the previous sessions could not be brought over: {e}");
     }
 }
 
@@ -39,22 +59,23 @@ fn run(hidden: bool, link: Option<String>, profile: Option<String>) -> Result<()
     let (data, cache, secrets) = match &profile {
         Some(p) => {
             let p = std::path::PathBuf::from(p);
-            (p.clone(), p.join("cache"), "mango-desktop-profile")
+            (p.clone(), p.join("cache"), "kuro-profile")
         }
         None => {
-            let dirs = directories::ProjectDirs::from("", "", "MangoDesktop").ok_or("no home directory")?;
-            (dirs.data_local_dir().to_owned(), dirs.cache_dir().to_owned(), "mango-desktop")
+            let dirs = directories::ProjectDirs::from("", "", "Kuro").ok_or("no home directory")?;
+            (dirs.data_local_dir().to_owned(), dirs.cache_dir().to_owned(), "kuro")
         }
     };
     std::fs::create_dir_all(&data)?;
-    let store = Store::open(&data.join("mango.db"))?;
+    adopt_previous(&data, profile.is_none(), secrets);
+    let store = Store::open(&data.join("kuro.db"))?;
     let s = store.settings()?;
     let ids = ClientIds::with_defaults(&s.anilist_client_id, &s.mal_client_id);
     let api = Api::new(Arc::new(Keyring::new(secrets)), ids)?;
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("Mango Desktop")
+            .with_title("Kuro")
             .with_app_id(system::APP_ID)
             .with_inner_size([1240.0, 820.0])
             .with_min_inner_size(min_size())
@@ -65,14 +86,20 @@ fn run(hidden: bool, link: Option<String>, profile: Option<String>) -> Result<()
         ..Default::default()
     };
     eframe::run_native(
-        "Mango Desktop",
+        "Kuro",
         options,
         Box::new(move |cc| {
             let bg = Backend::new(api, store, cache.join("images"), cc.egui_ctx.clone(), true);
             let reply = bg.reply();
             system::listen(profile.as_deref(), reply.clone());
             #[cfg(windows)]
-            let sys: Box<dyn system::System> = Box::new(system::WindowsSystem::new(reply));
+            let sys = system::WindowsSystem::new(reply);
+            #[cfg(windows)]
+            if profile.is_none() {
+                sys.adopt_previous();
+            }
+            #[cfg(windows)]
+            let sys: Box<dyn system::System> = Box::new(sys);
             #[cfg(not(windows))]
             let sys: Box<dyn system::System> = Box::new(system::NoSystem);
             let mut app = App::new(&cc.egui_ctx, bg, sys, hidden);

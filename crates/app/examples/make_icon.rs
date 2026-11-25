@@ -1,12 +1,12 @@
 //! Writes `assets/app.ico`. Run after changing the drawing in `icon.rs`.
 
-use mango_app::icon;
-use mango_core::settings::AppIcon;
+use kuro_app::icon;
+use kuro_core::settings::AppIcon;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut images = Vec::new();
     for size in [16, 32, 48, 64, 128, 256] {
-        let i = icon::render(AppIcon::Sunrise, size);
+        let i = icon::render(AppIcon::Ink, size);
         let mut png = std::io::Cursor::new(Vec::new());
         image::RgbaImage::from_raw(size, size, i.rgba)
             .ok_or("size")?

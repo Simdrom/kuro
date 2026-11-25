@@ -1,4 +1,6 @@
-# Mango Desktop
+# Kuro 黒
+
+*Kuro* is Japanese for black, like the ink of manga.
 
 Unofficial anime and manga tracker for Windows, written in Rust. It works with
 AniList and MyAnimeList, or with a list that stays on your computer.
@@ -8,7 +10,7 @@ MyAnimeList, and built without any of their code or artwork.
 
 ## Run
 
-    cargo run --release -p mango-desktop
+    cargo run --release -p kuro
 
 Needs stable Rust with the MSVC toolchain. Nothing else is required to browse
 and keep a local list.
@@ -23,7 +25,7 @@ redirect URL shown, and paste it in **Settings › Accounts**:
 | AniList | https://anilist.co/settings/developer | `http://127.0.0.1:42813/anilist` |
 | MyAnimeList (app type "other") | https://myanimelist.net/apiconfig | `http://127.0.0.1:42813/mal` |
 
-To build them in, set `MANGO_ANILIST_CLIENT_ID` and `MANGO_MAL_CLIENT_ID` when
+To build them in, set `KURO_ANILIST_CLIENT_ID` and `KURO_MAL_CLIENT_ID` when
 compiling. No client secret is used.
 
 ## What changes from a phone app
@@ -33,8 +35,8 @@ compiling. No client secret is used.
 | Home screen widgets | Always-on-top desktop widget |
 | Live Activity | Binge session mini window |
 | Swipe actions | Drag a row, double-click, middle-click, context menu |
-| Siri Shortcuts | Ctrl+K palette and `mango://` links |
-| Safari extension | `mango://` links, bookmarklet, copied links |
+| Siri Shortcuts | Ctrl+K palette and `kuro://` links |
+| Safari extension | `kuro://` links, bookmarklet, copied links |
 | Watch app | Tray icon and Windows notifications |
 
 Not included: watch complications, visionOS, and Arabic (the interface toolkit
@@ -62,8 +64,8 @@ needs a private key.
 ## Tests
 
     cargo test --workspace
-    cargo test -p mango-api --test live -- --ignored     # real AniList
-    cargo test -p mango-desktop --test shots -- --ignored # renders every screen
+    cargo test -p kuro-api --test live -- --ignored     # real AniList
+    cargo test -p kuro --test shots -- --ignored # renders every screen
     cargo clippy --workspace --all-targets -- -D warnings
 
-`MANGO_PROFILE_DIR=<folder>` runs a separate profile.
+`KURO_PROFILE_DIR=<folder>` runs a separate profile.

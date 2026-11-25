@@ -1,10 +1,10 @@
 [package]
-name = "mango-core"
+name = "kuro-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
-description = "Domain model, local storage and business rules for Mango Desktop"
+description = "Domain model, local storage and business rules for Kuro"
 
 [dependencies]
 jiff = "1"

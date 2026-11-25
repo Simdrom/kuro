@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use mango_core::{Theme, ThemeKind};
+use kuro_core::{Theme, ThemeKind};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;

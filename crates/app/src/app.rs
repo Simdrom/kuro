@@ -6,14 +6,14 @@ use std::rc::Rc;
 use eframe::egui::{self, Key, Modifiers, Vec2};
 use jiff::civil::Date;
 use jiff::tz::TimeZone;
-use mango_api::music::Track;
-use mango_api::{ApiError, Page, Ranking, RankingQuery, SeasonQuery, Tokens};
-use mango_core::links::{self, Link};
-use mango_core::list::{Filter, SortKey};
-use mango_core::notify;
-use mango_core::overview::Section;
-use mango_core::settings::{GestureAction, Settings};
-use mango_core::{
+use kuro_api::music::Track;
+use kuro_api::{ApiError, Page, Ranking, RankingQuery, SeasonQuery, Tokens};
+use kuro_core::links::{self, Link};
+use kuro_core::list::{Filter, SortKey};
+use kuro_core::notify;
+use kuro_core::overview::Section;
+use kuro_core::settings::{GestureAction, Settings};
+use kuro_core::{
     ListEntry, ListStatus, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, SeasonYear, Service, Theme,
     TitleLanguage, UserProfile, progress,
 };
@@ -159,7 +159,7 @@ pub struct SeasonView {
     pub continuing: bool,
     pub feed: Feed,
     pub text: String,
-    pub format: Option<mango_core::Format>,
+    pub format: Option<kuro_core::Format>,
     pub sort: BrowseSort,
     pub mine_only: bool,
 }
@@ -299,7 +299,7 @@ pub struct App {
     /// Frames left in which a hidden start is enforced.
     start_hidden: u8,
     applied: Option<(Palette, bool, f32)>,
-    icon_applied: Option<mango_core::settings::AppIcon>,
+    icon_applied: Option<kuro_core::settings::AppIcon>,
     tray_applied: bool,
     time: f64,
     screen: egui::Rect,
@@ -558,7 +558,7 @@ impl App {
     }
 
     fn refresh_airing(&mut self) {
-        use mango_core::ReleaseStatus as R;
+        use kuro_core::ReleaseStatus as R;
         self.airing_at = now();
         let refs = self.lib[0]
             .iter()
@@ -757,7 +757,7 @@ impl App {
             Act::Edit(m) => {
                 let is_new = self.entry(&m).is_none();
                 let entry = self.working_entry(&m);
-                let text = |d: Option<mango_core::FuzzyDate>| d.map(|d| d.iso()).unwrap_or_default();
+                let text = |d: Option<kuro_core::FuzzyDate>| d.map(|d| d.iso()).unwrap_or_default();
                 self.editor =
                     Some(Editor { start: text(entry.start), finish: text(entry.finish), entry, is_new });
             }
@@ -1233,7 +1233,7 @@ impl App {
             }
             if old.mal_client_id != self.s.mal_client_id || old.anilist_client_id != self.s.anilist_client_id
             {
-                self.bg.api.set_ids(mango_api::ClientIds::with_defaults(
+                self.bg.api.set_ids(kuro_api::ClientIds::with_defaults(
                     &self.s.anilist_client_id,
                     &self.s.mal_client_id,
                 ));

@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use mango_core::Service;
+use kuro_core::Service;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -260,7 +260,7 @@ fn page(status: u16, text: &str, nonce: &str) -> String {
         )
     };
     let body = format!(
-        "<!doctype html><meta charset=utf-8><title>Mango Desktop</title>\
+        "<!doctype html><meta charset=utf-8><title>Kuro</title>\
          <body style=\"font:16px system-ui;display:grid;place-items:center;height:90vh\"><p>{text}</p>{script}"
     );
     let csp = if nonce.is_empty() {

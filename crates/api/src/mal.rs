@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use mango_core::{
+use kuro_core::{
     Format, FuzzyDate, ListEntry, ListStatus, Media, MediaDetail, MediaKind, Relation, RelationKind,
     ReleaseStatus, Season, SeasonYear, Service, Theme, ThemeKind, UserProfile,
 };

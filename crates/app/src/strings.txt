@@ -141,7 +141,7 @@ Lists, search, rankings and details come from your primary service.|Las listas, 
 Main series|Serie principal|Série principale|Hauptserie|Serie principale|Hovedserie|본편
 Main story|Historia principal|Histoire principale|Hauptgeschichte|Storia principale|Hovedhistorie|본편
 Manga|Manga|Manga|Manga|Manga|Manga|만화
-Mango|Mango|Mangue|Mango|Mango|Mango|망고
+Amber|Ámbar|Ambre|Bernstein|Ambra|Rav|호박색
 Mark as completed|Marcar como completado|Marquer comme terminé|Als abgeschlossen markieren|Segna come completato|Merk som fullført|완료로 표시
 Mark as dropped|Marcar como abandonado|Marquer comme abandonné|Als abgebrochen markieren|Segna come abbandonato|Merk som droppet|하차로 표시
 Middle-click|Clic central|Clic du milieu|Mittelklick|Clic centrale|Midtklikk|가운데 클릭
@@ -192,7 +192,7 @@ Open copied AniList and MyAnimeList links|Abrir enlaces copiados de AniList y My
 Open first|Abrir primero|Ouvrir en premier|Zuerst öffnen|Apri per primo|Åpne først|처음 열 항목
 Open in browser|Abrir en el navegador|Ouvrir dans le navigateur|Im Browser öffnen|Apri nel browser|Åpne i nettleser|브라우저에서 열기
 Open link|Abrir enlace|Ouvrir le lien|Link öffnen|Apri link|Åpne lenke|링크 열기
-Open mango:// links in this app|Abrir enlaces mango:// en esta app|Ouvrir les liens mango:// dans cette app|mango://-Links in dieser App öffnen|Apri i link mango:// in questa app|Åpne mango://-lenker i denne appen|이 앱에서 mango:// 링크 열기
+Open kuro:// links in this app|Abrir enlaces kuro:// en esta app|Ouvrir les liens kuro:// dans cette app|kuro://-Links in dieser App öffnen|Apri i link kuro:// in questa app|Åpne kuro://-lenker i denne appen|이 앱에서 kuro:// 링크 열기
 Open on {}|Abrir en {}|Ouvrir sur {}|Auf {} öffnen|Apri su {}|Åpne på {}|{}에서 열기
 Open the developer page|Abrir la página de desarrollador|Ouvrir la page développeur|Entwicklerseite öffnen|Apri la pagina sviluppatore|Åpne utviklersiden|개발자 페이지 열기
 Opening|Opening|Opening|Opening|Sigla iniziale|Åpning|오프닝
@@ -308,7 +308,7 @@ Started {}|Empezado el {}|Commencé le {}|Begonnen am {}|Iniziato il {}|Startet 
 Status|Estado|Statut|Status|Stato|Status|상태
 Studios|Estudios|Studios|Studios|Studi|Studioer|제작사
 Summer|Verano|Été|Sommer|Estate|Sommer|여름
-Sunrise|Amanecer|Aurore|Sonnenaufgang|Alba|Soloppgang|일출
+Ink|Tinta|Encre|Tinte|Inchiostro|Blekk|먹
 Switch tabs|Cambiar de pestaña|Changer d’onglet|Tab wechseln|Cambia scheda|Bytt fane|탭 전환
 Sync|Sincronización|Synchronisation|Synchronisierung|Sincronizzazione|Synkronisering|동기화
 Sync now|Sincronizar ahora|Synchroniser|Jetzt synchronisieren|Sincronizza ora|Synkroniser nå|지금 동기화
@@ -385,3 +385,4 @@ Table|Tabla|Tableau|Tabelle|Tabella|Tabell|표
 Use the whole window|Usar toda la ventana|Utiliser toute la fenêtre|Ganzes Fenster nutzen|Usa tutta la finestra|Bruk hele vinduet|창 전체 사용
 Vol {}|Tomo {}|Tome {}|Band {}|Vol. {}|Bind {}|{}권
 {} behind|{} sin ver|{} en retard|{} offen|{} da vedere|{} bak|{}화 밀림
+Kuro is Japanese for black, like the ink of manga.|Kuro significa «negro» en japonés, como la tinta del manga.|Kuro veut dire « noir » en japonais, comme l’encre du manga.|Kuro ist Japanisch für Schwarz, wie die Tinte der Manga.|Kuro significa “nero” in giapponese, come l’inchiostro dei manga.|Kuro er japansk for svart, som blekket i manga.|Kuro는 일본어로 검정이며, 만화의 먹을 뜻합니다.

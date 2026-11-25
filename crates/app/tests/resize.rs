@@ -9,9 +9,9 @@ use common::*;
 use egui::accesskit::Role;
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
-use mango_app::app::{Act, App, Feed, Route, SettingsPage, Tab};
-use mango_core::settings::ListLayout;
-use mango_core::*;
+use kuro_app::app::{Act, App, Feed, Route, SettingsPage, Tab};
+use kuro_core::settings::ListLayout;
+use kuro_core::*;
 
 type H = Harness<'static, App>;
 
@@ -313,7 +313,7 @@ fn table_headers_sort() {
     settle(&mut h);
     h.get_by_label("Sort by: Title").click();
     settle(&mut h);
-    assert_eq!(h.state().s.sort, mango_core::list::SortKey::Title);
+    assert_eq!(h.state().s.sort, kuro_core::list::SortKey::Title);
     assert!(h.state().s.sort_asc);
     let y = |h: &H, s: &str| h.get_by_label_contains(&format!("{s}, ")).rect().top();
     assert!(y(&h, "Dustfall") < y(&h, "Midnight Ferry"));
