@@ -104,6 +104,13 @@ pub enum Event {
     },
     /// Kioku: how far a sync has got.
     KiokuProgress(KiokuStep),
+    /// Kioku: the file dialog was closed without a file.
+    KiokuCancelled,
+    /// Kioku: titles for the picker.
+    KiokuFound {
+        text: String,
+        result: Outcome<Vec<Media>>,
+    },
     /// Kioku: history read and matched, waiting for the user.
     KiokuReview(Outcome<KiokuReview>),
     /// A link passed by another process or the tray.
@@ -187,91 +194,182 @@ pub fn kioku_queries(g: &Group) -> Vec<String> {
 }
 
 /// Matches groups to titles and proposes changes. Pure, so the interface tests
-/// can feed it a simulated source.
+/// can feed it a simulated source. `chosen` gives the title the user picked
+/// for a group, which wins over any match.
 pub fn kioku_review(
     platform: Platform,
     service: Service,
     groups: Vec<Group>,
     candidates: impl Fn(&Group) -> Vec<Media>,
+    chosen: impl Fn(&Group) -> Option<Media>,
     entry: impl Fn(&Media) -> Option<ListEntry>,
     today: jiff::civil::Date,
 ) -> KiokuReview {
     let mut r = KiokuReview { platform: Some(platform), service, ..KiokuReview::default() };
     for g in groups {
         r.held.extend(g.items.iter().cloned());
-        let found = candidates(&g);
-        match kioku::review::review(g, &found, &entry, today) {
-            kioku::Outcome::Change(p) => r.changes.push(*p),
-            kioku::Outcome::Nothing { items, .. } => r.settled.extend(items),
-            kioku::Outcome::Unmatched(g) => r.unmatched.push(g),
-        }
+        r.add(kioku_outcome(g, &candidates, &chosen, &entry, today));
     }
     let settled: HashSet<&String> = r.settled.iter().collect();
     r.held.retain(|i| !settled.contains(&i.external_id));
-    r.changes.sort_by(|a, b| b.selected.cmp(&a.selected).then_with(|| a.media.title.cmp(&b.media.title)));
+    r.sort();
     r
 }
 
+/// One group, through a chosen title or the candidates.
+pub fn kioku_outcome(
+    g: Group,
+    candidates: &impl Fn(&Group) -> Vec<Media>,
+    chosen: &impl Fn(&Group) -> Option<Media>,
+    entry: &impl Fn(&Media) -> Option<ListEntry>,
+    today: jiff::civil::Date,
+) -> kioku::Outcome {
+    match chosen(&g) {
+        Some(m) => kioku::review::review_with(g, Some(kioku::Match::chosen(m)), entry, today),
+        None => {
+            let found = candidates(&g);
+            kioku::review::review(g, &found, entry, today)
+        }
+    }
+}
+
+impl KiokuReview {
+    pub fn add(&mut self, o: kioku::Outcome) {
+        match o {
+            kioku::Outcome::Change(p) => self.changes.push(*p),
+            kioku::Outcome::Nothing { items, .. } => self.settled.extend(items),
+            kioku::Outcome::Unmatched(g) => self.unmatched.push(g),
+        }
+    }
+
+    /// Ticked first, then by title.
+    pub fn sort(&mut self) {
+        self.changes
+            .sort_by(|a, b| b.selected.cmp(&a.selected).then_with(|| a.media.title.cmp(&b.media.title)));
+    }
+
+    /// The items of a group, as the platform gave them, for the ids of a change.
+    pub fn group_of(&self, ids: &[String]) -> Group {
+        Group { items: self.held.iter().filter(|i| ids.contains(&i.external_id)).cloned().collect() }
+    }
+
+    /// Drops everything that came from `g`, before it is reviewed again.
+    pub fn forget(&mut self, g: &Group) {
+        let ids: HashSet<&String> = g.items.iter().map(|i| &i.external_id).collect();
+        let key = g.key();
+        self.changes.retain(|c| !c.items.iter().any(|i| ids.contains(i)));
+        self.unmatched.retain(|u| u.key() != key);
+        self.settled.retain(|i| !ids.contains(i));
+    }
+}
+
+/// Days a title lookup is reused for.
+const LOOKUP_DAYS: i64 = 30;
+
+/// A search on the tracker, from memory, from the store when recent, or asked.
+async fn kioku_lookup(
+    api: &Api,
+    store: &Mutex<Store>,
+    service: Service,
+    seen: &mut std::collections::HashMap<String, Vec<Media>>,
+    q: &str,
+) -> Outcome<Vec<Media>> {
+    if let Some(v) = seen.get(q) {
+        return Ok(v.clone());
+    }
+    let key = format!("kioku-search:{}:{}", service.key(), q.to_lowercase());
+    let hit = lock(store).cached::<Vec<Media>>(&key, now()).ok().flatten();
+    let found = match hit {
+        Some((v, age)) if age < LOOKUP_DAYS * 86_400 => v,
+        _ => {
+            // Anime only: what the tracker does not know as anime stays unmatched.
+            match api.search(service, MediaKind::Anime, q, false, 1).await {
+                Ok(p) => {
+                    if let Err(e) = lock(store).put_cache(&key, &p.items, now()) {
+                        tracing::warn!("kioku: lookup not cached: {e}");
+                    }
+                    p.items
+                }
+                Err(e) if e.is_transient() || e == ApiError::NotConfigured => return Err(e),
+                Err(_) => Vec::new(),
+            }
+        }
+    };
+    seen.insert(q.to_owned(), found.clone());
+    Ok(found)
+}
+
+/// Reads the history (or takes the items of a file), looks titles up and
+/// builds the review.
 async fn kioku_run(
     api: &Api,
     store: &Mutex<Store>,
     platform: Platform,
     service: Service,
     reply: &Reply,
+    file: Option<Vec<WatchedItem>>,
 ) -> Outcome<KiokuReview> {
     let db = |e: kuro_core::StoreError| ApiError::Service(e.to_string());
-    let (known, pending) = {
+    let (known, pending, chosen) = {
         let s = lock(store);
-        (s.kioku_known(service, platform).map_err(db)?, s.kioku_pending(service, platform).map_err(db)?)
+        (
+            s.kioku_known(service, platform).map_err(db)?,
+            s.kioku_pending(service, platform).map_err(db)?,
+            s.kioku_chosen(service, platform).map_err(db)?,
+        )
     };
-    let source: &dyn HistorySource = match platform {
-        Platform::Crunchyroll => &api.crunchyroll,
-        _ => return Err(ApiError::Unavailable),
+    let mut items = match file {
+        Some(items) => items,
+        None => {
+            let source: &dyn HistorySource = match platform {
+                Platform::Crunchyroll => &api.crunchyroll,
+                _ => return Err(ApiError::Unavailable),
+            };
+            let on_page = {
+                let reply = reply.clone();
+                move |n| reply.send(Event::KiokuProgress(KiokuStep::Reading(n)))
+            };
+            source.fetch(&known, &on_page).await?
+        }
     };
-    let on_page = {
-        let reply = reply.clone();
-        move |n| reply.send(Event::KiokuProgress(KiokuStep::Reading(n)))
-    };
-    let mut items = source.fetch(&known, &on_page).await?;
     let read = items.len();
     items.extend(pending);
     let groups = kioku::review::groups(items, &known);
-    let mut queries: Vec<String> = groups.iter().flat_map(kioku_queries).collect();
-    queries.sort_unstable();
-    queries.dedup();
-    let total = queries.len();
+    let total = groups.len();
     // Counts only: titles and ids never reach the log.
-    tracing::info!(read, groups = groups.len(), searches = total, "kioku: history read");
+    tracing::info!(read, groups = total, chosen = chosen.len(), "kioku: history read");
+    let mut seen = std::collections::HashMap::new();
     let mut found: std::collections::HashMap<String, Vec<Media>> = std::collections::HashMap::new();
-    for (done, q) in queries.into_iter().enumerate() {
+    for (done, g) in groups.iter().enumerate() {
         reply.send(Event::KiokuProgress(KiokuStep::Searching { done, total }));
         if done % 10 == 0 {
             tracing::info!(done, total, "kioku: looking up titles");
         }
-        // Anime only: what the tracker does not know as anime stays unmatched.
-        let page = api.search(service, MediaKind::Anime, &q, false, 1).await;
-        match page {
-            Ok(p) => drop(found.insert(q, p.items)),
-            Err(e) if e.is_transient() || e == ApiError::NotConfigured => return Err(e),
-            Err(_) => drop(found.insert(q, Vec::new())),
+        if chosen.contains_key(&g.key()) {
+            continue;
         }
-    }
-    let candidates = |g: &Group| {
+        let queries = kioku_queries(g);
         let mut all: Vec<Media> = Vec::new();
-        for q in kioku_queries(g) {
-            for m in found.get(&q).into_iter().flatten() {
+        for (i, q) in queries.iter().enumerate() {
+            // The other names only when the first one is not enough.
+            if i > 0 && kioku::matcher::best(&g.items, &all).is_some_and(|m| m.sure()) {
+                break;
+            }
+            for m in kioku_lookup(api, store, service, &mut seen, q).await? {
                 if !all.iter().any(|x| x.id == m.id) {
-                    all.push(m.clone());
+                    all.push(m);
                 }
             }
         }
-        all
-    };
+        found.insert(g.key(), all);
+    }
+    let candidates = |g: &Group| found.get(&g.key()).cloned().unwrap_or_default();
+    let picked = |g: &Group| chosen.get(&g.key()).cloned();
     let entry = |m: &Media| {
         let r = MediaRef { service, kind: m.kind, id: m.id_on(service).unwrap_or(m.id) };
         lock(store).entry(r).ok().flatten()
     };
-    let review = kioku_review(platform, service, groups, candidates, entry, crate::app::today());
+    let review = kioku_review(platform, service, groups, candidates, picked, entry, crate::app::today());
     lock(store).kioku_set_pending(service, platform, &review.held).map_err(db)?;
     tracing::info!(
         changes = review.changes.len(),
@@ -281,6 +379,33 @@ async fn kioku_run(
         "kioku: review ready"
     );
     Ok(review)
+}
+
+/// Runs a sync in a task of its own, so that a bug ends it with an error
+/// instead of leaving it spinning forever.
+async fn kioku_task(
+    api: Api,
+    store: Arc<Mutex<Store>>,
+    platform: Platform,
+    service: Service,
+    reply: Reply,
+    file: Option<Vec<WatchedItem>>,
+) {
+    let started = std::time::Instant::now();
+    let run = {
+        let reply = reply.clone();
+        tokio::spawn(async move { kioku_run(&api, &store, platform, service, &reply, file).await })
+    };
+    let result = run.await.unwrap_or_else(|e| {
+        tracing::error!("kioku: sync stopped unexpectedly: {e}");
+        Err(ApiError::Service("Kioku stopped unexpectedly".into()))
+    });
+    let seconds = started.elapsed().as_secs();
+    match &result {
+        Ok(_) => tracing::info!(seconds, "kioku: sync finished"),
+        Err(e) => tracing::warn!(seconds, "kioku: sync failed: {e}"),
+    }
+    reply.send(Event::KiokuReview(result));
 }
 
 fn lock(store: &Mutex<Store>) -> MutexGuard<'_, Store> {
@@ -581,23 +706,40 @@ impl Backend {
     /// Reads the history and matches it; nothing is written to the list.
     pub fn kioku_sync(&self, platform: Platform, service: Service) {
         let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
-        self.spawn(async move {
-            let started = std::time::Instant::now();
-            // A bug must end the sync with an error, not leave it spinning forever.
-            let run = {
-                let reply = reply.clone();
-                tokio::spawn(async move { kioku_run(&api, &store, platform, service, &reply).await })
+        self.spawn(kioku_task(api, store, platform, service, reply, None));
+    }
+
+    /// Asks for an exported history file and reviews it like a sync.
+    pub fn kioku_import(&self, platform: Platform, service: Service) {
+        use kuro_api::kioku::netflix::{MAX_FILE, Netflix};
+        let Some(rt) = self.rt.as_ref().map(|rt| rt.handle().clone()) else { return };
+        let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
+        std::thread::spawn(move || {
+            let Some(path) = rfd::FileDialog::new().add_filter("CSV", &["csv"]).pick_file() else {
+                return reply.send(Event::KiokuCancelled);
             };
-            let result = run.await.unwrap_or_else(|e| {
-                tracing::error!("kioku: sync stopped unexpectedly: {e}");
-                Err(ApiError::Service("Kioku stopped unexpectedly".into()))
-            });
-            let seconds = started.elapsed().as_secs();
-            match &result {
-                Ok(_) => tracing::info!(seconds, "kioku: sync finished"),
-                Err(e) => tracing::warn!(seconds, "kioku: sync failed: {e}"),
+            let read = match std::fs::metadata(&path) {
+                Ok(m) if m.len() > MAX_FILE as u64 => Err(ApiError::TooLarge),
+                Ok(_) => std::fs::read(&path).map_err(|e| ApiError::Service(e.to_string())),
+                Err(e) => Err(ApiError::Service(e.to_string())),
+            };
+            let source: &dyn HistorySource = match platform {
+                Platform::Netflix => &Netflix,
+                _ => return reply.send(Event::KiokuReview(Err(ApiError::Unavailable))),
+            };
+            match read.and_then(|bytes| source.parse(&bytes)) {
+                Ok(items) => drop(rt.spawn(kioku_task(api, store, platform, service, reply, Some(items)))),
+                Err(e) => reply.send(Event::KiokuReview(Err(e))),
             }
-            reply.send(Event::KiokuReview(result));
+        });
+    }
+
+    /// Searches the tracker for the title picker.
+    pub fn kioku_search(&self, service: Service, text: String) {
+        let (api, reply) = (self.api.clone(), self.reply());
+        self.spawn(async move {
+            let result = api.search(service, MediaKind::Anime, &text, false, 1).await.map(|p| p.items);
+            reply.send(Event::KiokuFound { text, result });
         });
     }
 

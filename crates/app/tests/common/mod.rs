@@ -213,6 +213,7 @@ pub fn history() -> FakeSource {
 /// What a sync of `source` finds, built the way the backend builds it.
 pub fn review(app: &App, source: &FakeSource) -> kuro_app::backend::KiokuReview {
     let known = app.bg.store().kioku_known(Service::AniList, Platform::Crunchyroll).unwrap();
+    let chosen = app.bg.store().kioku_chosen(Service::AniList, Platform::Crunchyroll).unwrap();
     let rt = tokio::runtime::Builder::new_current_thread().build().unwrap();
     let items = rt.block_on(source.fetch(&known, &|_| {})).unwrap();
     let groups = kuro_core::kioku::review::groups(items, &known);
@@ -222,6 +223,7 @@ pub fn review(app: &App, source: &FakeSource) -> kuro_app::backend::KiokuReview 
         Service::AniList,
         groups,
         |_| titles.clone(),
+        |g| chosen.get(&g.key()).cloned(),
         |m| app.entry_at(m.media_ref()).map(|e| (*e).clone()),
         kuro_app::app::today(),
     )

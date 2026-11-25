@@ -8,7 +8,7 @@ use jiff::civil::Date;
 use jiff::tz::TimeZone;
 use kuro_api::music::Track;
 use kuro_api::{ApiError, Page, Ranking, RankingQuery, SeasonQuery, Tokens};
-use kuro_core::kioku::Platform;
+use kuro_core::kioku::{Group, Platform};
 use kuro_core::links::{self, Link};
 use kuro_core::list::{Filter, SortKey};
 use kuro_core::notify;
@@ -118,6 +118,31 @@ pub enum Act {
     KiokuApply,
     /// Leaves an unmatched series out of every later review.
     KiokuDismiss(usize),
+    KiokuDismissAll,
+    /// Reviews a history file exported from the platform.
+    KiokuImport(Platform),
+    /// Opens the title picker for a series of the review.
+    KiokuPick(PickFrom),
+    /// Searches with the picker's text.
+    KiokuLookup,
+    KiokuChoose(Box<Media>),
+}
+
+/// The part of a review a series comes from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PickFrom {
+    Unmatched(usize),
+    Change(usize),
+}
+
+/// Picks the title of a series by hand.
+pub struct KiokuPicker {
+    pub group: Group,
+    pub text: String,
+    /// Text of the last search.
+    pub sent: String,
+    pub busy: bool,
+    pub results: Option<Result<Vec<Media>, ApiError>>,
 }
 
 /// Kioku's screen.
@@ -135,6 +160,9 @@ pub struct KiokuView {
     pub took: Option<f64>,
     pub review: Option<KiokuReview>,
     pub error: Option<ApiError>,
+    pub picker: Option<KiokuPicker>,
+    /// Long lists of series not found start folded.
+    pub show_unmatched: bool,
 }
 
 #[derive(Default)]
@@ -939,6 +967,49 @@ impl App {
                 });
             }
             Act::KiokuApply => self.kioku_apply(),
+            Act::KiokuImport(p) => {
+                if !self.bg.online() {
+                    return;
+                }
+                self.kioku.syncing = true;
+                self.kioku.progress = None;
+                self.kioku.started = Some(self.time);
+                self.kioku.took = None;
+                self.kioku.error = None;
+                self.kioku.review = None;
+                self.bg.kioku_import(p, self.s.primary);
+            }
+            Act::KiokuDismissAll => {
+                if let Some(r) = self.kioku.review.as_mut() {
+                    for g in std::mem::take(&mut r.unmatched) {
+                        r.dismissed.extend(g.items.into_iter().map(|i| i.external_id));
+                    }
+                }
+            }
+            Act::KiokuPick(from) => {
+                let Some(r) = self.kioku.review.as_ref() else { return };
+                let group = match from {
+                    PickFrom::Unmatched(i) => r.unmatched.get(i).cloned(),
+                    PickFrom::Change(i) => r.changes.get(i).map(|c| r.group_of(&c.items)),
+                };
+                if let Some(group) = group.filter(|g| !g.items.is_empty()) {
+                    let text = group.query().to_owned();
+                    self.kioku.picker =
+                        Some(KiokuPicker { group, text, sent: String::new(), busy: false, results: None });
+                    self.act(Act::KiokuLookup);
+                }
+            }
+            Act::KiokuLookup => {
+                let Some(pk) = self.kioku.picker.as_mut() else { return };
+                let text = pk.text.trim().to_owned();
+                if text.is_empty() || !self.bg.online() {
+                    return;
+                }
+                pk.busy = true;
+                pk.sent = text.clone();
+                self.bg.kioku_search(self.s.primary, text);
+            }
+            Act::KiokuChoose(m) => self.kioku_choose(*m),
             Act::KiokuDismiss(i) => {
                 if let Some(r) = self.kioku.review.as_mut()
                     && i < r.unmatched.len()
@@ -948,6 +1019,24 @@ impl App {
                 }
             }
         }
+    }
+
+    /// Remembers the title picked for a series and reviews that series again with it.
+    fn kioku_choose(&mut self, m: Media) {
+        let Some(picker) = self.kioku.picker.take() else { return };
+        let Some(mut r) = self.kioku.review.take() else { return };
+        let Some(platform) = r.platform else { return };
+        let saved = self.bg.store().kioku_choose(r.service, platform, &picker.group.key(), &m);
+        if let Err(e) = saved {
+            tracing::error!("kioku: the chosen title was not saved: {e}");
+            self.say_error(t("Your change could not be saved."));
+        }
+        r.forget(&picker.group);
+        let entry = |x: &Media| self.entry(x).map(|e| (*e).clone());
+        let chosen = |_: &Group| Some(m.clone());
+        r.add(crate::backend::kioku_outcome(picker.group, &|_| Vec::new(), &chosen, &entry, today()));
+        r.sort();
+        self.kioku.review = Some(r);
     }
 
     /// Writes the ticked Kioku changes, checked again against the list as it
@@ -1219,6 +1308,19 @@ impl App {
                         self.say(tf("kioku.connected.toast", &[&platform.name()]));
                     }
                     Err(e) => self.kioku.error = Some(e),
+                }
+            }
+            Event::KiokuCancelled => {
+                self.kioku.syncing = false;
+                self.kioku.progress = None;
+                self.kioku.started = None;
+            }
+            Event::KiokuFound { text, result } => {
+                if let Some(pk) = self.kioku.picker.as_mut()
+                    && pk.sent == text
+                {
+                    pk.busy = false;
+                    pk.results = Some(result);
                 }
             }
             Event::KiokuProgress(step) => {

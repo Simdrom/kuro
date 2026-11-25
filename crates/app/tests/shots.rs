@@ -47,6 +47,13 @@ fn screens() {
     let found = review(h.state(), &history());
     h.state_mut().kioku.review = Some(found);
     shot(&mut h, "kioku-review");
+    h.state_mut().act(Act::KiokuPick(kuro_app::app::PickFrom::Unmatched(0)));
+    let titles =
+        vec![media(4, MediaKind::Anime, "Midnight Ferry"), media(5, MediaKind::Anime, "Glass Meridian")];
+    settle(&mut h);
+    h.state_mut().kioku.picker.as_mut().unwrap().results = Some(Ok(titles));
+    shot(&mut h, "kioku-picker");
+    h.state_mut().kioku.picker = None;
     h.state_mut().act(Act::Go(Tab::Manga));
     settle(&mut h);
     h.state_mut().s.theme = Theme::Light;

@@ -343,6 +343,18 @@ fn kioku_and_its_review_fit() {
             resize(&mut h, w, 800.0);
             check(&h, w, 800.0, &format!("{language} Kioku"));
         }
+        act_now(&mut h, Act::KiokuPick(kuro_app::app::PickFrom::Unmatched(0)));
+        let titles =
+            vec![media(4, MediaKind::Anime, "Midnight Ferry"), media(5, MediaKind::Anime, "Glass Meridian")];
+        h.state_mut().kioku.picker.as_mut().unwrap().results = Some(Ok(titles));
+        for (w, height) in [(340.0, 400.0), (340.0, 800.0), (1240.0, 800.0)] {
+            resize(&mut h, w, height);
+            let window = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(w, height));
+            for label in [kuro_app::i18n::t("Cancel"), "Midnight Ferry"] {
+                let r = h.get_all_by_label(label).last().unwrap().rect();
+                assert!(window.contains_rect(r), "{language} picker: {label} at {r:?} in {w}x{height}");
+            }
+        }
     }
 }
 

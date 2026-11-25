@@ -504,7 +504,8 @@ fn kioku_opens_from_accounts_and_the_palette() {
 
 #[test]
 fn kioku_reviews_before_writing_and_never_imports_twice() {
-    let mut h = harness();
+    // Tall enough for the whole review.
+    let mut h = harness_with(store(), [1240.0, 2400.0], |_| {});
     let source = history();
     let found = review(h.state(), &source);
     act(&mut h, Act::Push(Route::Kioku));
@@ -570,4 +571,80 @@ fn kioku_shows_how_far_a_sync_has_got() {
     assert!(h.state().kioku.progress.is_none() && !h.state().kioku.syncing);
     assert!(h.state().kioku.took.is_some_and(|t| t >= 75.0));
     assert!(h.query_by_label_contains("session has expired").is_some());
+}
+
+#[test]
+fn kioku_titles_can_be_chosen_by_hand_and_are_remembered() {
+    use kuro_app::app::PickFrom;
+    let mut h = harness_with(store(), [1240.0, 2400.0], |_| {});
+    let found = review(h.state(), &history());
+    act(&mut h, Act::Push(Route::Kioku));
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(found)));
+    settle(&mut h);
+    click(&mut h, "Choose title");
+    let picker = h.state().kioku.picker.as_ref().unwrap();
+    assert_eq!(picker.text, "A Show Nobody Has Heard Of");
+    assert!(h.query_by_label("Which title is “A Show Nobody Has Heard Of”?").is_some());
+    // Offline, the search answers through an event, as it would from the network.
+    let text = picker.text.clone();
+    h.state_mut().kioku.picker.as_mut().unwrap().sent = text.clone();
+    let result = Ok(vec![media(4, MediaKind::Anime, "Midnight Ferry")]);
+    h.state_mut().handle(&ctx, Event::KiokuFound { text, result });
+    settle(&mut h);
+    click(&mut h, "Midnight Ferry");
+
+    let r = h.state().kioku.review.clone().unwrap();
+    assert!(h.state().kioku.picker.is_none());
+    assert!(r.unmatched.is_empty());
+    let c = r.changes.iter().find(|c| c.media.id == 4).unwrap();
+    assert_eq!(
+        (c.before.as_ref().map(|b| b.status), c.after.progress, c.selected),
+        (Some(ListStatus::Planning), 1, true)
+    );
+
+    // The next sync knows the choice.
+    let again = review(h.state(), &history());
+    assert!(again.unmatched.is_empty() && again.changes.iter().any(|c| c.media.id == 4));
+
+    // A matched title can be changed the same way.
+    let i = h.state().kioku.review.as_ref().unwrap().changes.iter().position(|c| c.media.id == 1).unwrap();
+    act(&mut h, Act::KiokuPick(PickFrom::Change(i)));
+    assert_eq!(h.state().kioku.picker.as_ref().unwrap().group.items.len(), 3);
+}
+
+#[test]
+fn kioku_counted_episodes_are_marked() {
+    let mut h = harness_with(store(), [1240.0, 2400.0], |_| {});
+    let mut items: Vec<_> = (1..=3).map(|n| watched(&format!("M{n}"), "Midnight Ferry", 1, n)).collect();
+    for i in &mut items {
+        i.estimated = true;
+    }
+    let found = review(h.state(), &FakeSource(items));
+    act(&mut h, Act::Push(Route::Kioku));
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(found)));
+    settle(&mut h);
+    let c = &h.state().kioku.review.as_ref().unwrap().changes[0];
+    assert!(c.estimated && c.selected && c.after.progress == 3);
+    assert!(h.query_by_label("Episode numbers counted from the history").is_some());
+}
+
+#[test]
+fn kioku_folds_long_lists_of_series_not_found() {
+    let mut h = harness_with(store(), [1240.0, 2400.0], |_| {});
+    let items = (1..=5).map(|n| watched(&format!("U{n}"), &format!("Unknown Show {n}"), 1, 1)).collect();
+    let found = review(h.state(), &FakeSource(items));
+    act(&mut h, Act::Push(Route::Kioku));
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(found)));
+    settle(&mut h);
+    assert!(h.query_by_label_contains("5 series not found").is_some());
+    assert!(h.query_by_label_contains("Unknown Show 1").is_none());
+    click(&mut h, "Show");
+    assert!(h.query_by_label_contains("Unknown Show 1").is_some());
+    click(&mut h, "Ignore all");
+    let r = h.state().kioku.review.as_ref().unwrap();
+    assert!(r.unmatched.is_empty());
+    assert_eq!(r.dismissed.len(), 5);
 }

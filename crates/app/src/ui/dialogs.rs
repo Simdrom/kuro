@@ -13,6 +13,7 @@ pub fn show(app: &mut App, ctx: &Context) {
     editor(app, ctx);
     login(app, ctx);
     command(app, ctx);
+    super::kioku::picker(app, ctx);
     confirm(app, ctx);
     toast(app, ctx);
 }

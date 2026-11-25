@@ -65,8 +65,19 @@ Kioku appears as a device called "Kuro" in your Crunchyroll account.
 **Disconnect** forgets the session in Kuro; to end it on Crunchyroll as well,
 remove that device in your account settings.
 
-Netflix, Disney+ and Prime Video are planned as imports of the files those
-services hand out, and are not available yet.
+**Netflix** is an import, with nothing unofficial about it: on netflix.com,
+open Account › Profiles › your profile › Viewing activity, choose **Download
+all** and import that file in Kioku. Nothing is sent to Netflix. The file
+gives episode titles but almost never their numbers, so episodes are counted
+in the order they were watched and the review says so.
+
+Series that are not found (most of a Netflix history is not anime) are folded
+into one line. Any of them, or any title matched wrongly, can be set with
+**Choose title**; Kioku remembers the choice for later imports. Title lookups
+are kept for 30 days, so importing again is quick.
+
+Disney+ and Prime Video are planned as imports of the files those services
+hand out, and are not available yet.
 
 ## What changes from a phone app
 
@@ -109,7 +120,8 @@ needs a private key.
 ## Tests
 
     cargo test --workspace
-    cargo test -p kuro-api --test live -- --ignored     # real AniList; Crunchyroll with KURO_KIOKU_ETP_RT
+    cargo test -p kuro-api --test live -- --ignored     # real AniList; Crunchyroll with KURO_KIOKU_ETP_RT,
+                                                        # a Netflix file with KURO_KIOKU_NETFLIX_CSV
     cargo test -p kuro --test shots -- --ignored # renders every screen
     cargo clippy --workspace --all-targets -- -D warnings
 
