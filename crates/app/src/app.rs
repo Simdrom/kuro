@@ -292,6 +292,8 @@ pub struct App {
     clipboard_seen: String,
     really_quit: bool,
     hidden: bool,
+    /// Frames left in which a hidden start is enforced.
+    start_hidden: u8,
     applied: Option<(Palette, bool, f32)>,
     icon_applied: Option<mango_core::settings::AppIcon>,
     tray_applied: bool,
@@ -386,6 +388,7 @@ impl App {
             clipboard_seen: String::new(),
             really_quit: false,
             hidden,
+            start_hidden: if hidden { 3 } else { 0 },
             applied: None,
             icon_applied: None,
             tray_applied: false,
@@ -1075,6 +1078,7 @@ impl App {
 
     pub fn show_window(&mut self, ctx: &egui::Context) {
         self.hidden = false;
+        self.start_hidden = 0;
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
         ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
         ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
@@ -1280,6 +1284,12 @@ impl eframe::App for App {
         let ctx = ui.ctx().clone();
         self.screen = ctx.content_rect();
         self.tex.begin_frame();
+        // The window is shown after its first frame whatever was asked for.
+        if self.start_hidden > 0 {
+            self.start_hidden -= 1;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            ctx.request_repaint();
+        }
         self.check_clipboard(&ctx);
         self.shortcuts(&ctx);
         crate::ui::show(self, ui);
