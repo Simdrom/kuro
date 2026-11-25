@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Kuro: third-party licences</title>
+<h1>Third-party licences</h1>
+{{#each licenses}}
+<h2>{{name}}</h2>
+<ul>
+{{#each used_by}}
+<li>{{crate.name}} {{crate.version}}</li>
+{{/each}}
+</ul>
+<pre>{{text}}</pre>
+{{/each}}
+</html>

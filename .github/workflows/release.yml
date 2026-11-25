@@ -1,0 +1,184 @@
+name: Release
+
+# Publishes develop: main is fast-forwarded to it and tagged with the version in
+# Cargo.toml, the executable is published, and develop moves to the next minor version.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and package everything, publish nothing
+        type: boolean
+        default: true
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Check and describe
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Version and preconditions
+        id: version
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          HAS_KEY: ${{ secrets.RELEASE_DEPLOY_KEY != '' }}
+        run: |
+          fail() { echo "::error::$1"; exit 1; }
+          [ "$GITHUB_REF" = refs/heads/develop ] || fail "Run this from develop, not $GITHUB_REF"
+          version=$(grep -m1 -oP '^version = "\K\d+\.\d+\.\d+(?=")' Cargo.toml) || fail "No X.Y.Z version in Cargo.toml"
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            # A retry of this same commit may go on.
+            [ "$(git rev-parse "v$version^{commit}")" = "$GITHUB_SHA" ] || fail "v$version already exists on another commit"
+          fi
+          git merge-base --is-ancestor origin/main "$GITHUB_SHA" || fail "main has commits that develop lacks: merge main into develop first"
+          [ "$DRY_RUN" = true ] || [ "$HAS_KEY" = true ] || fail "The RELEASE_DEPLOY_KEY secret is missing"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "## Kuro $version" >> "$GITHUB_STEP_SUMMARY"
+      - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
+        with:
+          tool: git-cliff@2.14.2,cargo-about@0.9.3
+          fallback: none
+      - name: Notes and third-party licences
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir out
+          git cliff --unreleased --tag "v$VERSION" --strip header -o out/notes.md
+          cargo about generate --locked --fail -o out/THIRD-PARTY-LICENSES.html about.hbs
+          cat out/notes.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-notes
+          path: out
+          if-no-files-found: error
+          retention-days: 14
+
+  ci:
+    name: CI
+    needs: prepare
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  package:
+    name: Package
+    needs: [prepare, ci]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: kuro-${{ github.sha }}
+          path: in
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-notes
+          path: in
+      - name: Zip and checksums
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          name="kuro-$VERSION-windows-x64"
+          mkdir -p "$name" dist
+          cp in/kuro.exe in/THIRD-PARTY-LICENSES.html README.md "$name/"
+          cp crates/app/assets/fonts/PHOSPHOR-LICENSE.txt "$name/"
+          zip -r "dist/$name.zip" "$name"
+          cd dist
+          sha256sum "$name.zip" | tee SHA256SUMS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-files
+          path: dist
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Tag and publish
+    if: ${{ !inputs.dry_run }}
+    needs: [prepare, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-files
+          path: dist
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-notes
+          path: notes
+      # The workflow's own token may not push changes to workflow files; the key may.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: repo
+          fetch-depth: 0
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
+          persist-credentials: true
+      # Both or neither. A lightweight tag makes a retry harmless.
+      - name: Move main and tag
+        env:
+          TAG: v${{ needs.prepare.outputs.version }}
+        working-directory: repo
+        run: git push --atomic origin "$GITHUB_SHA:refs/heads/main" "$GITHUB_SHA:refs/tags/$TAG"
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: v${{ needs.prepare.outputs.version }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 ||
+            gh release create "$TAG" --verify-tag --draft --title "Kuro ${TAG#v}" --notes-file notes/notes.md
+          gh release upload "$TAG" dist/* --clobber
+          gh release edit "$TAG" --draft=false --latest
+
+  next:
+    name: Next version on develop
+    needs: [prepare, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: develop
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
+          persist-credentials: true
+      - name: Bump
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          if ! grep -q "^version = \"$VERSION\"$" Cargo.toml; then
+            echo "develop has already moved on from $VERSION"
+            exit 0
+          fi
+          IFS=. read -r major minor _ <<< "$VERSION"
+          next="$major.$((minor + 1)).0"
+          sed -i "s/^version = \"$VERSION\"$/version = \"$next\"/" Cargo.toml
+          # Only the workspace's own entries change in the lock file.
+          cargo update --workspace
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: start $next"
+          git push origin HEAD:develop
