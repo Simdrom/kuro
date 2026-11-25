@@ -255,6 +255,13 @@ pub fn error(e: &ApiError) -> String {
     }
 }
 
+/// `m:ss`, or `h:mm:ss` from an hour on.
+pub fn duration(seconds: f64) -> String {
+    let s = seconds.max(0.0) as u64;
+    let (h, m, s) = (s / 3600, s / 60 % 60, s % 60);
+    if h > 0 { format!("{h}:{m:02}:{s:02}") } else { format!("{m}:{s:02}") }
+}
+
 pub fn date(d: FuzzyDate) -> String {
     let full = FuzzyDate::new(d.year, d.month, Some(d.day.unwrap_or(1))).and_then(|f| f.exact());
     match full {
@@ -331,6 +338,15 @@ pub fn bytes(n: u64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn durations_read_like_a_clock() {
+        assert_eq!(
+            (duration(0.0), duration(75.4), duration(3725.0)),
+            ("0:00".into(), "1:15".into(), "1:02:05".into())
+        );
+        assert_eq!(duration(-3.0), "0:00");
+    }
 
     #[test]
     fn countdowns() {

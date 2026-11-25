@@ -33,6 +33,13 @@ pub fn show(app: &mut App, ui: &mut Ui) {
                 }
             };
             ui.vertical_centered(|ui| widgets::dim(ui, &p, text));
+            if let Some(started) = app.kioku.started {
+                let elapsed = ui.input(|i| i.time) - started;
+                ui.vertical_centered(|ui| {
+                    widgets::dim(ui, &p, tf("kioku.elapsed", &[&format::duration(elapsed)]))
+                });
+                ui.ctx().request_repaint_after(std::time::Duration::from_millis(500));
+            }
             if let Some(KiokuStep::Searching { done, total }) = app.kioku.progress
                 && total > 0
             {
@@ -53,6 +60,10 @@ pub fn show(app: &mut App, ui: &mut Ui) {
             });
         }
         if app.kioku.review.is_some() {
+            if let Some(took) = app.kioku.took {
+                ui.add_space(8.0);
+                note(ui, &p, &tf("kioku.took", &[&format::duration(took)]));
+            }
             review(app, ui);
         }
         section(ui, &p, t("kioku.more"));

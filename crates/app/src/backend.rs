@@ -582,6 +582,7 @@ impl Backend {
     pub fn kioku_sync(&self, platform: Platform, service: Service) {
         let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
         self.spawn(async move {
+            let started = std::time::Instant::now();
             // A bug must end the sync with an error, not leave it spinning forever.
             let run = {
                 let reply = reply.clone();
@@ -591,8 +592,10 @@ impl Backend {
                 tracing::error!("kioku: sync stopped unexpectedly: {e}");
                 Err(ApiError::Service("Kioku stopped unexpectedly".into()))
             });
-            if let Err(e) = &result {
-                tracing::warn!("kioku: sync failed: {e}");
+            let seconds = started.elapsed().as_secs();
+            match &result {
+                Ok(_) => tracing::info!(seconds, "kioku: sync finished"),
+                Err(e) => tracing::warn!(seconds, "kioku: sync failed: {e}"),
             }
             reply.send(Event::KiokuReview(result));
         });

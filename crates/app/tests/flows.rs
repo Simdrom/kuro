@@ -555,10 +555,12 @@ fn kioku_shows_how_far_a_sync_has_got() {
     let mut h = harness();
     act(&mut h, Act::Push(Route::Kioku));
     h.state_mut().kioku.syncing = true;
+    h.state_mut().kioku.started = Some(h.ctx.input(|i| i.time) - 75.0);
     let ctx = h.ctx.clone();
     h.state_mut().handle(&ctx, Event::KiokuProgress(KiokuStep::Reading(4)));
     settle(&mut h);
     assert!(h.query_by_label("Reading the history: page 4").is_some());
+    assert!(h.query_by_label_contains("Elapsed: 1:1").is_some());
     h.state_mut().handle(&ctx, Event::KiokuProgress(KiokuStep::Searching { done: 3, total: 10 }));
     settle(&mut h);
     assert!(h.query_by_label("Looking up titles: 3 of 10").is_some());
@@ -566,5 +568,6 @@ fn kioku_shows_how_far_a_sync_has_got() {
     h.state_mut().handle(&ctx, Event::KiokuReview(Err(kuro_api::ApiError::Unauthorized)));
     settle(&mut h);
     assert!(h.state().kioku.progress.is_none() && !h.state().kioku.syncing);
+    assert!(h.state().kioku.took.is_some_and(|t| t >= 75.0));
     assert!(h.query_by_label_contains("session has expired").is_some());
 }

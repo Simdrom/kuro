@@ -129,6 +129,10 @@ pub struct KiokuView {
     pub syncing: bool,
     /// How far the running sync has got.
     pub progress: Option<KiokuStep>,
+    /// Interface time the running sync started at.
+    pub started: Option<f64>,
+    /// Seconds the last sync took.
+    pub took: Option<f64>,
     pub review: Option<KiokuReview>,
     pub error: Option<ApiError>,
 }
@@ -918,6 +922,8 @@ impl App {
             Act::KiokuSync(p) => {
                 self.kioku.syncing = true;
                 self.kioku.progress = None;
+                self.kioku.started = Some(self.time);
+                self.kioku.took = None;
                 self.kioku.error = None;
                 self.kioku.review = None;
                 self.bg.kioku_sync(p, self.s.primary);
@@ -1223,6 +1229,7 @@ impl App {
             Event::KiokuReview(result) => {
                 self.kioku.syncing = false;
                 self.kioku.progress = None;
+                self.kioku.took = self.kioku.started.take().map(|s| (ctx.input(|i| i.time) - s).max(0.0));
                 match result {
                     Ok(r) => self.kioku.review = Some(r),
                     Err(e) => {
