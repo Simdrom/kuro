@@ -83,7 +83,7 @@ impl AniList {
             .unwrap_or_default();
         let decl = if decl.is_empty() { decl } else { format!("({decl})") };
         let q = format!(
-            "query{decl}{{Page(page:{page},perPage:{PER_PAGE}){{pageInfo{{hasNextPage}} media({args}){{...M}}}}}} {SUMMARY}"
+            "query{decl}{{Page(page:{page},perPage:{PER_PAGE}){{pageInfo{{hasNextPage}} media({args}){{...M description(asHtml:false)}}}}}} {SUMMARY}"
         );
         let d = self.query(None, &q, vars).await?;
         Ok(Page {
@@ -486,6 +486,7 @@ pub(crate) fn media(v: &Value) -> Option<Media> {
         season: season.and_then(|season| {
             Some(SeasonYear { season, year: i32::try_from(v["seasonYear"].as_i64()?).ok()? })
         }),
+        synopsis: opt_text(&v["description"]).map(|t| clean(&t)),
         start: date(&v["startDate"]),
         end: date(&v["endDate"]),
         episodes: num(&v["episodes"]),
@@ -569,7 +570,6 @@ fn entry(v: &Value) -> Option<ListEntry> {
 
 fn detail(v: &Value) -> Option<MediaDetail> {
     let mut m = media(v)?;
-    m.synopsis = opt_text(&v["description"]).map(|t| clean(&t));
     m.tags = list(&v["tags"])
         .iter()
         .filter(|t| t["isMediaSpoiler"].as_bool() != Some(true) && t["rank"].as_u64().unwrap_or(0) >= 60)
