@@ -30,6 +30,10 @@ fn main() {
         };
         std::process::exit(code);
     }
+    if args.iter().any(|a| a == "--quit") {
+        let gone = system::quit(profile.as_deref(), std::time::Duration::from_secs(15));
+        std::process::exit(i32::from(!gone));
+    }
     if system::forward(profile.as_deref(), link.as_deref()) {
         return;
     }

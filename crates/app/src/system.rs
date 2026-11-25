@@ -1,6 +1,7 @@
 //! Windows integration: toasts, tray, autostart, links and single instance.
 
 use std::io::{BufRead, BufReader, Read, Write};
+use std::time::{Duration, Instant};
 
 use interprocess::local_socket::traits::{ListenerExt, Stream as _};
 use interprocess::local_socket::{GenericNamespaced, ListenerOptions, Stream, ToNsName};
@@ -11,6 +12,7 @@ use crate::backend::{Event, Reply};
 pub const APP_ID: &str = "Kuro.Tracker";
 const MAX_LINE: u64 = 4096;
 const SHOW: &str = "show";
+const QUIT: &str = "quit";
 
 fn pipe_name(profile: Option<&str>) -> String {
     let user = std::env::var("USERNAME").or_else(|_| std::env::var("USER")).unwrap_or_default();
@@ -33,10 +35,30 @@ pub fn forward(profile: Option<&str>, link: Option<&str>) -> bool {
 }
 
 fn forward_to(name: &str, link: Option<&str>) -> bool {
+    send_to(name, link.filter(|l| links::parse(l).is_some()).unwrap_or(SHOW))
+}
+
+fn send_to(name: &str, line: &str) -> bool {
     let Ok(name) = name.to_ns_name::<GenericNamespaced>() else { return false };
     let Ok(mut s) = Stream::connect(name) else { return false };
-    let line = link.filter(|l| links::parse(l).is_some()).unwrap_or(SHOW);
     writeln!(s, "{line}").is_ok()
+}
+
+/// Closes the running instance, even from the tray, and waits for it. The installer
+/// needs its files free. Returns false if it is still there after `wait`.
+pub fn quit(profile: Option<&str>, wait: Duration) -> bool {
+    quit_at(&pipe_name(profile), wait)
+}
+
+fn quit_at(name: &str, wait: Duration) -> bool {
+    let end = Instant::now() + wait;
+    while send_to(name, QUIT) {
+        if Instant::now() >= end {
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(200));
+    }
+    true
 }
 
 /// Receives links from later instances.
@@ -56,9 +78,11 @@ fn listen_on(name: &str, reply: Reply) {
                     return;
                 }
                 let line = line.trim();
-                // Any local program can write here, so only known links get through.
+                // Any local program can write here, so only known words and links get through.
                 if line == SHOW {
                     reply.send(Event::ShowWindow);
+                } else if line == QUIT {
+                    reply.send(Event::Quit);
                 } else if links::parse(line).is_some() {
                     reply.send(Event::ShowWindow);
                     reply.send(Event::OpenLink(line.to_owned()));
@@ -114,7 +138,7 @@ mod windows {
     use super::*;
     use crate::i18n::t;
     use eframe::egui::IconData;
-    use tauri_winrt_notification::{Duration, Toast};
+    use tauri_winrt_notification::{Duration as ToastDuration, Toast};
     use tray_icon::menu::{Menu, MenuEvent, MenuItem};
     use tray_icon::{MouseButton, TrayIcon, TrayIconBuilder, TrayIconEvent};
     use windows_registry::CURRENT_USER;
@@ -171,15 +195,16 @@ mod windows {
     impl System for WindowsSystem {
         fn notify(&self, title: &str, body: &str, link: Option<String>) {
             let reply = self.reply.clone();
-            let toast = Toast::new(APP_ID).title(title).text1(body).duration(Duration::Short).on_activated(
-                move |_| {
-                    reply.send(Event::ShowWindow);
-                    if let Some(l) = &link {
-                        reply.send(Event::OpenLink(l.clone()));
-                    }
-                    Ok(())
-                },
-            );
+            let toast =
+                Toast::new(APP_ID).title(title).text1(body).duration(ToastDuration::Short).on_activated(
+                    move |_| {
+                        reply.send(Event::ShowWindow);
+                        if let Some(l) = &link {
+                            reply.send(Event::OpenLink(l.clone()));
+                        }
+                        Ok(())
+                    },
+                );
             if let Err(e) = toast.show() {
                 tracing::warn!("toast failed: {e}");
             }
@@ -272,7 +297,6 @@ mod tests {
     use kuro_api::{Api, ClientIds, MemorySecrets};
     use kuro_core::Store;
     use std::sync::Arc;
-    use std::time::{Duration, Instant};
 
     #[test]
     fn only_web_addresses_can_be_opened() {
@@ -323,5 +347,14 @@ mod tests {
         }
         assert_eq!(open, ["https://anilist.co/anime/5"]);
         assert_eq!(show, 2);
+
+        // The installer asks for a way out; with nobody listening there is nothing to wait for.
+        assert!(!quit_at(&name, Duration::ZERO));
+        let end = Instant::now() + Duration::from_secs(2);
+        while !matches!(bg.next_event(), Some(Event::Quit)) {
+            assert!(Instant::now() < end, "quit did not arrive");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(quit_at(&format!("{name}-nobody"), Duration::ZERO));
     }
 }
