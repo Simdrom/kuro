@@ -2,7 +2,6 @@
 
 use std::rc::Rc;
 
-use chrono::Datelike;
 use eframe::egui::{self, Ui};
 use mango_api::Ranking;
 use mango_core::links;
@@ -207,7 +206,7 @@ pub fn ranking(app: &mut App, ui: &mut Ui) {
                 }
             });
         let mut years = vec![None];
-        years.extend((1960..=today().year() + 1).rev().map(Some));
+        years.extend((1960..=i32::from(today().year()) + 1).rev().map(Some));
         widgets::select(ui, "year", t("Year"), &mut r.year, &years, |y| {
             y.map_or(t("All years").to_owned(), |y| y.to_string())
         });

@@ -1,6 +1,6 @@
 //! Decides which notifications are due.
 
-use chrono::{NaiveTime, TimeZone};
+use jiff::tz::TimeZone;
 
 use crate::model::{FuzzyDate, ListEntry, ListStatus, MediaKind, ReleaseStatus};
 use crate::settings::NotificationSettings;
@@ -24,17 +24,18 @@ pub struct Due {
 /// Alerts older than this are dropped rather than shown late.
 const MAX_AGE: i64 = 12 * 3600;
 
-fn local_at<Tz: TimeZone>(d: FuzzyDate, t: NaiveTime, tz: &Tz) -> Option<i64> {
-    tz.from_local_datetime(&d.exact()?.and_time(t)).earliest().map(|x| x.timestamp())
+fn local_at(d: FuzzyDate, hour: i8, tz: &TimeZone) -> Option<i64> {
+    let at = tz.to_timestamp(d.exact()?.at(hour, 0, 0, 0)).ok()?;
+    Some(at.as_second())
 }
 
 /// Every notification for `entries`, past or future, that settings allow.
-pub fn plan<Tz: TimeZone>(entries: &[ListEntry], s: &NotificationSettings, tz: &Tz) -> Vec<Due> {
+pub fn plan(entries: &[ListEntry], s: &NotificationSettings, tz: &TimeZone) -> Vec<Due> {
     let mut out = Vec::new();
     if !s.enabled {
         return out;
     }
-    let time = NaiveTime::from_hms_opt(s.date_hour.min(23), 0, 0).unwrap_or_default();
+    let hour = s.date_hour.min(23) as i8;
     for e in entries.iter().filter(|e| e.media.kind == MediaKind::Anime) {
         let m = &e.media;
         let wanted = match e.status {
@@ -62,13 +63,13 @@ pub fn plan<Tz: TimeZone>(entries: &[ListEntry], s: &NotificationSettings, tz: &
         } else {
             if s.premieres
                 && m.release == ReleaseStatus::NotYetReleased
-                && let Some(at) = m.start.and_then(|d| local_at(d, time, tz))
+                && let Some(at) = m.start.and_then(|d| local_at(d, hour, tz))
             {
                 push("premiere".into(), at, Event::Premiere);
             }
             if s.finished
                 && m.release == ReleaseStatus::Releasing
-                && let Some(at) = m.end.and_then(|d| local_at(d, time, tz))
+                && let Some(at) = m.end.and_then(|d| local_at(d, hour, tz))
             {
                 push("finished".into(), at, Event::Finished);
             }
@@ -87,7 +88,6 @@ pub fn due(plan: Vec<Due>, now: i64, already: impl Fn(&str) -> bool) -> Vec<Due>
 mod tests {
     use super::*;
     use crate::model::{Airing, Media};
-    use chrono::Utc;
 
     fn airing(id: u64, ep: u32, at: i64, total: Option<u32>) -> ListEntry {
         ListEntry {
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn fires_once_inside_the_window() {
-        let p = plan(&[airing(1, 5, 1000, Some(12))], &on(), &Utc);
+        let p = plan(&[airing(1, 5, 1000, Some(12))], &on(), &TimeZone::UTC);
         assert_eq!(p[0].event, Event::Episode(5));
         assert!(due(p.clone(), 999, |_| false).is_empty());
         assert_eq!(due(p.clone(), 1000, |_| false).len(), 1);
@@ -116,13 +116,13 @@ mod tests {
 
     #[test]
     fn long_running_without_total_still_alerts() {
-        assert_eq!(plan(&[airing(1, 1150, 10, None)], &on(), &Utc)[0].event, Event::Episode(1150));
+        assert_eq!(plan(&[airing(1, 1150, 10, None)], &on(), &TimeZone::UTC)[0].event, Event::Episode(1150));
     }
 
     #[test]
     fn premiere_and_finale() {
-        assert_eq!(plan(&[airing(1, 1, 10, Some(12))], &on(), &Utc)[0].event, Event::Premiere);
-        let p = plan(&[airing(1, 12, 10, Some(12))], &on(), &Utc);
+        assert_eq!(plan(&[airing(1, 1, 10, Some(12))], &on(), &TimeZone::UTC)[0].event, Event::Premiere);
+        let p = plan(&[airing(1, 12, 10, Some(12))], &on(), &TimeZone::UTC);
         assert!(p.iter().any(|d| d.event == Event::Finished));
     }
 
@@ -131,11 +131,11 @@ mod tests {
         let e = airing(1, 2, 10, None);
         let mut s = on();
         s.muted.push(e.media.media_ref());
-        assert!(plan(std::slice::from_ref(&e), &s, &Utc).is_empty());
+        assert!(plan(std::slice::from_ref(&e), &s, &TimeZone::UTC).is_empty());
         let off = NotificationSettings { enabled: false, ..on() };
-        assert!(plan(std::slice::from_ref(&e), &off, &Utc).is_empty());
+        assert!(plan(std::slice::from_ref(&e), &off, &TimeZone::UTC).is_empty());
         let dropped = ListEntry { status: ListStatus::Dropped, ..e };
-        assert!(plan(&[dropped], &on(), &Utc).is_empty());
+        assert!(plan(&[dropped], &on(), &TimeZone::UTC).is_empty());
     }
 
     #[test]
@@ -149,7 +149,7 @@ mod tests {
             })
         };
         let s = NotificationSettings { date_hour: 9, ..on() };
-        let at = Utc.with_ymd_and_hms(2027, 1, 2, 9, 0, 0).unwrap().timestamp();
-        assert_eq!(plan(&[e], &s, &Utc)[0].at, at);
+        let at = "2027-01-02T09:00:00Z".parse::<jiff::Timestamp>().unwrap().as_second();
+        assert_eq!(plan(&[e], &s, &TimeZone::UTC)[0].at, at);
     }
 }

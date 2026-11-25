@@ -1,4 +1,4 @@
-use chrono::{Datelike, NaiveDate};
+use jiff::civil::Date;
 use serde::{Deserialize, Serialize};
 
 use crate::season::{Season, SeasonYear};
@@ -141,6 +141,10 @@ pub struct FuzzyDate {
     pub day: Option<u32>,
 }
 
+fn civil(year: i32, month: u32, day: u32) -> Option<Date> {
+    Date::new(year.try_into().ok()?, month.try_into().ok()?, day.try_into().ok()?).ok()
+}
+
 impl FuzzyDate {
     /// Builds a date, dropping components that are out of range.
     pub fn new(year: i32, month: Option<u32>, day: Option<u32>) -> Option<Self> {
@@ -148,7 +152,7 @@ impl FuzzyDate {
             return None;
         }
         let month = month.filter(|m| (1..=12).contains(m));
-        let day = month.and_then(|m| day.filter(|d| NaiveDate::from_ymd_opt(year, m, *d).is_some()));
+        let day = month.and_then(|m| day.filter(|d| civil(year, m, *d).is_some()));
         Some(Self { year, month, day })
     }
 
@@ -164,13 +168,13 @@ impl FuzzyDate {
         Self::new(year, month, day)
     }
 
-    pub fn from_naive(d: NaiveDate) -> Self {
-        Self { year: d.year(), month: Some(d.month()), day: Some(d.day()) }
+    pub fn from_date(d: Date) -> Self {
+        Self { year: d.year().into(), month: Some(d.month() as u32), day: Some(d.day() as u32) }
     }
 
     /// The exact calendar date, when all components are known.
-    pub fn exact(&self) -> Option<NaiveDate> {
-        NaiveDate::from_ymd_opt(self.year, self.month?, self.day?)
+    pub fn exact(&self) -> Option<Date> {
+        civil(self.year, self.month?, self.day?)
     }
 
     pub fn season(&self) -> Option<SeasonYear> {
@@ -467,10 +471,7 @@ mod tests {
 
     #[test]
     fn fuzzy_date_rejects_nonsense() {
-        assert_eq!(
-            FuzzyDate::parse("2023-09-29").and_then(|d| d.exact()),
-            NaiveDate::from_ymd_opt(2023, 9, 29)
-        );
+        assert_eq!(FuzzyDate::parse("2023-09-29").and_then(|d| d.exact()), civil(2023, 9, 29));
         assert_eq!(FuzzyDate::parse("2023-09").map(|d| d.iso()).as_deref(), Some("2023-09"));
         assert_eq!(FuzzyDate::parse("2023").map(|d| d.iso()).as_deref(), Some("2023"));
         assert_eq!(FuzzyDate::parse("2023-13-40").map(|d| d.iso()).as_deref(), Some("2023"));

@@ -1,6 +1,7 @@
 //! Text for domain values, in the interface language.
 
-use chrono::{DateTime, Local, TimeZone};
+use jiff::tz::TimeZone;
+use jiff::{Timestamp, ZonedDateTime};
 use mango_api::{ApiError, Ranking};
 use mango_core::list::SortKey;
 use mango_core::overview::Section;
@@ -255,10 +256,9 @@ pub fn error(e: &ApiError) -> String {
 
 pub fn date(d: FuzzyDate) -> String {
     let full = FuzzyDate::new(d.year, d.month, Some(d.day.unwrap_or(1))).and_then(|f| f.exact());
-    match (full, d.day) {
-        (Some(n), Some(_)) => n.format_localized("%e %b %Y", current().locale).to_string().trim().to_owned(),
-        (Some(n), None) => n.format_localized("%b %Y", current().locale).to_string(),
-        _ => d.year.to_string(),
+    match full {
+        Some(n) => current().date(n, d.day.is_some()),
+        None => d.year.to_string(),
     }
 }
 
@@ -266,19 +266,29 @@ pub fn month(d: FuzzyDate) -> String {
     date(FuzzyDate { day: None, ..d })
 }
 
-fn local(at: i64) -> Option<DateTime<Local>> {
-    Local.timestamp_opt(at, 0).single()
+fn local(at: i64) -> Option<ZonedDateTime> {
+    Some(Timestamp::from_second(at).ok()?.to_zoned_datetime(TimeZone::system()))
+}
+
+fn clock(z: &ZonedDateTime) -> String {
+    format!("{:02}:{:02}", z.hour(), z.minute())
 }
 
 pub fn date_time(at: i64) -> String {
-    local(at).map(|d| d.format_localized("%e %b %Y %H:%M", current().locale).to_string()).unwrap_or_default()
+    local(at).map(|z| format!("{} {}", current().date(z.date(), true), clock(&z))).unwrap_or_default()
 }
 
 /// `Thu 17:26`, or the date when more than a week away.
 pub fn airing_time(at: i64, now: i64) -> String {
-    let Some(d) = local(at) else { return String::new() };
-    let f = if at - now < 7 * 86_400 { "%a %H:%M" } else { "%e %b %H:%M" };
-    d.format_localized(f, current().locale).to_string().trim().to_owned()
+    let Some(z) = local(at) else { return String::new() };
+    let l = current();
+    if at - now < 7 * 86_400 {
+        return format!("{} {}", l.weekday(z.weekday()), clock(&z));
+    }
+    match l.code {
+        "ko" => format!("{} {}일 {}", l.month(z.month()), z.day(), clock(&z)),
+        _ => format!("{} {} {}", z.day(), l.month(z.month()), clock(&z)),
+    }
 }
 
 pub fn countdown(at: i64, now: i64) -> String {

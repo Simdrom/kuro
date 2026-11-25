@@ -330,7 +330,7 @@ fn dates_line(app: &App, ui: &mut Ui, e: &ListEntry) {
         parts.push(tf("Finished {}", &[&format::date(d)]));
     }
     if let (Some(a), Some(b)) = (e.start.and_then(|d| d.exact()), e.finish.and_then(|d| d.exact())) {
-        parts.push(tf("{} days", &[&((b - a).num_days() + 1)]));
+        parts.push(tf("{} days", &[&(b.duration_since(a).as_hours() / 24 + 1)]));
     }
     if e.repeat_count > 0 {
         parts.push(tf("Repeated {} times", &[&e.repeat_count]));

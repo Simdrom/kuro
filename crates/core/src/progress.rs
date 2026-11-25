@@ -1,18 +1,18 @@
 //! Rules that turn a user action into a new list entry.
 
-use chrono::NaiveDate;
+use jiff::civil::Date;
 
 use crate::model::{FuzzyDate, ListEntry, ListStatus, MediaKind};
 
 /// Moves progress by `delta`, applying the usual side effects.
-pub fn step(entry: &ListEntry, delta: i32, today: NaiveDate) -> ListEntry {
+pub fn step(entry: &ListEntry, delta: i32, today: Date) -> ListEntry {
     let target = i64::from(entry.progress).saturating_add(i64::from(delta)).clamp(0, i64::from(u32::MAX));
     set_progress(entry, target as u32, today)
 }
 
 /// Sets progress, clamped to the known total. Starting a title moves it to
 /// `Current`; reaching the end completes it (and counts a finished repeat).
-pub fn set_progress(entry: &ListEntry, value: u32, today: NaiveDate) -> ListEntry {
+pub fn set_progress(entry: &ListEntry, value: u32, today: Date) -> ListEntry {
     let mut e = entry.clone();
     let total = e.media.total();
     let value = total.map_or(value, |t| value.min(t));
@@ -31,13 +31,13 @@ pub fn set_progress(entry: &ListEntry, value: u32, today: NaiveDate) -> ListEntr
     }
     e.status = ListStatus::Current;
     if e.start.is_none() && !e.repeating {
-        e.start = Some(FuzzyDate::from_naive(today));
+        e.start = Some(FuzzyDate::from_date(today));
     }
     e
 }
 
 /// Changes volume progress without completing the title by itself.
-pub fn step_volumes(entry: &ListEntry, delta: i32, today: NaiveDate) -> ListEntry {
+pub fn step_volumes(entry: &ListEntry, delta: i32, today: Date) -> ListEntry {
     let mut e = entry.clone();
     let target =
         i64::from(e.progress_volumes).saturating_add(i64::from(delta)).clamp(0, i64::from(u32::MAX)) as u32;
@@ -46,12 +46,12 @@ pub fn step_volumes(entry: &ListEntry, delta: i32, today: NaiveDate) -> ListEntr
     e.progress_volumes = target;
     if advanced && e.status == ListStatus::Planning {
         e.status = ListStatus::Current;
-        e.start.get_or_insert(FuzzyDate::from_naive(today));
+        e.start.get_or_insert(FuzzyDate::from_date(today));
     }
     e
 }
 
-pub fn complete(entry: &ListEntry, today: NaiveDate) -> ListEntry {
+pub fn complete(entry: &ListEntry, today: Date) -> ListEntry {
     let mut e = entry.clone();
     if let Some(total) = e.media.total() {
         e.progress = total;
@@ -66,7 +66,7 @@ pub fn complete(entry: &ListEntry, today: NaiveDate) -> ListEntry {
         e.repeating = false;
         e.repeat_count = e.repeat_count.saturating_add(1);
     } else {
-        let date = FuzzyDate::from_naive(today);
+        let date = FuzzyDate::from_date(today);
         e.start.get_or_insert(date);
         e.finish.get_or_insert(date);
     }
@@ -84,13 +84,13 @@ pub fn start_repeat(entry: &ListEntry) -> ListEntry {
 }
 
 /// Applies a status picked by the user.
-pub fn set_status(entry: &ListEntry, status: ListStatus, today: NaiveDate) -> ListEntry {
+pub fn set_status(entry: &ListEntry, status: ListStatus, today: Date) -> ListEntry {
     match status {
         ListStatus::Completed if entry.status != ListStatus::Completed => complete(entry, today),
         ListStatus::Current => {
             let mut e = ListEntry { status, ..entry.clone() };
             if !e.repeating {
-                e.start.get_or_insert(FuzzyDate::from_naive(today));
+                e.start.get_or_insert(FuzzyDate::from_date(today));
             }
             e
         }
@@ -123,8 +123,8 @@ mod tests {
     use super::*;
     use crate::model::Media;
 
-    fn day() -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 11, 25).unwrap()
+    fn day() -> Date {
+        jiff::civil::date(2026, 11, 25)
     }
     fn anime(total: Option<u32>) -> ListEntry {
         ListEntry::new(Media { episodes: total, ..Media::default() })
@@ -134,7 +134,7 @@ mod tests {
     fn first_episode_starts_watching() {
         let e = step(&anime(Some(12)), 1, day());
         assert_eq!((e.status, e.progress), (ListStatus::Current, 1));
-        assert_eq!(e.start, Some(FuzzyDate::from_naive(day())));
+        assert_eq!(e.start, Some(FuzzyDate::from_date(day())));
     }
 
     #[test]
@@ -170,7 +170,7 @@ mod tests {
         e = start_repeat(&e);
         assert_eq!((e.progress, e.repeating), (0, true));
         for _ in 0..3 {
-            e = step(&e, 1, day().succ_opt().unwrap());
+            e = step(&e, 1, day().tomorrow().unwrap());
         }
         assert_eq!((e.status, e.repeating, e.repeat_count), (ListStatus::Completed, false, 1));
         assert_eq!(e.finish, original);

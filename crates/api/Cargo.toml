@@ -9,7 +9,7 @@ description = "AniList, MyAnimeList and music clients, OAuth and secret storage"
 [dependencies]
 mango-core = { path = "../core" }
 base64 = "0.22"
-chrono = { version = "0.4", features = ["serde"] }
+jiff = "1"
 getrandom = "0.3"
 keyring = "4"
 reqwest = { version = "0.13", default-features = false, features = ["native-tls", "json", "form", "query", "gzip", "http2", "charset", "system-proxy", "stream"] }

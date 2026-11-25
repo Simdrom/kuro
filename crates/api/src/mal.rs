@@ -368,8 +368,8 @@ fn entry(kind: MediaKind, v: &Value) -> Option<ListEntry> {
         notes: text(&s["comments"]),
         updated_at: s["updated_at"]
             .as_str()
-            .and_then(|t| chrono::DateTime::parse_from_rfc3339(t).ok())
-            .map_or(0, |t| t.timestamp()),
+            .and_then(|t| t.parse::<jiff::Timestamp>().ok())
+            .map_or(0, |t| t.as_second()),
     })
 }
 

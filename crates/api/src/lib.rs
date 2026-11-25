@@ -127,7 +127,7 @@ pub struct Api {
 const EARLY: i64 = 300;
 
 fn now() -> i64 {
-    chrono::Utc::now().timestamp()
+    jiff::Timestamp::now().as_second()
 }
 
 impl Api {

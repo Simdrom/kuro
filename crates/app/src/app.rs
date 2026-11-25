@@ -3,8 +3,9 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use chrono::{Local, NaiveDate};
 use eframe::egui::{self, Key, Modifiers, Vec2};
+use jiff::civil::Date;
+use jiff::tz::TimeZone;
 use mango_api::music::Track;
 use mango_api::{ApiError, Page, Ranking, RankingQuery, SeasonQuery, Tokens};
 use mango_core::links::{self, Link};
@@ -298,8 +299,8 @@ pub struct App {
     screen: egui::Rect,
 }
 
-pub fn today() -> NaiveDate {
-    Local::now().date_naive()
+pub fn today() -> Date {
+    jiff::ZonedDateTime::now().date()
 }
 
 fn slot(k: MediaKind) -> usize {
@@ -1102,7 +1103,7 @@ impl App {
 
     fn send_notifications(&mut self) {
         let all: Vec<ListEntry> = self.lib[0].iter().map(|e| (**e).clone()).collect();
-        let plan = notify::plan(&all, &self.s.notifications, &Local);
+        let plan = notify::plan(&all, &self.s.notifications, &TimeZone::system());
         let store = self.bg.store();
         let due = notify::due(plan, now(), |k| store.was_notified(k).unwrap_or(true));
         for d in &due {

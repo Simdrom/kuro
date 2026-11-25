@@ -129,7 +129,7 @@ impl Reply {
 }
 
 pub fn now() -> i64 {
-    chrono::Utc::now().timestamp()
+    jiff::Timestamp::now().as_second()
 }
 
 fn lock(store: &Mutex<Store>) -> MutexGuard<'_, Store> {
@@ -384,7 +384,7 @@ impl Backend {
 
     pub fn random(&self, kind: MediaKind, adult: bool) {
         let (api, reply) = (self.api.clone(), self.reply());
-        let seed = chrono::Utc::now().timestamp_subsec_nanos();
+        let seed = jiff::Timestamp::now().subsec_nanosecond().unsigned_abs();
         self.spawn(
             async move { reply.send(Event::Random(api.anilist.random(kind, adult, seed.into()).await)) },
         );

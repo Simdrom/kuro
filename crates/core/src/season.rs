@@ -1,4 +1,4 @@
-use chrono::{Datelike, NaiveDate};
+use jiff::civil::Date;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -39,8 +39,8 @@ pub struct SeasonYear {
 }
 
 impl SeasonYear {
-    pub fn of_date(d: NaiveDate) -> Self {
-        Self { season: Season::of_month(d.month()), year: d.year() }
+    pub fn of_date(d: Date) -> Self {
+        Self { season: Season::of_month(d.month() as u32), year: d.year().into() }
     }
 
     pub fn next(self) -> Self {
@@ -63,8 +63,8 @@ impl SeasonYear {
 }
 
 /// Years offered by the picker, newest first. Next year appears from September.
-pub fn years(today: NaiveDate) -> Vec<i32> {
-    let last = today.year() + i32::from(today.month() >= 9);
+pub fn years(today: Date) -> Vec<i32> {
+    let last = i32::from(today.year()) + i32::from(today.month() >= 9);
     (1960..=last).rev().collect()
 }
 
@@ -85,8 +85,8 @@ mod tests {
 
     #[test]
     fn upcoming_year_listed_from_september() {
-        let aug = NaiveDate::from_ymd_opt(2026, 8, 31).unwrap();
-        let sep = NaiveDate::from_ymd_opt(2026, 9, 1).unwrap();
+        let aug = jiff::civil::date(2026, 8, 31);
+        let sep = jiff::civil::date(2026, 9, 1);
         assert_eq!(years(aug)[0], 2026);
         assert_eq!(years(sep)[0], 2027);
     }

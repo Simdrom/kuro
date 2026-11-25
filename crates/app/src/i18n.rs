@@ -4,26 +4,90 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use chrono::Locale;
-
 pub struct Language {
     pub code: &'static str,
     pub name: &'static str,
-    pub locale: Locale,
     /// Digit group separator and decimal mark.
     pub marks: (char, char),
+    /// Short names, from January.
+    pub months: &'static str,
+    /// Short names, from Monday.
+    pub days: &'static str,
 }
 
 /// Column order of `strings.txt`.
 pub const LANGUAGES: [Language; 7] = [
-    Language { code: "en", name: "English", locale: Locale::en_US, marks: (',', '.') },
-    Language { code: "es", name: "Español", locale: Locale::es_ES, marks: ('.', ',') },
-    Language { code: "fr", name: "Français", locale: Locale::fr_FR, marks: ('\u{202f}', ',') },
-    Language { code: "de", name: "Deutsch", locale: Locale::de_DE, marks: ('.', ',') },
-    Language { code: "it", name: "Italiano", locale: Locale::it_IT, marks: ('.', ',') },
-    Language { code: "nb", name: "Norsk bokmål", locale: Locale::nb_NO, marks: ('\u{a0}', ',') },
-    Language { code: "ko", name: "한국어", locale: Locale::ko_KR, marks: (',', '.') },
+    Language {
+        code: "en",
+        name: "English",
+        marks: (',', '.'),
+        months: "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",
+        days: "Mon Tue Wed Thu Fri Sat Sun",
+    },
+    Language {
+        code: "es",
+        name: "Español",
+        marks: ('.', ','),
+        months: "ene feb mar abr may jun jul ago sep oct nov dic",
+        days: "lun mar mié jue vie sáb dom",
+    },
+    Language {
+        code: "fr",
+        name: "Français",
+        marks: ('\u{202f}', ','),
+        months: "janv. févr. mars avr. mai juin juil. août sept. oct. nov. déc.",
+        days: "lun. mar. mer. jeu. ven. sam. dim.",
+    },
+    Language {
+        code: "de",
+        name: "Deutsch",
+        marks: ('.', ','),
+        months: "Jan. Feb. März Apr. Mai Juni Juli Aug. Sept. Okt. Nov. Dez.",
+        days: "Mo. Di. Mi. Do. Fr. Sa. So.",
+    },
+    Language {
+        code: "it",
+        name: "Italiano",
+        marks: ('.', ','),
+        months: "gen feb mar apr mag giu lug ago set ott nov dic",
+        days: "lun mar mer gio ven sab dom",
+    },
+    Language {
+        code: "nb",
+        name: "Norsk bokmål",
+        marks: ('\u{a0}', ','),
+        months: "jan. feb. mars apr. mai juni juli aug. sep. okt. nov. des.",
+        days: "man. tir. ons. tor. fre. lør. søn.",
+    },
+    Language {
+        code: "ko",
+        name: "한국어",
+        marks: (',', '.'),
+        months: "1월 2월 3월 4월 5월 6월 7월 8월 9월 10월 11월 12월",
+        days: "월 화 수 목 금 토 일",
+    },
 ];
+
+impl Language {
+    pub fn month(&self, month: i8) -> &'static str {
+        self.months.split(' ').nth(usize::try_from(month - 1).unwrap_or(0)).unwrap_or_default()
+    }
+
+    pub fn weekday(&self, day: jiff::civil::Weekday) -> &'static str {
+        self.days.split(' ').nth(day.to_monday_zero_offset() as usize).unwrap_or_default()
+    }
+
+    /// `3 Oct 2025`, in the order the language uses.
+    pub fn date(&self, d: jiff::civil::Date, with_day: bool) -> String {
+        let (y, m) = (d.year(), self.month(d.month()));
+        match (self.code, with_day) {
+            ("ko", true) => format!("{y}년 {m} {}일", d.day()),
+            ("ko", false) => format!("{y}년 {m}"),
+            (_, true) => format!("{} {m} {y}", d.day()),
+            (_, false) => format!("{m} {y}"),
+        }
+    }
+}
 
 static CURRENT: AtomicUsize = AtomicUsize::new(0);
 
@@ -148,6 +212,15 @@ mod tests {
         assert_eq!(number(0), "0");
         assert_eq!(number(1_131_247), "1,131,247");
         assert_eq!(decimal(9.3, 2), "9.30");
+    }
+
+    #[test]
+    fn every_language_names_all_months_and_days() {
+        for l in &LANGUAGES {
+            assert_eq!((l.months.split(' ').count(), l.days.split(' ').count()), (12, 7), "{}", l.code);
+        }
+        assert_eq!(LANGUAGES[1].date(jiff::civil::date(2025, 10, 3), true), "3 oct 2025");
+        assert_eq!(LANGUAGES[6].date(jiff::civil::date(2025, 10, 3), true), "2025년 10월 3일");
     }
 
     #[test]
