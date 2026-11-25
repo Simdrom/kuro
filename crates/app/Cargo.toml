@@ -5,10 +5,40 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 description = "Unofficial desktop anime & manga tracker"
+default-run = "mango-desktop"
+
+[lib]
+name = "mango_app"
 
 [dependencies]
 mango-core = { path = "../core" }
 mango-api = { path = "../api" }
+arboard = { version = "3", default-features = false }
+chrono = { version = "0.4", features = ["unstable-locales"] }
+directories = "6"
+eframe = { version = "0.37", default-features = false, features = ["accesskit", "clipboard", "default_fonts", "links", "system_fonts", "wgpu", "persistence"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
+interprocess = "2"
+open = "5"
+rfd = { version = "0.18", default-features = false }
+serde = { version = "1", features = ["derive"] }
+sys-locale = "0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
+
+[target.'cfg(windows)'.dependencies]
+tray-icon = { version = "0.26", default-features = false }
+tauri-winrt-notification = "0.8"
+windows-registry = "0.100"
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = { version = "0.1", default-features = false }
+
+[dev-dependencies]
+egui_kittest = { version = "0.37", features = ["wgpu", "snapshot", "eframe"] }
+egui = "0.37"
+tempfile = "3"
 
 [lints]
 workspace = true

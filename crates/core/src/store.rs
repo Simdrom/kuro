@@ -165,8 +165,22 @@ impl Store {
         Ok(tx.commit()?)
     }
 
-    /// Replaces one list with the remote copy, keeping edits that have not been sent yet.
-    pub fn replace_library(&mut self, service: Service, kind: MediaKind, remote: &[ListEntry]) -> Result<()> {
+    /// Replaces one list with the remote copy, keeping edits that have not been
+    /// sent yet. With `merge`, local titles missing from the remote copy are kept
+    /// and queued for upload instead of dropped.
+    pub fn replace_library(
+        &mut self,
+        service: Service,
+        kind: MediaKind,
+        remote: &[ListEntry],
+        merge: bool,
+    ) -> Result<()> {
+        let keep: Vec<ListEntry> = if merge {
+            let known: std::collections::HashSet<u64> = remote.iter().map(|e| e.media.id).collect();
+            self.entries(service, kind)?.into_iter().filter(|e| !known.contains(&e.media.id)).collect()
+        } else {
+            Vec::new()
+        };
         let pending: Vec<Pending> = self
             .pending()?
             .into_iter()
@@ -176,6 +190,10 @@ impl Store {
         tx.execute("DELETE FROM entries WHERE service=?1 AND kind=?2", [service.key(), kind.key()])?;
         for e in remote.iter().filter(|e| e.media.service == service && e.media.kind == kind) {
             put_entry(&tx, e)?;
+        }
+        for e in &keep {
+            put_entry(&tx, e)?;
+            queue(&tx, service, e.media.media_ref(), &Change::Save(Box::new(e.clone())))?;
         }
         for p in pending {
             match p.change {
@@ -236,9 +254,12 @@ impl Store {
         Ok(())
     }
 
-    pub fn clear_pending(&self, target: Service) -> Result<()> {
-        self.db.execute("DELETE FROM outbox WHERE target=?1", [target.key()])?;
-        Ok(())
+    /// Forgets everything that belongs to an account, on sign-out.
+    pub fn clear_account(&mut self, service: Service) -> Result<()> {
+        let tx = self.db.transaction()?;
+        tx.execute("DELETE FROM outbox WHERE target=?1", [service.key()])?;
+        tx.execute("DELETE FROM entries WHERE service=?1", [service.key()])?;
+        Ok(tx.commit()?)
     }
 
     // Cache
@@ -380,7 +401,7 @@ mod tests {
         let mut s = Store::in_memory().unwrap();
         s.save_and_queue(&entry(1, 5), &[Service::AniList]).unwrap();
         s.put_entry(&entry(3, 1)).unwrap();
-        s.replace_library(Service::AniList, MediaKind::Anime, &[entry(1, 4), entry(2, 0)]).unwrap();
+        s.replace_library(Service::AniList, MediaKind::Anime, &[entry(1, 4), entry(2, 0)], false).unwrap();
         let mut got: Vec<_> = s
             .entries(Service::AniList, MediaKind::Anime)
             .unwrap()
@@ -395,7 +416,21 @@ mod tests {
     fn refresh_does_not_resurrect_unsent_deletes() {
         let mut s = Store::in_memory().unwrap();
         s.delete_and_queue(&entry(1, 0), &[Service::AniList]).unwrap();
-        s.replace_library(Service::AniList, MediaKind::Anime, &[entry(1, 0)]).unwrap();
+        s.replace_library(Service::AniList, MediaKind::Anime, &[entry(1, 0)], false).unwrap();
+        assert!(s.entries(Service::AniList, MediaKind::Anime).unwrap().is_empty());
+    }
+
+    #[test]
+    fn first_sign_in_uploads_only_missing_titles() {
+        let mut s = Store::in_memory().unwrap();
+        s.put_entry(&entry(1, 9)).unwrap();
+        s.put_entry(&entry(2, 5)).unwrap();
+        s.replace_library(Service::AniList, MediaKind::Anime, &[entry(1, 3)], true).unwrap();
+        assert_eq!(s.entry(entry(1, 0).media.media_ref()).unwrap().unwrap().progress, 3);
+        let p = s.pending().unwrap();
+        assert_eq!((p.len(), p[0].media.id), (1, 2));
+        s.clear_account(Service::AniList).unwrap();
+        assert!(s.pending().unwrap().is_empty());
         assert!(s.entries(Service::AniList, MediaKind::Anime).unwrap().is_empty());
     }
 

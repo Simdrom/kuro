@@ -1,0 +1,376 @@
+A small window above the others with your progress and statistics.|Una ventana pequeña sobre las demás con tu progreso y tus estadísticas.|Une petite fenêtre au-dessus des autres avec ta progression et tes statistiques.|Ein kleines Fenster über den anderen mit deinem Fortschritt und deiner Statistik.|Una piccola finestra sopra le altre con i tuoi progressi e le tue statistiche.|Et lite vindu over de andre med fremdrift og statistikk.|진행 상황과 통계를 다른 창 위에 보여 주는 작은 창입니다.
+About|Acerca de|À propos|Über|Informazioni|Om|정보
+Accounts|Cuentas|Comptes|Konten|Account|Kontoer|계정
+Adaptation|Adaptación|Adaptation|Adaption|Adattamento|Adaptasjon|각색
+Add a client ID in Settings › Accounts to use this service.|Añade un ID de cliente en Ajustes › Cuentas para usar este servicio.|Ajoute un ID client dans Réglages › Comptes pour utiliser ce service.|Füge unter Einstellungen › Konten eine Client-ID hinzu, um diesen Dienst zu nutzen.|Aggiungi un ID client in Impostazioni › Account per usare questo servizio.|Legg til en klient-ID i Innstillinger › Kontoer for å bruke tjenesten.|이 서비스를 사용하려면 설정 › 계정에서 클라이언트 ID를 추가하세요.
+Add one|Sumar uno|Ajouter un|Eins hinzufügen|Aggiungi uno|Legg til én|하나 추가
+Add one episode or chapter|Sumar un episodio o capítulo|Ajouter un épisode ou chapitre|Eine Folge oder ein Kapitel hinzufügen|Aggiungi un episodio o capitolo|Legg til én episode eller ett kapittel|에피소드 또는 챕터 하나 추가
+Add one volume|Sumar un tomo|Ajouter un tome|Einen Band hinzufügen|Aggiungi un volume|Legg til ett bind|권 하나 추가
+Add or remove one on the open title|Sumar o restar uno en el título abierto|Ajouter ou retirer un sur le titre ouvert|Beim offenen Titel eins hinzufügen oder entfernen|Aggiungi o togli uno al titolo aperto|Legg til eller fjern én på den åpne tittelen|열린 작품에서 하나 추가 또는 제거
+Add to list|Añadir a la lista|Ajouter à la liste|Zur Liste hinzufügen|Aggiungi alla lista|Legg til i listen|목록에 추가
+Add to list…|Añadir a la lista…|Ajouter à la liste…|Zur Liste hinzufügen…|Aggiungi alla lista…|Legg til i listen…|목록에 추가…
+Add…|Añadir…|Ajouter…|Hinzufügen…|Aggiungi…|Legg til…|추가…
+Airing|En emisión|En diffusion|Läuft gerade|In onda|Sendes nå|방영 중
+All|Todos|Tous|Alle|Tutti|Alle|전체
+All formats|Todos los formatos|Tous les formats|Alle Formate|Tutti i formati|Alle formater|모든 형식
+All genres|Todos los géneros|Tous les genres|Alle Genres|Tutti i generi|Alle sjangre|모든 장르
+All years|Todos los años|Toutes les années|Alle Jahre|Tutti gli anni|Alle år|모든 연도
+Alternative|Alternativa|Alternative|Alternative|Alternativa|Alternativ|다른 버전
+Alternative titles|Títulos alternativos|Titres alternatifs|Alternative Titel|Titoli alternativi|Alternative titler|다른 제목
+An independent, unofficial app. Not affiliated with ManGo, RocketScience IT, AniList or MyAnimeList.|Aplicación independiente y no oficial. Sin relación con ManGo, RocketScience IT, AniList ni MyAnimeList.|Application indépendante et non officielle. Sans lien avec ManGo, RocketScience IT, AniList ou MyAnimeList.|Eine unabhängige, inoffizielle App. Nicht verbunden mit ManGo, RocketScience IT, AniList oder MyAnimeList.|App indipendente e non ufficiale. Non affiliata a ManGo, RocketScience IT, AniList o MyAnimeList.|En uavhengig, uoffisiell app. Ikke tilknyttet ManGo, RocketScience IT, AniList eller MyAnimeList.|독립적인 비공식 앱입니다. ManGo, RocketScience IT, AniList, MyAnimeList와 관련이 없습니다.
+Animations|Animaciones|Animations|Animationen|Animazioni|Animasjoner|애니메이션 효과
+Anime|Anime|Anime|Anime|Anime|Anime|애니
+App icon|Icono de la app|Icône de l’app|App-Symbol|Icona dell’app|Appikon|앱 아이콘
+Appearance|Apariencia|Apparence|Darstellung|Aspetto|Utseende|화면 스타일
+Ascending|Ascendente|Croissant|Aufsteigend|Crescente|Stigende|오름차순
+Ask before removing a title|Preguntar antes de quitar un título|Demander avant de retirer un titre|Vor dem Entfernen nachfragen|Chiedi prima di rimuovere un titolo|Spør før en tittel fjernes|작품을 제거하기 전에 확인
+Automation|Automatización|Automatisation|Automatisierung|Automazione|Automatisering|자동화
+Average score|Nota media|Note moyenne|Durchschnitt|Voto medio|Gjennomsnitt|평균 점수
+Back|Atrás|Retour|Zurück|Indietro|Tilbake|뒤로
+Background|Contexto|Contexte|Hintergrund|Contesto|Bakgrunn|배경
+Backup|Copia de seguridad|Sauvegarde|Sicherung|Backup|Sikkerhetskopi|백업
+Backup saved|Copia guardada|Sauvegarde enregistrée|Sicherung gespeichert|Backup salvato|Sikkerhetskopi lagret|백업을 저장했습니다
+Badge|Etiqueta|Badge|Plakette|Etichetta|Merke|배지
+Binge session|Maratón|Marathon|Binge-Session|Maratona|Maraton|정주행
+Black|Negro|Noir|Schwarz|Nero|Svart|검정
+Blue|Azul|Bleu|Blau|Blu|Blå|파랑
+Both|Ambos|Les deux|Beide|Entrambi|Begge|둘 다
+Both services|Ambos servicios|Les deux services|Beide Dienste|Entrambi i servizi|Begge tjenester|두 서비스 모두
+Broadcast|Emisión|Diffusion|Ausstrahlung|Trasmissione|Sending|방영 시간
+Caches|Cachés|Caches|Zwischenspeicher|Cache|Hurtiglager|캐시
+Cancel|Cancelar|Annuler|Abbrechen|Annulla|Avbryt|취소
+Cancelled|Cancelado|Annulé|Abgebrochen|Annullato|Avlyst|취소됨
+Candy|Caramelo|Bonbon|Bonbon|Caramella|Sukkertøy|캔디
+Changes are saved to your primary service.|Los cambios se guardan en tu servicio principal.|Les changements sont enregistrés dans ton service principal.|Änderungen werden in deinem Hauptdienst gespeichert.|Le modifiche vengono salvate nel servizio principale.|Endringer lagres i hovedtjenesten din.|변경 사항을 기본 서비스에 저장합니다.
+Changes waiting to sync|Cambios pendientes de sincronizar|Changements à synchroniser|Noch nicht synchronisierte Änderungen|Modifiche da sincronizzare|Endringer som venter på synkronisering|동기화 대기 중인 변경 사항
+Chapters|Capítulos|Chapitres|Kapitel|Capitoli|Kapitler|챕터
+Characters & voice actors|Personajes y actores de voz|Personnages et doubleurs|Figuren & Synchronsprecher|Personaggi e doppiatori|Figurer og stemmeskuespillere|캐릭터 및 성우
+Choose a setting|Elige un ajuste|Choisis un réglage|Wähle eine Einstellung|Scegli un’impostazione|Velg en innstilling|설정을 선택하세요
+Choose a title|Elige un título|Choisis un titre|Wähle einen Titel|Scegli un titolo|Velg en tittel|작품을 선택하세요
+Clear|Borrar|Effacer|Leeren|Cancella|Tøm|지우기
+Clear filters|Quitar filtros|Effacer les filtres|Filter löschen|Cancella filtri|Fjern filtre|필터 지우기
+Client ID|ID de cliente|ID client|Client-ID|ID client|Klient-ID|클라이언트 ID
+Close|Cerrar|Fermer|Schließen|Chiudi|Lukk|닫기
+Community|Comunidad|Communauté|Community|Community|Fellesskap|커뮤니티
+Compilation|Recopilación|Compilation|Zusammenschnitt|Compilation|Samling|총집편
+Complete series overview|Vista completa de la serie|Vue complète de la série|Komplette Serienübersicht|Panoramica completa della serie|Full serieoversikt|시리즈 전체 보기
+Completed|Completado|Terminé|Abgeschlossen|Completato|Fullført|완료
+Confetti when I complete a title|Confeti al completar un título|Confettis quand je termine un titre|Konfetti beim Abschließen eines Titels|Coriandoli quando completo un titolo|Konfetti når jeg fullfører en tittel|작품을 완료하면 색종이 효과
+Contains|Contiene|Contient|Enthält|Contiene|Inneholder|포함
+Continue only if this is your account.|Continúa solo si esta es tu cuenta.|Continue seulement si c’est ton compte.|Fahre nur fort, wenn das dein Konto ist.|Continua solo se questo è il tuo account.|Fortsett bare hvis dette er kontoen din.|본인 계정인 경우에만 계속하세요.
+Continuing|Continúan|Suites|Fortlaufend|In corso|Fortsetter|계속 방영
+Copied links open when you return to this window. Other clipboard content is ignored.|Los enlaces copiados se abren al volver a esta ventana. El resto del portapapeles se ignora.|Les liens copiés s’ouvrent quand tu reviens à cette fenêtre. Le reste du presse-papiers est ignoré.|Kopierte Links öffnen sich, wenn du zu diesem Fenster zurückkehrst. Alles andere in der Zwischenablage wird ignoriert.|I link copiati si aprono quando torni a questa finestra. Il resto degli appunti viene ignorato.|Kopierte lenker åpnes når du går tilbake til vinduet. Annet innhold på utklippstavlen ignoreres.|이 창으로 돌아오면 복사한 링크가 열립니다. 다른 클립보드 내용은 무시합니다.
+Copy|Copiar|Copier|Kopieren|Copia|Kopier|복사
+Copy a bookmarklet that opens the current page here|Copiar un marcador que abre aquí la página actual|Copier un favori qui ouvre ici la page actuelle|Bookmarklet kopieren, das die aktuelle Seite hier öffnet|Copia un bookmarklet che apre qui la pagina corrente|Kopier et bokmerke som åpner gjeldende side her|현재 페이지를 여기에서 여는 북마클릿 복사
+Copy link|Copiar enlace|Copier le lien|Link kopieren|Copia link|Kopier lenke|링크 복사
+Copy {} link|Copiar enlace de {}|Copier le lien {}|{}-Link kopieren|Copia link {}|Kopier {}-lenke|{} 링크 복사
+Create a client on AniList with this redirect URL, then paste its ID here. It is free.|Crea un cliente en AniList con esta URL de redirección y pega aquí su ID. Es gratis.|Crée un client sur AniList avec cette URL de redirection, puis colle son ID ici. C’est gratuit.|Erstelle auf AniList einen Client mit dieser Weiterleitungs-URL und füge die ID hier ein. Das ist kostenlos.|Crea un client su AniList con questo URL di reindirizzamento e incolla qui il suo ID. È gratuito.|Opprett en klient på AniList med denne omdirigerings-URL-en, og lim inn ID-en her. Det er gratis.|AniList에서 이 리디렉션 URL로 클라이언트를 만든 뒤 ID를 여기에 붙여 넣으세요. 무료입니다.
+Create a client on MyAnimeList (app type “other”) with this redirect URL, then paste its ID here. It is free.|Crea un cliente en MyAnimeList (tipo de app «other») con esta URL de redirección y pega aquí su ID. Es gratis.|Crée un client sur MyAnimeList (type « other ») avec cette URL de redirection, puis colle son ID ici. C’est gratuit.|Erstelle auf MyAnimeList einen Client (App-Typ „other“) mit dieser Weiterleitungs-URL und füge die ID hier ein. Das ist kostenlos.|Crea un client su MyAnimeList (tipo “other”) con questo URL di reindirizzamento e incolla qui il suo ID. È gratuito.|Opprett en klient på MyAnimeList (apptype «other») med denne omdirigerings-URL-en, og lim inn ID-en her. Det er gratis.|MyAnimeList에서 이 리디렉션 URL로 클라이언트(앱 유형 “other”)를 만든 뒤 ID를 여기에 붙여 넣으세요. 무료입니다.
+Credits|Créditos|Crédits|Danksagung|Riconoscimenti|Bidrag|크레딧
+Dark|Oscuro|Sombre|Dunkel|Scuro|Mørk|다크
+Data & caches|Datos y cachés|Données et caches|Daten & Zwischenspeicher|Dati e cache|Data og hurtiglager|데이터 및 캐시
+Data source|Fuente de datos|Source de données|Datenquelle|Origine dei dati|Datakilde|데이터 출처
+Date started|Fecha de inicio|Date de début|Startdatum|Data di inizio|Startdato|시작한 날짜
+Delay after airing|Retraso tras la emisión|Délai après la diffusion|Verzögerung nach Ausstrahlung|Ritardo dopo la trasmissione|Forsinkelse etter sending|방영 후 지연
+Descending|Descendente|Décroissant|Absteigend|Decrescente|Synkende|내림차순
+Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget desktop|Skrivebordswidget|데스크톱 위젯
+Display|Visualización|Affichage|Anzeige|Visualizzazione|Visning|표시
+Double-click|Doble clic|Double-clic|Doppelklick|Doppio clic|Dobbeltklikk|더블 클릭
+Drag a row sideways with the mouse or a finger. Right-click always opens the full menu.|Arrastra una fila de lado con el ratón o el dedo. El clic derecho siempre abre el menú completo.|Fais glisser une ligne sur le côté avec la souris ou le doigt. Le clic droit ouvre toujours le menu complet.|Ziehe eine Zeile mit Maus oder Finger zur Seite. Rechtsklick öffnet immer das ganze Menü.|Trascina una riga di lato con il mouse o con il dito. Il clic destro apre sempre il menu completo.|Dra en rad sidelengs med musen eller fingeren. Høyreklikk åpner alltid hele menyen.|마우스나 손가락으로 행을 옆으로 드래그하세요. 오른쪽 클릭하면 항상 전체 메뉴가 열립니다.
+Drag left|Arrastrar a la izquierda|Glisser à gauche|Nach links ziehen|Trascina a sinistra|Dra til venstre|왼쪽으로 드래그
+Drag right|Arrastrar a la derecha|Glisser à droite|Nach rechts ziehen|Trascina a destra|Dra til høyre|오른쪽으로 드래그
+Dropped|Abandonado|Abandonné|Abgebrochen|Abbandonato|Droppet|하차
+Duration|Duración|Durée|Dauer|Durata|Varighet|길이
+Edit|Editar|Modifier|Bearbeiten|Modifica|Rediger|편집
+Edit the open title|Editar el título abierto|Modifier le titre ouvert|Offenen Titel bearbeiten|Modifica il titolo aperto|Rediger den åpne tittelen|열린 작품 편집
+Edit…|Editar…|Modifier…|Bearbeiten…|Modifica…|Rediger…|편집…
+End|Terminar|Terminer|Beenden|Termina|Avslutt|종료
+Ending|Ending|Ending|Ending|Sigla finale|Avslutning|엔딩
+English|Inglés|Anglais|Englisch|Inglese|Engelsk|영어
+Ep {} · {}|Ep. {} · {}|Ép. {} · {}|Folge {} · {}|Ep. {} · {}|Ep. {} · {}|{}화 · {}
+Episode {} in {}|Episodio {} en {}|Épisode {} dans {}|Folge {} in {}|Episodio {} tra {}|Episode {} om {}|{}화까지 {}
+Episode {} is out|Ya está el episodio {}|L’épisode {} est sorti|Folge {} ist da|È uscito l’episodio {}|Episode {} er ute|{}화가 나왔습니다
+Episodes|Episodios|Épisodes|Folgen|Episodi|Episoder|에피소드
+Every change is saved to AniList and MyAnimeList.|Cada cambio se guarda en AniList y MyAnimeList.|Chaque changement est enregistré sur AniList et MyAnimeList.|Jede Änderung wird auf AniList und MyAnimeList gespeichert.|Ogni modifica viene salvata su AniList e MyAnimeList.|Hver endring lagres på AniList og MyAnimeList.|모든 변경 사항을 AniList와 MyAnimeList에 저장합니다.
+Every new episode|Cada episodio nuevo|Chaque nouvel épisode|Jede neue Folge|Ogni nuovo episodio|Hver nye episode|새 에피소드마다
+Export…|Exportar…|Exporter…|Exportieren…|Esporta…|Eksporter…|내보내기…
+Fall|Otoño|Automne|Herbst|Autunno|Høst|가을
+Filter|Filtrar|Filtrer|Filtern|Filtra|Filtrer|필터
+Filter by title|Filtrar por título|Filtrer par titre|Nach Titel filtern|Filtra per titolo|Filtrer etter tittel|제목으로 필터
+Finales|Finales|Finales|Finalfolgen|Finali|Finaler|최종화
+Find on Spotify|Buscar en Spotify|Chercher sur Spotify|Auf Spotify suchen|Cerca su Spotify|Finn på Spotify|Spotify에서 찾기
+Find something to add|Buscar algo que añadir|Trouver quelque chose à ajouter|Etwas zum Hinzufügen suchen|Cerca qualcosa da aggiungere|Finn noe å legge til|추가할 작품 찾기
+Find songs on|Buscar canciones en|Chercher les chansons sur|Lieder suchen auf|Cerca le canzoni su|Finn sanger på|노래 찾기
+Finish in your browser. This window updates by itself.|Termina en el navegador. Esta ventana se actualiza sola.|Termine dans ton navigateur. Cette fenêtre se met à jour toute seule.|Schließe die Anmeldung im Browser ab. Dieses Fenster aktualisiert sich selbst.|Completa nel browser. Questa finestra si aggiorna da sola.|Fullfør i nettleseren. Vinduet oppdateres av seg selv.|브라우저에서 완료하세요. 이 창은 자동으로 업데이트됩니다.
+Finished|Finalizado|Terminé|Beendet|Finito|Avsluttet|종료
+Finished {}|Terminado el {}|Terminé le {}|Beendet am {}|Finito il {}|Fullført {}|{} 완료
+Format|Formato|Format|Format|Formato|Format|형식
+General|General|Général|Allgemein|Generali|Generelt|일반
+Genre|Género|Genre|Genre|Genere|Sjanger|장르
+Genres|Géneros|Genres|Genres|Generi|Sjangre|장르
+Gestures|Gestos|Gestes|Gesten|Gesti|Bevegelser|제스처
+Go to a title, page or link|Ir a un título, página o enlace|Aller à un titre, une page ou un lien|Zu Titel, Seite oder Link gehen|Vai a un titolo, una pagina o un link|Gå til tittel, side eller lenke|작품, 페이지 또는 링크로 이동
+Go to anything|Ir a cualquier sitio|Aller n’importe où|Überallhin springen|Vai ovunque|Gå hvor som helst|어디든 이동
+Green|Verde|Vert|Grün|Verde|Grønn|초록
+Hide sidebar|Ocultar barra lateral|Masquer la barre latérale|Seitenleiste ausblenden|Nascondi barra laterale|Skjul sidefelt|사이드바 숨기기
+Icons: Phosphor Icons (MIT)|Iconos: Phosphor Icons (MIT)|Icônes : Phosphor Icons (MIT)|Symbole: Phosphor Icons (MIT)|Icone: Phosphor Icons (MIT)|Ikoner: Phosphor Icons (MIT)|아이콘: Phosphor Icons (MIT)
+Images|Imágenes|Images|Bilder|Immagini|Bilder|이미지
+Import|Importar|Importer|Importieren|Importa|Importer|가져오기
+Import this backup?|¿Importar esta copia?|Importer cette sauvegarde ?|Diese Sicherung importieren?|Importare questo backup?|Importere denne sikkerhetskopien?|이 백업을 가져올까요?
+Import…|Importar…|Importer…|Importieren…|Importa…|Importer…|가져오기…
+Include titles I plan to watch|Incluir los que pienso ver|Inclure les titres que je prévois de voir|Geplante Titel einschließen|Includi i titoli che voglio guardare|Ta med titler jeg planlegger å se|볼 예정인 작품 포함
+Indigo|Índigo|Indigo|Indigo|Indaco|Indigo|남색
+Information|Información|Informations|Informationen|Informazioni|Informasjon|정보
+Interface|Interfaz|Interface|Oberfläche|Interfaccia|Grensesnitt|인터페이스
+Interface language|Idioma de la interfaz|Langue de l’interface|Sprache der Oberfläche|Lingua dell’interfaccia|Språk i grensesnittet|인터페이스 언어
+Interface size|Tamaño de la interfaz|Taille de l’interface|Größe der Oberfläche|Dimensione dell’interfaccia|Størrelse på grensesnittet|인터페이스 크기
+Japanese|Japonés|Japonais|Japanisch|Giapponese|Japansk|일본어
+Keep running in the tray when closed|Seguir en la bandeja al cerrar|Rester dans la zone de notification à la fermeture|Nach dem Schließen im Infobereich weiterlaufen|Resta nell’area di notifica alla chiusura|Fortsett i systemstatusfeltet når vinduet lukkes|닫아도 트레이에서 계속 실행
+Keyboard|Teclado|Clavier|Tastatur|Tastiera|Tastatur|키보드
+Language|Idioma|Langue|Sprache|Lingua|Språk|언어
+Languages|Idiomas|Langues|Sprachen|Lingue|Språk|언어
+Last updated|Última actualización|Dernière mise à jour|Zuletzt aktualisiert|Ultimo aggiornamento|Sist oppdatert|최근 업데이트
+Leaf|Hoja|Feuille|Blatt|Foglia|Blad|잎
+Light|Claro|Clair|Hell|Chiaro|Lys|라이트
+Light novel|Novela ligera|Light novel|Light Novel|Light novel|Light novel|라이트 노벨
+Link copied|Enlace copiado|Lien copié|Link kopiert|Link copiato|Lenke kopiert|링크를 복사했습니다
+Links|Enlaces|Liens|Links|Link|Lenker|링크
+List settings|Ajustes de la lista|Réglages de la liste|Listeneinstellungen|Impostazioni lista|Listeinnstillinger|목록 설정
+Lists|Listas|Listes|Listen|Liste|Lister|목록
+Lists, search, rankings and details come from your primary service.|Las listas, búsquedas, rankings y detalles vienen de tu servicio principal.|Les listes, recherches, classements et détails viennent de ton service principal.|Listen, Suche, Ranglisten und Details kommen aus deinem Hauptdienst.|Liste, ricerca, classifiche e dettagli provengono dal servizio principale.|Lister, søk, rangeringer og detaljer kommer fra hovedtjenesten din.|목록, 검색, 순위, 상세 정보는 기본 서비스에서 가져옵니다.
+Main series|Serie principal|Série principale|Hauptserie|Serie principale|Hovedserie|본편
+Main story|Historia principal|Histoire principale|Hauptgeschichte|Storia principale|Hovedhistorie|본편
+Manga|Manga|Manga|Manga|Manga|Manga|만화
+Mango|Mango|Mangue|Mango|Mango|Mango|망고
+Mark as completed|Marcar como completado|Marquer comme terminé|Als abgeschlossen markieren|Segna come completato|Merk som fullført|완료로 표시
+Mark as dropped|Marcar como abandonado|Marquer comme abandonné|Als abgebrochen markieren|Segna come abbandonato|Merk som droppet|하차로 표시
+Middle-click|Clic central|Clic du milieu|Mittelklick|Clic centrale|Midtklikk|가운데 클릭
+Mono|Mono|Mono|Mono|Mono|Mono|모노
+More|Más|Plus|Mehr|Altro|Mer|더 보기
+Most favorited|Más favoritos|Les plus aimés|Beliebteste Favoriten|Più preferiti|Flest favoritter|즐겨찾기 순
+Most popular|Más populares|Les plus populaires|Am beliebtesten|Più popolari|Mest populære|인기순
+Movie|Película|Film|Film|Film|Film|극장판
+Movies|Películas|Films|Filme|Film|Filmer|극장판
+Music|Música|Musique|Musik|Musica|Musikk|음악
+Mute notifications|Silenciar notificaciones|Couper les notifications|Benachrichtigungen stummschalten|Silenzia notifiche|Demp varsler|알림 끄기
+Muted|Silenciados|En sourdine|Stummgeschaltet|Silenziati|Dempet|알림 꺼짐
+My Anime|Mi anime|Mes animes|Meine Anime|I miei anime|Min anime|내 애니
+My List|Mi lista|Ma liste|Meine Liste|La mia lista|Min liste|내 목록
+My Manga|Mi manga|Mes mangas|Meine Manga|I miei manga|Min manga|내 만화
+My average score|Mi nota media|Ma note moyenne|Mein Durchschnitt|Il mio voto medio|Min gjennomsnittsscore|내 평균 점수
+My score|Mi nota|Ma note|Meine Wertung|Il mio voto|Min score|내 점수
+MyAnimeList rounds scores to whole numbers.|MyAnimeList redondea las notas a números enteros.|MyAnimeList arrondit les notes à l’entier.|MyAnimeList rundet Wertungen auf ganze Zahlen.|MyAnimeList arrotonda i voti a numeri interi.|MyAnimeList runder av til hele tall.|MyAnimeList는 점수를 정수로 반올림합니다.
+Navigation|Navegación|Navigation|Navigation|Navigazione|Navigasjon|탐색
+New|Nuevos|Nouveautés|Neu|Nuovi|Nye|신작
+Next|Siguiente|Suivant|Weiter|Avanti|Neste|다음
+Next episode|Próximo episodio|Prochain épisode|Nächste Folge|Prossimo episodio|Neste episode|다음 에피소드
+Next season|Temporada siguiente|Saison suivante|Nächste Saison|Stagione successiva|Neste sesong|다음 시즌
+Night|Noche|Nuit|Nacht|Notte|Natt|밤
+No analytics and no ads. The app talks only to AniList, MyAnimeList, Apple Music search, AnimeThemes and Jikan. Sign-in tokens are kept in the Windows Credential Manager.|Sin analíticas ni anuncios. La app solo se comunica con AniList, MyAnimeList, la búsqueda de Apple Music, AnimeThemes y Jikan. Los tokens de acceso se guardan en el Administrador de credenciales de Windows.|Ni statistiques ni publicités. L’app ne communique qu’avec AniList, MyAnimeList, la recherche Apple Music, AnimeThemes et Jikan. Les jetons de connexion sont gardés dans le Gestionnaire d’identification Windows.|Keine Analyse und keine Werbung. Die App spricht nur mit AniList, MyAnimeList, der Apple-Music-Suche, AnimeThemes und Jikan. Anmelde-Token liegen in der Windows-Anmeldeinformationsverwaltung.|Nessuna analisi e nessuna pubblicità. L’app comunica solo con AniList, MyAnimeList, la ricerca di Apple Music, AnimeThemes e Jikan. I token di accesso sono conservati in Gestione credenziali di Windows.|Ingen analyse og ingen annonser. Appen snakker bare med AniList, MyAnimeList, Apple Music-søk, AnimeThemes og Jikan. Påloggingstokener lagres i Windows Legitimasjonsbehandling.|분석도 광고도 없습니다. 앱은 AniList, MyAnimeList, Apple Music 검색, AnimeThemes, Jikan과만 통신합니다. 로그인 토큰은 Windows 자격 증명 관리자에 보관합니다.
+No connection. Check your network and try again.|Sin conexión. Revisa tu red e inténtalo de nuevo.|Pas de connexion. Vérifie ton réseau et réessaie.|Keine Verbindung. Prüfe dein Netzwerk und versuche es erneut.|Nessuna connessione. Controlla la rete e riprova.|Ingen tilkobling. Sjekk nettverket og prøv igjen.|연결되지 않았습니다. 네트워크를 확인하고 다시 시도하세요.
+None|Ninguno|Aucun|Keine|Nessuno|Ingen|없음
+Not found|No encontrado|Introuvable|Nicht gefunden|Non trovato|Ikke funnet|찾을 수 없음
+Not in your list|No está en tu lista|Pas dans ta liste|Nicht in deiner Liste|Non è nella tua lista|Ikke i listen din|목록에 없음
+Not signed in|Sin sesión iniciada|Non connecté|Nicht angemeldet|Accesso non effettuato|Ikke logget på|로그인하지 않음
+Not yet released|Aún sin estrenar|Pas encore sorti|Noch nicht erschienen|Non ancora uscito|Ikke utgitt ennå|미공개
+Notes|Notas|Notes|Notizen|Note|Notater|메모
+Nothing|Nada|Rien|Nichts|Niente|Ingenting|없음
+Nothing found|Sin resultados|Aucun résultat|Nichts gefunden|Nessun risultato|Ingenting funnet|결과 없음
+Nothing here|Aquí no hay nada|Rien ici|Hier ist nichts|Qui non c’è niente|Ingenting her|항목 없음
+Notifications|Notificaciones|Notifications|Benachrichtigungen|Notifiche|Varsler|알림
+Notifications are working.|Las notificaciones funcionan.|Les notifications fonctionnent.|Benachrichtigungen funktionieren.|Le notifiche funzionano.|Varsler fungerer.|알림이 작동합니다.
+Notifications arrive while the app is open or in the tray.|Las notificaciones llegan con la app abierta o en la bandeja.|Les notifications arrivent quand l’app est ouverte ou dans la zone de notification.|Benachrichtigungen kommen, solange die App offen oder im Infobereich ist.|Le notifiche arrivano mentre l’app è aperta o nell’area di notifica.|Varsler kommer når appen er åpen eller i systemstatusfeltet.|앱이 열려 있거나 트레이에 있을 때 알림이 옵니다.
+Off|Desactivado|Désactivé|Aus|Disattivato|Av|끔
+On a title|Sobre un título|Sur un titre|Auf einem Titel|Su un titolo|På en tittel|작품에서
+On hiatus|En pausa|En pause|Pausiert|In pausa|På pause|휴재
+On hold|En espera|En attente|Pausiert|In sospeso|På vent|보류
+Only anime I have completed|Solo anime que he completado|Seulement les animes que j’ai terminés|Nur Anime, die ich abgeschlossen habe|Solo anime che ho completato|Bare anime jeg har fullført|완료한 애니만
+Only the primary service|Solo el servicio principal|Seulement le service principal|Nur der Hauptdienst|Solo il servizio principale|Bare hovedtjenesten|기본 서비스만
+Only titles in my list|Solo títulos de mi lista|Seulement les titres de ma liste|Nur Titel aus meiner Liste|Solo titoli nella mia lista|Bare titler i listen min|내 목록의 작품만
+Open|Abrir|Ouvrir|Öffnen|Apri|Åpne|열기
+Open copied AniList and MyAnimeList links|Abrir enlaces copiados de AniList y MyAnimeList|Ouvrir les liens AniList et MyAnimeList copiés|Kopierte AniList- und MyAnimeList-Links öffnen|Apri i link copiati di AniList e MyAnimeList|Åpne kopierte AniList- og MyAnimeList-lenker|복사한 AniList 및 MyAnimeList 링크 열기
+Open first|Abrir primero|Ouvrir en premier|Zuerst öffnen|Apri per primo|Åpne først|처음 열 항목
+Open in browser|Abrir en el navegador|Ouvrir dans le navigateur|Im Browser öffnen|Apri nel browser|Åpne i nettleser|브라우저에서 열기
+Open link|Abrir enlace|Ouvrir le lien|Link öffnen|Apri link|Åpne lenke|링크 열기
+Open mango:// links in this app|Abrir enlaces mango:// en esta app|Ouvrir les liens mango:// dans cette app|mango://-Links in dieser App öffnen|Apri i link mango:// in questa app|Åpne mango://-lenker i denne appen|이 앱에서 mango:// 링크 열기
+Open on {}|Abrir en {}|Ouvrir sur {}|Auf {} öffnen|Apri su {}|Åpne på {}|{}에서 열기
+Open the developer page|Abrir la página de desarrollador|Ouvrir la page développeur|Entwicklerseite öffnen|Apri la pagina sviluppatore|Åpne utviklersiden|개발자 페이지 열기
+Opening|Opening|Opening|Opening|Sigla iniziale|Åpning|오프닝
+Openings & endings|Openings y endings|Openings et endings|Openings & Endings|Sigle iniziali e finali|Åpninger og avslutninger|오프닝 및 엔딩
+Opening…|Abriendo…|Ouverture…|Wird geöffnet…|Apertura…|Åpner…|여는 중…
+Original work|Obra original|Œuvre originale|Vorlage|Opera originale|Originalverk|원작
+Other|Otro|Autre|Sonstiges|Altro|Annet|기타
+Pass one of these links to the program, or open it from anywhere once link handling is on.|Pasa uno de estos enlaces al programa, o ábrelo desde cualquier sitio con la apertura de enlaces activada.|Passe un de ces liens au programme, ou ouvre-le de n’importe où quand l’ouverture des liens est active.|Übergib einen dieser Links an das Programm oder öffne ihn von überall, sobald das Öffnen von Links aktiv ist.|Passa uno di questi link al programma, o aprilo da qualsiasi punto quando l’apertura dei link è attiva.|Send en av disse lenkene til programmet, eller åpne den hvor som helst når lenkeåpning er på.|이 링크 중 하나를 프로그램에 전달하거나, 링크 열기를 켠 뒤 어디서나 여세요.
+Pink|Rosa|Rose|Rosa|Rosa|Rosa|분홍
+Plan to read|Pendiente de leer|À lire|Geplant|Da leggere|Planlagt å lese|읽을 예정
+Plan to watch|Pendiente de ver|À voir|Geplant|Da guardare|Planlagt å se|볼 예정
+Play on Apple Music|Escuchar en Apple Music|Écouter sur Apple Music|Auf Apple Music anhören|Ascolta su Apple Music|Spill på Apple Music|Apple Music에서 듣기
+Popularity|Popularidad|Popularité|Beliebtheit|Popolarità|Popularitet|인기
+Poster size|Tamaño del póster|Taille des affiches|Postergröße|Dimensione poster|Plakatstørrelse|포스터 크기
+Posters|Pósteres|Affiches|Poster|Poster|Plakater|포스터
+Posters in my list|Pósteres en mi lista|Affiches dans ma liste|Poster in meiner Liste|Poster nella mia lista|Plakater i listen min|내 목록을 포스터로
+Posters in seasonal|Pósteres en temporadas|Affiches dans les saisons|Poster in Saisons|Poster nelle stagioni|Plakater i sesonger|시즌을 포스터로
+Preferences|Preferencias|Préférences|Einstellungen|Preferenze|Preferanser|환경설정
+Preferred hour when only the date is known|Hora preferida si solo se conoce la fecha|Heure préférée si seule la date est connue|Bevorzugte Uhrzeit, wenn nur das Datum bekannt ist|Ora preferita se è nota solo la data|Foretrukket tid når bare datoen er kjent|날짜만 알 때 선호하는 시각
+Premieres|Estrenos|Premières|Premieren|Debutti|Premierer|첫 방영
+Prequel|Precuela|Préquelle|Vorgeschichte|Prequel|Forløper|전작
+Previous season|Temporada anterior|Saison précédente|Vorige Saison|Stagione precedente|Forrige sesong|이전 시즌
+Primary service|Servicio principal|Service principal|Hauptdienst|Servizio principale|Hovedtjeneste|기본 서비스
+Privacy|Privacidad|Confidentialité|Datenschutz|Privacy|Personvern|개인정보
+Progress|Progreso|Progression|Fortschritt|Progresso|Fremdrift|진행
+Progress bar|Barra de progreso|Barre de progression|Fortschrittsbalken|Barra di avanzamento|Fremdriftslinje|진행 막대
+Publishing|En publicación|En publication|Erscheint gerade|In pubblicazione|Utgis nå|연재 중
+Purple|Morado|Violet|Lila|Viola|Lilla|보라
+Put on hold|Poner en espera|Mettre en attente|Pausieren|Metti in sospeso|Sett på vent|보류로 변경
+Quit|Salir|Quitter|Beenden|Esci|Avslutt|종료
+Random title|Título al azar|Titre au hasard|Zufälliger Titel|Titolo a caso|Tilfeldig tittel|무작위 작품
+Ranked|Puesto|Rang|Rang|Posizione|Rangering|순위
+Ranking|Ranking|Classement|Rangliste|Classifica|Rangering|순위
+Rating|Clasificación|Classification|Altersfreigabe|Classificazione|Aldersgrense|등급
+Reading|Leyendo|En lecture|Lese ich|In lettura|Leser|읽는 중
+Recap|Resumen|Récapitulatif|Zusammenfassung|Riassunto|Oppsummering|요약
+Recaps & alternatives|Resúmenes y alternativas|Récapitulatifs et alternatives|Zusammenfassungen & Alternativen|Riassunti e alternative|Oppsummeringer og alternativer|요약 및 다른 버전
+Recommendations|Recomendaciones|Recommandations|Empfehlungen|Consigliati|Anbefalinger|추천
+Red|Rojo|Rouge|Rot|Rosso|Rød|빨강
+Redirect URL|URL de redirección|URL de redirection|Weiterleitungs-URL|URL di reindirizzamento|Omdirigerings-URL|리디렉션 URL
+Refresh|Actualizar|Actualiser|Aktualisieren|Aggiorna|Oppdater|새로 고침
+Related|Relacionados|Œuvres liées|Verwandte Titel|Correlati|Relaterte|관련 작품
+Release date|Fecha de estreno|Date de sortie|Erscheinungsdatum|Data di uscita|Utgivelsesdato|공개일
+Reload|Recargar|Recharger|Neu laden|Ricarica|Last inn på nytt|다시 불러오기
+Remove|Quitar|Retirer|Entfernen|Rimuovi|Fjern|제거
+Remove from list…|Quitar de la lista…|Retirer de la liste…|Aus der Liste entfernen…|Rimuovi dalla lista…|Fjern fra listen…|목록에서 제거…
+Remove from your list?|¿Quitar de tu lista?|Retirer de ta liste ?|Aus deiner Liste entfernen?|Rimuovere dalla tua lista?|Fjerne fra listen din?|목록에서 제거할까요?
+Remove one|Restar uno|Retirer un|Eins entfernen|Togli uno|Fjern én|하나 제거
+Remove one episode or chapter|Restar un episodio o capítulo|Retirer un épisode ou chapitre|Eine Folge oder ein Kapitel entfernen|Togli un episodio o capitolo|Fjern én episode eller ett kapittel|에피소드 또는 챕터 하나 제거
+Removed from your list|Quitado de tu lista|Retiré de ta liste|Aus deiner Liste entfernt|Rimosso dalla tua lista|Fjernet fra listen din|목록에서 제거했습니다
+Repeated {} times|Repetido {} veces|Revu {} fois|{}-mal wiederholt|Ripetuto {} volte|Gjentatt {} ganger|{}회 반복
+Reread|Releer|Relire|Erneut lesen|Rileggi|Les på nytt|다시 읽기
+Rereading|Releyendo|En relecture|Lese ich erneut|In rilettura|Leser på nytt|다시 읽는 중
+Restore a list from a file|Restaurar una lista desde un archivo|Restaurer une liste depuis un fichier|Liste aus Datei wiederherstellen|Ripristina una lista da un file|Gjenopprett en liste fra en fil|파일에서 목록 복원
+Retry|Reintentar|Réessayer|Erneut versuchen|Riprova|Prøv igjen|다시 시도
+Review by {}|Reseña de {}|Critique de {}|Rezension von {}|Recensione di {}|Anmeldelse av {}|{}의 리뷰
+Reviews|Reseñas|Critiques|Rezensionen|Recensioni|Anmeldelser|리뷰
+Rewatch|Volver a ver|Revoir|Erneut ansehen|Riguarda|Se på nytt|다시 보기
+Rewatching|Volviendo a ver|En revisionnage|Sehe ich erneut|In revisione|Ser på nytt|다시 보는 중
+Roles|Papeles|Rôles|Rollen|Ruoli|Roller|배역
+Romaji|Romaji|Romaji|Romaji|Romaji|Romaji|로마자
+Save|Guardar|Enregistrer|Speichern|Salva|Lagre|저장
+Save changes to|Guardar cambios en|Enregistrer les changements dans|Änderungen speichern in|Salva modifiche in|Lagre endringer til|변경 사항 저장 위치
+Save your list to a file|Guardar tu lista en un archivo|Enregistrer ta liste dans un fichier|Liste in Datei speichern|Salva la tua lista in un file|Lagre listen din i en fil|목록을 파일로 저장
+Score|Nota|Note|Wertung|Voto|Score|점수
+Score distribution|Distribución de notas|Répartition des notes|Verteilung der Wertungen|Distribuzione dei voti|Fordeling av score|점수 분포
+Scores|Notas|Notes|Wertungen|Voti|Score|점수
+Search|Buscar|Rechercher|Suchen|Cerca|Søk|검색
+Search for a title, or try your luck with a random one.|Busca un título o prueba suerte con uno al azar.|Cherche un titre, ou tente ta chance au hasard.|Suche einen Titel oder versuche dein Glück mit einem zufälligen.|Cerca un titolo o tenta la fortuna con uno a caso.|Søk etter en tittel, eller prøv lykken med en tilfeldig.|작품을 검색하거나 무작위 작품에 도전해 보세요.
+Search in your list|Buscar en tu lista|Chercher dans ta liste|In deiner Liste suchen|Cerca nella tua lista|Søk i listen din|내 목록에서 검색
+Search {}: {}|Buscar {}: {}|Rechercher {} : {}|{} suchen: {}|Cerca {}: {}|Søk {}: {}|{} 검색: {}
+Season|Temporada|Saison|Saison|Stagione|Sesong|시즌
+Seasonal|Temporadas|Saisons|Saisons|Stagioni|Sesonger|시즌
+Seasons|Temporadas|Saisons|Staffeln|Stagioni|Sesonger|시즌
+Send a test notification|Enviar una notificación de prueba|Envoyer une notification de test|Testbenachrichtigung senden|Invia una notifica di prova|Send et testvarsel|테스트 알림 보내기
+Separate anime and manga tabs|Pestañas separadas para anime y manga|Onglets anime et manga séparés|Getrennte Tabs für Anime und Manga|Schede separate per anime e manga|Egne faner for anime og manga|애니와 만화 탭 분리
+Sequel|Secuela|Suite|Fortsetzung|Sequel|Oppfølger|후속작
+Settings|Ajustes|Réglages|Einstellungen|Impostazioni|Innstillinger|설정
+Share|Compartir|Partager|Teilen|Condividi|Del|공유
+Shared characters|Personajes en común|Personnages communs|Gemeinsame Figuren|Personaggi in comune|Felles figurer|공통 캐릭터
+Show adult titles|Mostrar títulos para adultos|Afficher les titres pour adultes|Titel für Erwachsene anzeigen|Mostra titoli per adulti|Vis titler for voksne|성인 작품 표시
+Show as list|Ver como lista|Afficher en liste|Als Liste anzeigen|Mostra come lista|Vis som liste|목록으로 보기
+Show as posters|Ver como pósteres|Afficher en affiches|Als Poster anzeigen|Mostra come poster|Vis som plakater|포스터로 보기
+Show edit button|Mostrar botón de editar|Afficher le bouton modifier|Bearbeiten-Knopf anzeigen|Mostra pulsante modifica|Vis redigeringsknapp|편집 버튼 표시
+Show less|Ver menos|Voir moins|Weniger anzeigen|Mostra meno|Vis mindre|간단히
+Show more|Ver más|Voir plus|Mehr anzeigen|Mostra altro|Vis mer|더 보기
+Show openings and endings|Mostrar openings y endings|Afficher openings et endings|Openings und Endings anzeigen|Mostra sigle iniziali e finali|Vis åpninger og avslutninger|오프닝과 엔딩 표시
+Show recommendations|Mostrar recomendaciones|Afficher les recommandations|Empfehlungen anzeigen|Mostra consigliati|Vis anbefalinger|추천 표시
+Show reviews|Mostrar reseñas|Afficher les critiques|Rezensionen anzeigen|Mostra recensioni|Vis anmeldelser|리뷰 표시
+Show scores|Mostrar notas|Afficher les notes|Wertungen anzeigen|Mostra voti|Vis score|점수 표시
+Show sidebar|Mostrar barra lateral|Afficher la barre latérale|Seitenleiste anzeigen|Mostra barra laterale|Vis sidefelt|사이드바 표시
+Show the current season as icon|Usar la estación actual como icono|Afficher la saison actuelle comme icône|Aktuelle Saison als Symbol anzeigen|Mostra la stagione attuale come icona|Vis gjeldende sesong som ikon|현재 시즌을 아이콘으로 표시
+Show the desktop widget|Mostrar el widget de escritorio|Afficher le widget de bureau|Desktop-Widget anzeigen|Mostra il widget desktop|Vis skrivebordswidgeten|데스크톱 위젯 표시
+Show when an entry was updated|Mostrar cuándo se actualizó una entrada|Afficher la date de mise à jour|Zeitpunkt der letzten Änderung anzeigen|Mostra quando una voce è stata aggiornata|Vis når en oppføring ble oppdatert|항목 업데이트 시각 표시
+Side stories & spin-offs|Historias paralelas y spin-offs|Histoires parallèles et spin-offs|Nebengeschichten & Spin-offs|Storie parallele e spin-off|Sidehistorier og spin-offer|외전 및 스핀오프
+Side story|Historia paralela|Histoire parallèle|Nebengeschichte|Storia parallela|Sidehistorie|외전
+Sign in|Iniciar sesión|Se connecter|Anmelden|Accedi|Logg på|로그인
+Sign in as {}?|¿Iniciar sesión como {}?|Se connecter en tant que {} ?|Als {} anmelden?|Accedere come {}?|Logge på som {}?|{}(으)로 로그인할까요?
+Sign in to sync your lists.|Inicia sesión para sincronizar tus listas.|Connecte-toi pour synchroniser tes listes.|Melde dich an, um deine Listen zu synchronisieren.|Accedi per sincronizzare le tue liste.|Logg på for å synkronisere listene dine.|로그인하면 목록이 동기화됩니다.
+Sign out|Cerrar sesión|Se déconnecter|Abmelden|Esci|Logg av|로그아웃
+Sign out?|¿Cerrar sesión?|Se déconnecter ?|Abmelden?|Uscire?|Logge av?|로그아웃할까요?
+Sign-in was cancelled.|Se canceló el inicio de sesión.|La connexion a été annulée.|Die Anmeldung wurde abgebrochen.|Accesso annullato.|Påloggingen ble avbrutt.|로그인이 취소되었습니다.
+Signed in as {}|Sesión iniciada como {}|Connecté en tant que {}|Angemeldet als {}|Accesso effettuato come {}|Logget på som {}|{}(으)로 로그인했습니다
+Signing in to {}|Iniciando sesión en {}|Connexion à {}|Anmeldung bei {}|Accesso a {}|Logger på {}|{}에 로그인하는 중
+Something went wrong: {}|Algo ha fallado: {}|Un problème est survenu : {}|Etwas ist schiefgelaufen: {}|Qualcosa è andato storto: {}|Noe gikk galt: {}|문제가 발생했습니다: {}
+Sort by|Ordenar por|Trier par|Sortieren nach|Ordina per|Sorter etter|정렬 기준
+Source|Origen|Source|Vorlage|Origine|Kilde|원작
+Special|Especial|Spécial|Special|Speciale|Spesial|스페셜
+Spin-off|Spin-off|Spin-off|Spin-off|Spin-off|Spin-off|스핀오프
+Spring|Primavera|Printemps|Frühling|Primavera|Vår|봄
+Staff|Equipo|Équipe|Stab|Staff|Stab|제작진
+Start binge session|Empezar maratón|Commencer un marathon|Binge-Session starten|Inizia maratona|Start maraton|정주행 시작
+Start with Windows|Iniciar con Windows|Démarrer avec Windows|Mit Windows starten|Avvia con Windows|Start med Windows|Windows 시작 시 실행
+Started|Inicio|Début|Begonnen|Inizio|Startet|시작
+Started {}|Empezado el {}|Commencé le {}|Begonnen am {}|Iniziato il {}|Startet {}|{} 시작
+Status|Estado|Statut|Status|Stato|Status|상태
+Studios|Estudios|Studios|Studios|Studi|Studioer|제작사
+Summer|Verano|Été|Sommer|Estate|Sommer|여름
+Sunrise|Amanecer|Aurore|Sonnenaufgang|Alba|Soloppgang|일출
+Switch tabs|Cambiar de pestaña|Changer d’onglet|Tab wechseln|Cambia scheda|Bytt fane|탭 전환
+Sync|Sincronización|Synchronisation|Synchronisierung|Sincronizzazione|Synkronisering|동기화
+Sync now|Sincronizar ahora|Synchroniser|Jetzt synchronisieren|Sincronizza ora|Synkroniser nå|지금 동기화
+Synonyms|Sinónimos|Synonymes|Synonyme|Sinonimi|Synonymer|동의어
+Synopsis|Sinopsis|Synopsis|Handlung|Trama|Sammendrag|줄거리
+System|Sistema|Système|System|Sistema|System|시스템
+Tags|Etiquetas|Tags|Tags|Tag|Stikkord|태그
+Teal|Turquesa|Turquoise|Türkis|Turchese|Blågrønn|청록
+The first episode is out|Ya está el primer episodio|Le premier épisode est sorti|Die erste Folge ist da|È uscito il primo episodio|Første episode er ute|첫 에피소드가 나왔습니다
+The last episode is out|Ya está el último episodio|Le dernier épisode est sorti|Die letzte Folge ist da|È uscito l’ultimo episodio|Siste episode er ute|마지막 에피소드가 나왔습니다
+The service is not available right now ({}).|El servicio no está disponible ahora ({}).|Le service est indisponible pour le moment ({}).|Der Dienst ist gerade nicht verfügbar ({}).|Il servizio non è disponibile al momento ({}).|Tjenesten er ikke tilgjengelig akkurat nå ({}).|지금은 서비스를 사용할 수 없습니다({}).
+The {} list will be removed from this computer. Your online list is kept.|La lista de {} se borrará de este equipo. Tu lista en línea se conserva.|La liste {} sera supprimée de cet ordinateur. Ta liste en ligne est conservée.|Die {}-Liste wird von diesem Computer entfernt. Deine Online-Liste bleibt erhalten.|La lista di {} verrà rimossa da questo computer. La lista online resta.|{}-listen fjernes fra denne datamaskinen. Nettlisten din beholdes.|{} 목록이 이 컴퓨터에서 제거됩니다. 온라인 목록은 유지됩니다.
+Theme|Tema|Thème|Design|Tema|Tema|테마
+This backup could not be read: {}|No se pudo leer esta copia: {}|Cette sauvegarde est illisible : {}|Diese Sicherung konnte nicht gelesen werden: {}|Impossibile leggere questo backup: {}|Sikkerhetskopien kunne ikke leses: {}|이 백업을 읽을 수 없습니다: {}
+Time|Hora|Heure|Zeit|Ora|Tid|시간
+Times reread|Veces releído|Nombre de relectures|Erneut gelesen|Volte riletto|Ganger lest på nytt|다시 읽은 횟수
+Times rewatched|Veces vuelto a ver|Nombre de revisionnages|Erneut gesehen|Volte rivisto|Ganger sett på nytt|다시 본 횟수
+Tint|Color de acento|Couleur d’accent|Akzentfarbe|Colore d’accento|Aksentfarge|강조 색상
+Title|Título|Titre|Titel|Titolo|Tittel|제목
+Title language|Idioma de los títulos|Langue des titres|Sprache der Titel|Lingua dei titoli|Språk på titler|제목 언어
+Title, or an AniList or MyAnimeList link|Título, o un enlace de AniList o MyAnimeList|Titre, ou lien AniList ou MyAnimeList|Titel oder AniList-/MyAnimeList-Link|Titolo, o link AniList o MyAnimeList|Tittel, eller lenke til AniList eller MyAnimeList|제목 또는 AniList, MyAnimeList 링크
+Titles and rankings|Títulos y rankings|Titres et classements|Titel und Ranglisten|Titoli e classifiche|Titler og rangeringer|작품 및 순위
+Titles in the backup replace the ones in your list.|Los títulos de la copia sustituyen a los de tu lista.|Les titres de la sauvegarde remplacent ceux de ta liste.|Titel aus der Sicherung ersetzen die in deiner Liste.|I titoli del backup sostituiscono quelli della tua lista.|Titler i sikkerhetskopien erstatter dem i listen din.|백업의 작품이 목록의 작품을 대체합니다.
+Today|Hoy|Aujourd’hui|Heute|Oggi|I dag|오늘
+Too many requests. Wait a minute and try again.|Demasiadas peticiones. Espera un minuto e inténtalo de nuevo.|Trop de requêtes. Attends une minute et réessaie.|Zu viele Anfragen. Warte eine Minute und versuche es erneut.|Troppe richieste. Aspetta un minuto e riprova.|For mange forespørsler. Vent et minutt og prøv igjen.|요청이 너무 많습니다. 잠시 후 다시 시도하세요.
+Top rated|Mejor valorados|Les mieux notés|Bestbewertet|Più votati|Høyest rangert|평점순
+Track your anime and manga|Sigue tu anime y manga|Suis tes animes et mangas|Behalte deine Anime und Manga im Blick|Segui i tuoi anime e manga|Følg med på anime og manga|애니와 만화를 기록하세요
+Trailer|Tráiler|Bande-annonce|Trailer|Trailer|Trailer|예고편
+Trending|Tendencias|Tendances|Im Trend|Di tendenza|Populært nå|급상승
+Turn on notifications|Activar notificaciones|Activer les notifications|Benachrichtigungen einschalten|Attiva notifiche|Slå på varsler|알림 켜기
+Unknown|Desconocido|Inconnu|Unbekannt|Sconosciuto|Ukjent|알 수 없음
+Upcoming|Próximamente|À venir|Demnächst|In arrivo|Kommende|예정
+Updated {}|Actualizado el {}|Mis à jour le {}|Aktualisiert am {}|Aggiornato il {}|Oppdatert {}|{} 업데이트
+Updating…|Actualizando…|Mise à jour…|Wird aktualisiert…|Aggiornamento…|Oppdaterer…|업데이트 중…
+Version|Versión|Version|Version|Versione|Versjon|버전
+Volumes|Tomos|Tomes|Bände|Volumi|Bind|권
+Watching|Viendo|En cours|Schaue ich|In visione|Ser på|보는 중
+Widgets & shortcuts|Widgets y atajos|Widgets et raccourcis|Widgets & Kurzbefehle|Widget e scorciatoie|Widgeter og snarveier|위젯 및 단축키
+Windows|Windows|Windows|Windows|Windows|Windows|Windows
+Winter|Invierno|Hiver|Winter|Inverno|Vinter|겨울
+Write dates as YYYY-MM-DD.|Escribe las fechas como AAAA-MM-DD.|Écris les dates au format AAAA-MM-JJ.|Schreibe Daten als JJJJ-MM-TT.|Scrivi le date come AAAA-MM-GG.|Skriv datoer som ÅÅÅÅ-MM-DD.|날짜를 YYYY-MM-DD 형식으로 입력하세요.
+YYYY-MM-DD|AAAA-MM-DD|AAAA-MM-JJ|JJJJ-MM-TT|AAAA-MM-GG|ÅÅÅÅ-MM-DD|YYYY-MM-DD
+Year|Año|Année|Jahr|Anno|År|연도
+Your change could not be saved.|No se pudo guardar el cambio.|Le changement n’a pas pu être enregistré.|Deine Änderung konnte nicht gespeichert werden.|Impossibile salvare la modifica.|Endringen kunne ikke lagres.|변경 사항을 저장할 수 없습니다.
+Your list stays on this computer until you sign in. Nothing is shared with anyone else.|Tu lista se queda en este equipo hasta que inicies sesión. No se comparte nada con nadie más.|Ta liste reste sur cet ordinateur jusqu’à ce que tu te connectes. Rien n’est partagé avec d’autres.|Deine Liste bleibt auf diesem Computer, bis du dich anmeldest. Nichts wird mit anderen geteilt.|La tua lista resta su questo computer finché non accedi. Nulla viene condiviso con altri.|Listen blir på denne datamaskinen til du logger på. Ingenting deles med andre.|로그인하기 전까지 목록은 이 컴퓨터에만 있습니다. 다른 누구와도 공유하지 않습니다.
+Your progress, score and notes for “{}” will be deleted.|Se borrarán tu progreso, nota y comentarios de «{}».|Ta progression, ta note et tes commentaires pour « {} » seront supprimés.|Dein Fortschritt, deine Wertung und deine Notizen zu „{}“ werden gelöscht.|Progressi, voto e note di “{}” verranno eliminati.|Fremdrift, score og notater for «{}» slettes.|“{}”의 진행, 점수, 메모가 삭제됩니다.
+Your session has expired. Sign in again.|Tu sesión ha caducado. Vuelve a iniciar sesión.|Ta session a expiré. Reconnecte-toi.|Deine Sitzung ist abgelaufen. Melde dich erneut an.|La sessione è scaduta. Accedi di nuovo.|Økten er utløpt. Logg på igjen.|세션이 만료되었습니다. 다시 로그인하세요.
+{} changes waiting to sync|{} cambios pendientes de sincronizar|{} changements à synchroniser|{} Änderungen warten auf Synchronisierung|{} modifiche da sincronizzare|{} endringer venter på synkronisering|변경 사항 {}개 동기화 대기 중
+{} connected|{} conectado|{} connecté|{} verbunden|{} connesso|{} tilkoblet|{} 연결됨
+{} d {} h|{} d {} h|{} j {} h|{} T {} Std|{} g {} h|{} d {} t|{}일 {}시간
+{} days|{} días|{} jours|{} Tage|{} giorni|{} dager|{}일
+{} eps|{} eps.|{} ép.|{} Folgen|{} ep.|{} ep.|{}화
+{} h {} min|{} h {} min|{} h {} min|{} Std {} Min|{} h {} min|{} t {} min|{}시간 {}분
+{} members|{} miembros|{} membres|{} Mitglieder|{} membri|{} medlemmer|회원 {}명
+{} min|{} min|{} min|{} Min|{} min|{} min|{}분
+{} min per episode|{} min por episodio|{} min par épisode|{} Min pro Folge|{} min a episodio|{} min per episode|에피소드당 {}분
+{} ratings|{} votos|{} votes|{} Wertungen|{} voti|{} vurderinger|평가 {}개
+{} statistics|Estadísticas de {}|Statistiques {}|{}-Statistik|Statistiche {}|{}-statistikk|{} 통계
+{} titles|{} títulos|{} titres|{} Titel|{} titoli|{} titler|작품 {}개
+{} titles imported|{} títulos importados|{} titres importés|{} Titel importiert|{} titoli importati|{} titler importert|작품 {}개를 가져왔습니다
+{} unsent changes will be lost.|Se perderán {} cambios sin enviar.|{} changements non envoyés seront perdus.|{} nicht gesendete Änderungen gehen verloren.|{} modifiche non inviate andranno perse.|{} usendte endringer går tapt.|보내지 않은 변경 사항 {}개가 사라집니다.
+{} vol, {} ch|{} tomos, {} caps.|{} tomes, {} ch.|{} Bde., {} Kap.|{} vol., {} cap.|{} bind, {} kap.|{}권, {}화

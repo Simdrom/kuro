@@ -227,6 +227,8 @@ pub struct Settings {
     // System
     pub close_to_tray: bool,
     pub autostart: bool,
+    /// Handle `mango://` links.
+    pub handle_links: bool,
     pub gestures: Gestures,
     pub notifications: NotificationSettings,
 }
@@ -269,6 +271,7 @@ impl Default for Settings {
             anilist_client_id: String::new(),
             close_to_tray: false,
             autostart: false,
+            handle_links: false,
             gestures: Gestures::default(),
             notifications: NotificationSettings::default(),
         }
