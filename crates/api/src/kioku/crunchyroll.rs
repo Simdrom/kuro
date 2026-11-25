@@ -354,6 +354,7 @@ fn parse_item(row: &Value) -> Option<WatchedItem> {
         season_title: if movie { None } else { text(&meta["season_title"]) },
         episode: if movie { None } else { number(&meta["episode_number"]) },
         estimated: false,
+        series_id: None,
         episode_title: text(&panel["title"]),
         movie,
         watched_at,

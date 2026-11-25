@@ -50,7 +50,7 @@ fn bad(why: &str) -> ApiError {
 }
 
 /// Rows of a CSV file: commas, quotes with `""` inside, CRLF or LF.
-fn rows(text: &str) -> Result<Vec<Vec<String>>> {
+pub(super) fn rows(text: &str) -> Result<Vec<Vec<String>>> {
     let mut out = Vec::new();
     let (mut row, mut field) = (Vec::new(), String::new());
     let (mut quoted, mut chars) = (false, text.chars().peekable());
@@ -133,14 +133,14 @@ const LIMITED: [&str; 6] =
 
 /// What a segment of a title says about its place in a series.
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Marker {
+pub(super) enum Marker {
     Season(u32),
     Part(u32),
     Episode(u32),
     Limited,
 }
 
-fn marker(segment: &str) -> Option<Marker> {
+pub(super) fn marker(segment: &str) -> Option<Marker> {
     let n = normalize(&segment.replace('\u{a0}', " "));
     if LIMITED.contains(&n.as_str()) {
         return Some(Marker::Limited);
@@ -264,6 +264,7 @@ pub fn parse(data: &[u8]) -> Result<Vec<WatchedItem>> {
             season_title: t.season_title,
             episode: t.episode,
             estimated: false,
+            series_id: None,
             episode_title: t.episode_title,
             movie: t.movie,
             watched_at,
@@ -278,7 +279,7 @@ pub fn parse(data: &[u8]) -> Result<Vec<WatchedItem>> {
 
 /// Gives every episode without a number its place in its season, by the order
 /// it was first watched. A season with some numbers given keeps those.
-fn number_episodes(items: &mut [WatchedItem]) {
+pub(super) fn number_episodes(items: &mut [WatchedItem]) {
     let mut seasons: BTreeMap<(String, Option<u32>, String), Vec<usize>> = BTreeMap::new();
     for (i, it) in items.iter().enumerate().filter(|(_, it)| !it.movie) {
         let key = (

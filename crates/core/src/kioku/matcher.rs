@@ -353,6 +353,7 @@ mod tests {
             season_title: season_title.map(Into::into),
             episode: Some(episode),
             estimated: false,
+            series_id: None,
             episode_title: None,
             movie: false,
             watched_at: None,

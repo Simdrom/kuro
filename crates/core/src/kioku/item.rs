@@ -81,4 +81,8 @@ pub struct WatchedItem {
     pub progress: Watched,
     /// Stable id on the platform, the same for every audio version.
     pub external_id: String,
+    /// The platform's id of the series, when titles alone cannot tell two
+    /// series apart (Prime Video names some only "Season 1").
+    #[serde(default)]
+    pub series_id: Option<String>,
 }

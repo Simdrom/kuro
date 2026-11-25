@@ -730,6 +730,7 @@ mod tests {
             season_title: None,
             episode: Some(1),
             estimated: false,
+            series_id: None,
             episode_title: None,
             movie: false,
             watched_at: None,

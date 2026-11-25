@@ -189,6 +189,7 @@ pub fn watched(id: &str, series: &str, season: u32, episode: u32) -> WatchedItem
         season_title: None,
         episode: Some(episode),
         estimated: false,
+        series_id: None,
         episode_title: None,
         movie: false,
         watched_at: Some(now() - 86_400 * i64::from(episode)),

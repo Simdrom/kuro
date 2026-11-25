@@ -33,14 +33,26 @@ impl Group {
             .first()
             .map(|i| {
                 let k = group_key(i);
-                format!("{}|{}|{}|{}|{}", k.0, k.1.map_or(String::new(), |s| s.to_string()), k.2, k.3, k.4)
+                let mut key = format!(
+                    "{}|{}|{}|{}|{}",
+                    k.0,
+                    k.1.map_or(String::new(), |s| s.to_string()),
+                    k.2,
+                    k.3,
+                    k.4
+                );
+                // Only platforms that give a series id add it, so older keys stay valid.
+                if !k.5.is_empty() {
+                    key = format!("{key}|{}", k.5);
+                }
+                key
             })
             .unwrap_or_default()
     }
 }
 
-/// Series, season number, season title, film and film title, normalised.
-type GroupKey = (String, Option<u32>, String, bool, String);
+/// Series, season number, season title, film, film title and series id, normalised.
+type GroupKey = (String, Option<u32>, String, bool, String, String);
 
 fn group_key(i: &WatchedItem) -> GroupKey {
     let film = if i.movie {
@@ -54,6 +66,7 @@ fn group_key(i: &WatchedItem) -> GroupKey {
         i.season_title.as_deref().map(matcher::normalize).unwrap_or_default(),
         i.movie,
         film,
+        i.series_id.clone().unwrap_or_default(),
     )
 }
 
@@ -282,6 +295,7 @@ mod tests {
             season_title: None,
             episode: Some(ep),
             estimated: false,
+            series_id: None,
             episode_title: None,
             movie: false,
             watched_at: Some(1_790_000_000),
@@ -398,6 +412,21 @@ mod tests {
                 .key()
                 .replace("iron orchard", "huerto de hierro")
         );
+    }
+
+    #[test]
+    fn series_with_the_same_name_stay_apart_by_id() {
+        let named = |id: &str, series: &str| WatchedItem {
+            series_title: "Temporada 1".into(),
+            series_id: Some(series.into()),
+            ..item(id, 1, Watched::Completed)
+        };
+        let g = groups(vec![named("a", "S1"), named("b", "S2")], &HashSet::new());
+        assert_eq!(g.len(), 2);
+        assert_ne!(g[0].key(), g[1].key());
+        // Without an id the key is the one it always was.
+        let plain = groups(vec![item("c", 1, Watched::Completed)], &HashSet::new());
+        assert_eq!(plain[0].key(), "iron orchard|1||false|");
     }
 
     #[test]
