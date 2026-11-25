@@ -154,7 +154,7 @@ pub fn settle(h: &mut Harness<'static, App>) {
 
 // Kioku
 
-use kuro_api::kioku::{BoxFuture, HistorySource, Mode};
+use kuro_api::kioku::{BoxFuture, HistorySource, Mode, OnPage};
 use kuro_core::kioku::{Platform, Watched, WatchedItem};
 
 /// A platform that answers with a fixed history, as a real one would.
@@ -173,8 +173,10 @@ impl HistorySource for FakeSource {
     fn fetch<'a>(
         &'a self,
         known: &'a std::collections::HashSet<String>,
+        on_page: &'a OnPage,
     ) -> BoxFuture<'a, kuro_api::Result<Vec<WatchedItem>>> {
         let items = self.0.iter().filter(|i| !known.contains(&i.external_id)).cloned().collect();
+        on_page(1);
         Box::pin(async move { Ok(items) })
     }
 }
@@ -211,7 +213,7 @@ pub fn history() -> FakeSource {
 pub fn review(app: &App, source: &FakeSource) -> kuro_app::backend::KiokuReview {
     let known = app.bg.store().kioku_known(Service::AniList, Platform::Crunchyroll).unwrap();
     let rt = tokio::runtime::Builder::new_current_thread().build().unwrap();
-    let items = rt.block_on(source.fetch(&known)).unwrap();
+    let items = rt.block_on(source.fetch(&known, &|_| {})).unwrap();
     let groups = kuro_core::kioku::review::groups(items, &known);
     let titles: Vec<Media> = app.library(MediaKind::Anime).iter().map(|e| e.media.clone()).collect();
     kuro_app::backend::kioku_review(

@@ -102,6 +102,8 @@ pub enum Event {
         platform: Platform,
         result: Outcome<()>,
     },
+    /// Kioku: how far a sync has got.
+    KiokuProgress(KiokuStep),
     /// Kioku: history read and matched, waiting for the user.
     KiokuReview(Outcome<KiokuReview>),
     /// A link passed by another process or the tray.
@@ -139,6 +141,15 @@ impl Reply {
 
 pub fn now() -> i64 {
     jiff::Timestamp::now().as_second()
+}
+
+/// Where a Kioku sync is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KiokuStep {
+    /// Pages of history read so far.
+    Reading(u32),
+    /// Titles looked up on the tracker, of how many.
+    Searching { done: usize, total: usize },
 }
 
 /// What a Kioku sync found, before anything is written.
@@ -206,6 +217,7 @@ async fn kioku_run(
     store: &Mutex<Store>,
     platform: Platform,
     service: Service,
+    reply: &Reply,
 ) -> Outcome<KiokuReview> {
     let db = |e: kuro_core::StoreError| ApiError::Service(e.to_string());
     let (known, pending) = {
@@ -216,13 +228,25 @@ async fn kioku_run(
         Platform::Crunchyroll => &api.crunchyroll,
         _ => return Err(ApiError::Unavailable),
     };
-    let mut items = source.fetch(&known).await?;
+    let on_page = {
+        let reply = reply.clone();
+        move |n| reply.send(Event::KiokuProgress(KiokuStep::Reading(n)))
+    };
+    let mut items = source.fetch(&known, &on_page).await?;
+    let read = items.len();
     items.extend(pending);
     let groups = kioku::review::groups(items, &known);
+    let mut queries: Vec<String> = groups.iter().flat_map(kioku_queries).collect();
+    queries.sort_unstable();
+    queries.dedup();
+    let total = queries.len();
+    // Counts only: titles and ids never reach the log.
+    tracing::info!(read, groups = groups.len(), searches = total, "kioku: history read");
     let mut found: std::collections::HashMap<String, Vec<Media>> = std::collections::HashMap::new();
-    for q in groups.iter().flat_map(kioku_queries) {
-        if found.contains_key(&q) {
-            continue;
+    for (done, q) in queries.into_iter().enumerate() {
+        reply.send(Event::KiokuProgress(KiokuStep::Searching { done, total }));
+        if done % 10 == 0 {
+            tracing::info!(done, total, "kioku: looking up titles");
         }
         // Anime only: what the tracker does not know as anime stays unmatched.
         let page = api.search(service, MediaKind::Anime, &q, false, 1).await;
@@ -249,6 +273,13 @@ async fn kioku_run(
     };
     let review = kioku_review(platform, service, groups, candidates, entry, crate::app::today());
     lock(store).kioku_set_pending(service, platform, &review.held).map_err(db)?;
+    tracing::info!(
+        changes = review.changes.len(),
+        ticked = review.selected(),
+        unmatched = review.unmatched.len(),
+        up_to_date = review.settled.len(),
+        "kioku: review ready"
+    );
     Ok(review)
 }
 
@@ -551,7 +582,11 @@ impl Backend {
     pub fn kioku_sync(&self, platform: Platform, service: Service) {
         let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
         self.spawn(async move {
-            reply.send(Event::KiokuReview(kioku_run(&api, &store, platform, service).await))
+            let result = kioku_run(&api, &store, platform, service, &reply).await;
+            if let Err(e) = &result {
+                tracing::warn!("kioku: sync failed: {e}");
+            }
+            reply.send(Event::KiokuReview(result));
         });
     }
 

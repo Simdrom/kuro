@@ -548,3 +548,23 @@ fn kioku_reviews_before_writing_and_never_imports_twice() {
     assert_eq!((left, again.unmatched.len(), again.settled.len()), (vec![5], 0, 0));
     assert_eq!(progress(&h, 1), 11);
 }
+
+#[test]
+fn kioku_shows_how_far_a_sync_has_got() {
+    use kuro_app::backend::KiokuStep;
+    let mut h = harness();
+    act(&mut h, Act::Push(Route::Kioku));
+    h.state_mut().kioku.syncing = true;
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::KiokuProgress(KiokuStep::Reading(4)));
+    settle(&mut h);
+    assert!(h.query_by_label("Reading the history: page 4").is_some());
+    h.state_mut().handle(&ctx, Event::KiokuProgress(KiokuStep::Searching { done: 3, total: 10 }));
+    settle(&mut h);
+    assert!(h.query_by_label("Looking up titles: 3 of 10").is_some());
+    // The result ends the progress, whatever it is.
+    h.state_mut().handle(&ctx, Event::KiokuReview(Err(kuro_api::ApiError::Unauthorized)));
+    settle(&mut h);
+    assert!(h.state().kioku.progress.is_none() && !h.state().kioku.syncing);
+    assert!(h.query_by_label_contains("session has expired").is_some());
+}

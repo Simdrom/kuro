@@ -19,7 +19,7 @@ use kuro_core::{
     TitleLanguage, UserProfile, progress,
 };
 
-use crate::backend::{Backend, Event, KiokuReview, now};
+use crate::backend::{Backend, Event, KiokuReview, KiokuStep, now};
 use crate::confetti::Confetti;
 use crate::i18n::{self, t, tf};
 use crate::system::System;
@@ -127,6 +127,8 @@ pub struct KiokuView {
     pub connected: Option<bool>,
     pub connecting: bool,
     pub syncing: bool,
+    /// How far the running sync has got.
+    pub progress: Option<KiokuStep>,
     pub review: Option<KiokuReview>,
     pub error: Option<ApiError>,
 }
@@ -915,6 +917,7 @@ impl App {
             }
             Act::KiokuSync(p) => {
                 self.kioku.syncing = true;
+                self.kioku.progress = None;
                 self.kioku.error = None;
                 self.kioku.review = None;
                 self.bg.kioku_sync(p, self.s.primary);
@@ -1212,8 +1215,14 @@ impl App {
                     Err(e) => self.kioku.error = Some(e),
                 }
             }
+            Event::KiokuProgress(step) => {
+                if self.kioku.syncing {
+                    self.kioku.progress = Some(step);
+                }
+            }
             Event::KiokuReview(result) => {
                 self.kioku.syncing = false;
+                self.kioku.progress = None;
                 match result {
                     Ok(r) => self.kioku.review = Some(r),
                     Err(e) => {

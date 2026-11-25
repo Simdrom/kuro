@@ -54,6 +54,12 @@ How it works with Crunchyroll:
    completed titles and rewatches are left alone, and imported items are
    remembered, so syncing the same history again changes nothing.
 
+A sync shows how far it has got: the pages of history read, then the titles
+looked up (about two seconds each on AniList, to respect its limits). To
+follow it in a terminal too, with counts but never titles or ids:
+
+    $env:RUST_LOG = "kuro_app=info,kuro_api=info"; cargo run --release -p kuro
+
 Kioku appears as a device called "Kuro" in your Crunchyroll account.
 **Disconnect** forgets the session in Kuro; to end it on Crunchyroll as well,
 remove that device in your account settings.

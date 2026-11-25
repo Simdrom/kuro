@@ -6,7 +6,7 @@ use kuro_core::ListStatus;
 use kuro_core::kioku::{Doubt, Platform, Proposal};
 
 use crate::app::{Act, App};
-use crate::backend::KiokuReview;
+use crate::backend::{KiokuReview, KiokuStep};
 use crate::i18n::{t, tf};
 use crate::widgets::{self, card, note, row, section, separator};
 use crate::{format, icons, theme};
@@ -25,7 +25,26 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         crunchyroll(app, ui);
         if app.kioku.syncing {
             widgets::loading(ui, &p);
-            ui.vertical_centered(|ui| widgets::dim(ui, &p, t("kioku.syncing")));
+            let text = match app.kioku.progress {
+                None => t("kioku.syncing").to_owned(),
+                Some(KiokuStep::Reading(n)) => tf("kioku.progress.reading", &[&n]),
+                Some(KiokuStep::Searching { done, total }) => {
+                    tf("kioku.progress.searching", &[&done, &total])
+                }
+            };
+            ui.vertical_centered(|ui| widgets::dim(ui, &p, text));
+            if let Some(KiokuStep::Searching { done, total }) = app.kioku.progress
+                && total > 0
+            {
+                ui.add_space(6.0);
+                let (rect, _) = ui.allocate_exact_size(
+                    egui::vec2(ui.available_width().min(320.0), 6.0),
+                    egui::Sense::hover(),
+                );
+                let rect =
+                    rect.translate(egui::vec2((ui.available_width() - rect.width()).max(0.0) / 2.0, 0.0));
+                widgets::bar(ui.painter(), rect, done as f32 / total as f32, p.tint, p.raised);
+            }
         }
         if let Some(e) = app.kioku.error.clone() {
             ui.add_space(8.0);

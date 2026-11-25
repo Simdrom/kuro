@@ -62,7 +62,7 @@ async fn crunchyroll_history_is_read() {
     };
     let api = api();
     api.crunchyroll.connect(cookie.trim()).await.unwrap();
-    let items = api.crunchyroll.fetch(&Default::default()).await.unwrap();
+    let items = api.crunchyroll.fetch(&Default::default(), &|page| println!("page {page}")).await.unwrap();
     let films = items.iter().filter(|i| i.movie).count();
     println!("items: {}  films: {films}", items.len());
     assert!(items.iter().all(|i| !i.external_id.is_empty() && !i.series_title.is_empty()));

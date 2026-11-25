@@ -32,7 +32,7 @@ use tokio::sync::Mutex;
 use url::Url;
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
-use super::{BoxFuture, HistorySource, Mode, USER_AGENT, uuid};
+use super::{BoxFuture, HistorySource, Mode, OnPage, USER_AGENT, uuid};
 use crate::http::{ApiError, Http, Result, Throttle, read_limited};
 use crate::secrets::{SecretKey, SecretStore, Tokens};
 
@@ -245,15 +245,23 @@ impl Crunchyroll {
 
     /// The history, newest first, until a page holds nothing new.
     pub async fn history(&self, known: &HashSet<String>) -> Result<Vec<WatchedItem>> {
+        self.history_with(known, &|_| {}).await
+    }
+
+    /// [`Crunchyroll::history`], telling `on_page` after every page.
+    pub async fn history_with(&self, known: &HashSet<String>, on_page: &OnPage) -> Result<Vec<WatchedItem>> {
         let (_, account) = self.session().await?;
         let mut url = self.url(&format!("/content/v2/{account}/watch-history"))?;
         url.query_pairs_mut().append_pair("page_size", &PAGE_SIZE.to_string()).append_pair("locale", "en-US");
         let mut out = Vec::new();
-        for _ in 0..MAX_PAGES {
+        for n in 1..=MAX_PAGES {
             let page = self.page(&url).await?;
             let rows = page["data"].as_array().map_or(0, Vec::len);
             let items = parse_page(&page);
             let fresh = items.iter().any(|i| !known.contains(&i.external_id));
+            // Counts only: titles and ids never reach the log.
+            tracing::info!(page = n, rows, kept = items.len(), "kioku: Crunchyroll history page read");
+            on_page(n);
             out.extend(items);
             let next = page["meta"]["next_page"].as_str().filter(|n| !n.is_empty());
             match next {
@@ -278,8 +286,12 @@ impl HistorySource for Crunchyroll {
         matches!(self.secrets.load(KEY), Ok(Some(_)))
     }
 
-    fn fetch<'a>(&'a self, known: &'a HashSet<String>) -> BoxFuture<'a, Result<Vec<WatchedItem>>> {
-        Box::pin(self.history(known))
+    fn fetch<'a>(
+        &'a self,
+        known: &'a HashSet<String>,
+        on_page: &'a OnPage,
+    ) -> BoxFuture<'a, Result<Vec<WatchedItem>>> {
+        Box::pin(self.history_with(known, on_page))
     }
 
     fn disconnect(&self) -> Result<()> {

@@ -22,6 +22,9 @@ pub const USER_AGENT: &str = concat!("Kuro-Kioku/", env!("CARGO_PKG_VERSION"));
 
 pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
+/// Told how many pages have been read so far.
+pub type OnPage = dyn Fn(u32) + Send + Sync;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     /// Signs in to the platform and reads the history.
@@ -41,9 +44,13 @@ pub trait HistorySource: Send + Sync {
     }
 
     /// Account mode: the history, newest first. Reading stops at the first
-    /// page whose items are all in `known`.
-    fn fetch<'a>(&'a self, known: &'a HashSet<String>) -> BoxFuture<'a, Result<Vec<WatchedItem>>> {
-        let _ = known;
+    /// page whose items are all in `known`. `on_page` follows the reading.
+    fn fetch<'a>(
+        &'a self,
+        known: &'a HashSet<String>,
+        on_page: &'a OnPage,
+    ) -> BoxFuture<'a, Result<Vec<WatchedItem>>> {
+        let _ = (known, on_page);
         Box::pin(async { Err(ApiError::Unavailable) })
     }
 
