@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Keeps the actions, pinned by commit, up to date.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # One pull request a week for compatible updates; major versions come one by one.
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      compatible:
+        update-types: [minor, patch]
