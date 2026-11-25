@@ -10,7 +10,7 @@ description = "AniList, MyAnimeList and music clients, OAuth and secret storage"
 kuro-core = { path = "../core" }
 base64 = "0.22"
 jiff = "1"
-getrandom = "0.3"
+getrandom = "0.4"
 keyring = "4"
 reqwest = { version = "0.13", default-features = false, features = ["native-tls", "json", "form", "query", "gzip", "http2", "charset", "system-proxy", "stream"] }
 serde = { version = "1", features = ["derive"] }
