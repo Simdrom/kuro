@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{Connection, OpenFlags, OptionalExtension, params};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
@@ -13,6 +13,8 @@ use crate::settings::Settings;
 pub enum StoreError {
     #[error("database error: {0}")]
     Db(#[from] rusqlite::Error),
+    #[error("file error: {0}")]
+    Io(#[from] std::io::Error),
     #[error("invalid data: {0}")]
     Json(#[from] serde_json::Error),
     #[error("database was created by a newer version ({0})")]
@@ -59,6 +61,24 @@ const BACKUP_FORMAT: u32 = 1;
 impl Store {
     pub fn open(path: &Path) -> Result<Self> {
         Self::init(Connection::open(path)?)
+    }
+
+    /// Copies the database of an older installation, when `new` does not exist
+    /// yet. The original is left untouched, even while another program uses it.
+    pub fn adopt(old: &Path, new: &Path) -> Result<bool> {
+        if new.exists() || !old.is_file() {
+            return Ok(false);
+        }
+        // A finished copy is renamed into place, so a failure leaves nothing behind.
+        let temp = new.with_extension("partial");
+        if temp.exists() {
+            std::fs::remove_file(&temp)?;
+        }
+        let db = Connection::open_with_flags(old, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+        db.busy_timeout(std::time::Duration::from_secs(5))?;
+        db.execute("VACUUM INTO ?1", [temp.to_string_lossy()])?;
+        std::fs::rename(&temp, new)?;
+        Ok(true)
     }
 
     pub fn in_memory() -> Result<Self> {
@@ -385,6 +405,36 @@ mod tests {
         Store::open(&path).unwrap().put_entry(&entry(1, 3)).unwrap();
         let s = Store::open(&path).unwrap();
         assert_eq!(s.entry(entry(1, 0).media.media_ref()).unwrap().unwrap().progress, 3);
+    }
+
+    #[test]
+    fn adopts_an_older_installation_that_is_still_open() {
+        let dir = tempfile::tempdir().unwrap();
+        let (old, new) = (dir.path().join("old.db"), dir.path().join("new.db"));
+        assert!(!Store::adopt(&old, &new).unwrap(), "nothing to adopt");
+        let mut running = Store::open(&old).unwrap();
+        running.save_and_queue(&entry(1, 7), &[Service::AniList]).unwrap();
+        running.save_settings(&Settings { zoom: 1.25, ..Settings::default() }).unwrap();
+
+        assert!(Store::adopt(&old, &new).unwrap());
+        let s = Store::open(&new).unwrap();
+        assert_eq!(s.entry(entry(1, 0).media.media_ref()).unwrap().unwrap().progress, 7);
+        assert_eq!((s.pending().unwrap().len(), s.settings().unwrap().zoom), (1, 1.25));
+        assert!(running.entry(entry(1, 0).media.media_ref()).unwrap().is_some());
+
+        // A second start must not overwrite newer data.
+        s.put_entry(&entry(1, 9)).unwrap();
+        assert!(!Store::adopt(&old, &new).unwrap());
+        assert_eq!(s.entry(entry(1, 0).media.media_ref()).unwrap().unwrap().progress, 9);
+    }
+
+    #[test]
+    fn a_broken_old_database_leaves_nothing_behind() {
+        let dir = tempfile::tempdir().unwrap();
+        let (old, new) = (dir.path().join("old.db"), dir.path().join("new.db"));
+        std::fs::write(&old, "not a database at all, only some text").unwrap();
+        assert!(Store::adopt(&old, &new).is_err());
+        assert!(!new.exists());
     }
 
     #[test]
