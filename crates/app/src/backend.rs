@@ -1,0 +1,599 @@
+//! Background work: runs requests off the UI thread and reports events back.
+
+use std::collections::HashSet;
+use std::future::Future;
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{Receiver, Sender, channel};
+use std::sync::{Arc, Mutex, MutexGuard};
+
+use eframe::egui;
+use mango_api::images::ImageCache;
+use mango_api::music::Track;
+use mango_api::{Api, ApiError, Page, RankingQuery, SeasonQuery, Tokens};
+use mango_core::overview::Section;
+use mango_core::{
+    ListEntry, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, Service, Store, Theme, UserProfile,
+};
+
+pub type Outcome<T> = Result<T, ApiError>;
+
+#[allow(clippy::large_enum_variant)]
+pub enum Event {
+    Library {
+        service: Service,
+        kind: MediaKind,
+        result: Outcome<()>,
+    },
+    Season {
+        query: SeasonQuery,
+        continuing: bool,
+        page: u32,
+        result: Outcome<Page<Media>>,
+    },
+    Ranking {
+        query: RankingQuery,
+        page: u32,
+        result: Outcome<Page<Media>>,
+    },
+    Search {
+        kind: MediaKind,
+        text: String,
+        page: u32,
+        result: Outcome<Page<Media>>,
+    },
+    Genres(Outcome<Vec<String>>),
+    Detail {
+        media: MediaRef,
+        result: Outcome<MediaDetail>,
+        fresh: bool,
+    },
+    Themes {
+        media: MediaRef,
+        result: Outcome<Vec<Theme>>,
+    },
+    Track {
+        theme: Theme,
+        result: Outcome<Option<Track>>,
+    },
+    Person {
+        id: u64,
+        result: Outcome<PersonDetail>,
+    },
+    Overview {
+        media: MediaRef,
+        result: Outcome<Vec<(Section, Vec<Media>)>>,
+    },
+    Random(Outcome<Media>),
+    Resolved {
+        from: MediaRef,
+        result: Outcome<MediaRef>,
+    },
+    Airing(Outcome<Vec<Media>>),
+    LoginUrl {
+        service: Service,
+        result: Outcome<String>,
+    },
+    Login {
+        service: Service,
+        result: Outcome<(UserProfile, Tokens, bool)>,
+    },
+    Profile {
+        service: Service,
+        result: Outcome<UserProfile>,
+    },
+    Sync {
+        sent: usize,
+        left: usize,
+        error: Option<(Service, ApiError)>,
+    },
+    Image {
+        url: String,
+        image: Option<egui::ColorImage>,
+    },
+    ImageCacheSize(u64),
+    /// Text chosen in a file dialog.
+    ImportText(Result<String, String>),
+    Exported(Result<(), String>),
+    /// A link passed by another process or the tray.
+    OpenLink(String),
+    ShowWindow,
+    Quit,
+}
+
+pub struct Backend {
+    rt: Option<tokio::runtime::Runtime>,
+    pub api: Api,
+    store: Arc<Mutex<Store>>,
+    pub images: ImageCache,
+    tx: Sender<Event>,
+    rx: Receiver<Event>,
+    ctx: egui::Context,
+    syncing: Arc<AtomicBool>,
+    resync: Arc<AtomicBool>,
+    login: Option<tokio::task::AbortHandle>,
+}
+
+/// Sends an event and wakes the UI.
+#[derive(Clone)]
+pub struct Reply {
+    tx: Sender<Event>,
+    ctx: egui::Context,
+}
+
+impl Reply {
+    pub fn send(&self, e: Event) {
+        let _ = self.tx.send(e);
+        self.ctx.request_repaint();
+    }
+}
+
+pub fn now() -> i64 {
+    chrono::Utc::now().timestamp()
+}
+
+fn lock(store: &Mutex<Store>) -> MutexGuard<'_, Store> {
+    store.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+impl Backend {
+    /// With `online` false no request is ever made, which tests rely on.
+    pub fn new(api: Api, store: Store, image_dir: PathBuf, ctx: egui::Context, online: bool) -> Self {
+        let (tx, rx) = channel();
+        let rt = online
+            .then(|| tokio::runtime::Builder::new_multi_thread().worker_threads(3).enable_all().build().ok())
+            .flatten();
+        let images = ImageCache::new(api.http().clone(), image_dir);
+        Self {
+            rt,
+            api,
+            store: Arc::new(Mutex::new(store)),
+            images,
+            tx,
+            rx,
+            ctx,
+            syncing: Arc::default(),
+            resync: Arc::default(),
+            login: None,
+        }
+    }
+
+    pub fn store(&self) -> MutexGuard<'_, Store> {
+        lock(&self.store)
+    }
+
+    pub fn reply(&self) -> Reply {
+        Reply { tx: self.tx.clone(), ctx: self.ctx.clone() }
+    }
+
+    pub fn next_event(&self) -> Option<Event> {
+        self.rx.try_recv().ok()
+    }
+
+    pub fn online(&self) -> bool {
+        self.rt.is_some()
+    }
+
+    fn spawn<F>(&self, f: F) -> Option<tokio::task::AbortHandle>
+    where
+        F: Future<Output = ()> + Send + 'static,
+    {
+        self.rt.as_ref().map(|rt| rt.spawn(f).abort_handle())
+    }
+
+    /// Serves `key` from the cache at once, and from the network when older
+    /// than `max_age` seconds.
+    fn cached<T, F, E>(&self, key: String, max_age: i64, fetch: F, event: E)
+    where
+        T: serde::Serialize + serde::de::DeserializeOwned + Send + 'static,
+        F: Future<Output = Outcome<T>> + Send + 'static,
+        E: Fn(Outcome<T>, bool) -> Event + Send + 'static,
+    {
+        let (store, reply) = (self.store.clone(), self.reply());
+        self.spawn(async move {
+            let hit = lock(&store).cached::<T>(&key, now()).ok().flatten();
+            let had = hit.is_some();
+            if let Some((v, age)) = hit {
+                let fresh = age < max_age;
+                reply.send(event(Ok(v), fresh));
+                if fresh {
+                    return;
+                }
+            }
+            match fetch.await {
+                Ok(v) => {
+                    if let Err(e) = lock(&store).put_cache(&key, &v, now()) {
+                        tracing::warn!("cache write failed: {e}");
+                    }
+                    reply.send(event(Ok(v), true));
+                }
+                // Keep showing what the cache gave us.
+                Err(e) if had && e.is_transient() => tracing::warn!("refresh of cached data failed: {e}"),
+                Err(e) => reply.send(event(Err(e), true)),
+            }
+        });
+    }
+
+    // Library
+
+    /// With `merge`, local titles the account lacks are kept and uploaded.
+    pub fn refresh_library(&self, service: Service, merge: bool) {
+        for kind in MediaKind::ALL {
+            let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
+            self.spawn(async move {
+                let result = match api.library(service, kind).await {
+                    Ok(mut list) => {
+                        if service == Service::Mal && kind == MediaKind::Anime {
+                            add_airing(&api, &mut list).await;
+                        }
+                        lock(&store)
+                            .replace_library(service, kind, &list, merge)
+                            .map_err(|e| ApiError::Service(e.to_string()))
+                    }
+                    Err(e) => Err(e),
+                };
+                reply.send(Event::Library { service, kind, result });
+            });
+        }
+    }
+
+    /// Sends queued edits. Calls made while a run is active start another run after it.
+    pub fn sync(&self) {
+        if self.rt.is_none() {
+            return;
+        }
+        if self.syncing.swap(true, Ordering::SeqCst) {
+            self.resync.store(true, Ordering::SeqCst);
+            return;
+        }
+        let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
+        let (syncing, resync) = (self.syncing.clone(), self.resync.clone());
+        self.spawn(async move {
+            loop {
+                resync.store(false, Ordering::SeqCst);
+                let (sent, left, error) = run_sync(&api, &store).await;
+                reply.send(Event::Sync { sent, left, error });
+                if !resync.load(Ordering::SeqCst) {
+                    break;
+                }
+            }
+            syncing.store(false, Ordering::SeqCst);
+        });
+    }
+
+    pub fn airing(&self, refs: Vec<MediaRef>) {
+        if refs.is_empty() {
+            return;
+        }
+        let (api, reply) = (self.api.clone(), self.reply());
+        self.spawn(async move { reply.send(Event::Airing(api.airing(&refs).await)) });
+    }
+
+    // Browsing
+
+    pub fn season(&self, s: Service, query: SeasonQuery, continuing: bool, page: u32) {
+        let api = self.api.clone();
+        let key = format!("season:{s:?}:{query:?}:{continuing}:{page}");
+        let q = query.clone();
+        self.cached(
+            key,
+            3600,
+            async move {
+                let p = if continuing {
+                    api.continuing(s, &q, page).await
+                } else {
+                    api.season(s, &q, page).await
+                }?;
+                Ok((p.items, p.more))
+            },
+            move |r, _| Event::Season { query: query.clone(), continuing, page, result: r.map(to_page) },
+        );
+    }
+
+    pub fn ranking(&self, s: Service, query: RankingQuery, page: u32) {
+        let api = self.api.clone();
+        let key = format!("ranking:{s:?}:{query:?}:{page}");
+        let q = query.clone();
+        self.cached(
+            key,
+            3600,
+            async move {
+                let p = api.ranking(s, &q, page).await?;
+                Ok((p.items, p.more))
+            },
+            move |r, _| Event::Ranking { query: query.clone(), page, result: r.map(to_page) },
+        );
+    }
+
+    pub fn search(&self, s: Service, kind: MediaKind, text: String, adult: bool, page: u32) {
+        let api = self.api.clone();
+        let key = format!("search:{s:?}:{kind:?}:{adult}:{page}:{}", text.to_lowercase());
+        let q = text.clone();
+        self.cached(
+            key,
+            3600,
+            async move {
+                let p = api.search(s, kind, &q, adult, page).await?;
+                Ok((p.items, p.more))
+            },
+            move |r, _| Event::Search { kind, text: text.clone(), page, result: r.map(to_page) },
+        );
+    }
+
+    pub fn genres(&self) {
+        let api = self.api.clone();
+        self.cached("genres".into(), 30 * 86_400, async move { api.anilist.genres().await }, |r, _| {
+            Event::Genres(r)
+        });
+    }
+
+    pub fn detail(&self, media: MediaRef, force: bool) {
+        let api = self.api.clone();
+        let max_age = if force { 0 } else { 6 * 3600 };
+        self.cached(
+            format!("detail:{media:?}"),
+            max_age,
+            async move { api.detail(media).await },
+            move |result, fresh| Event::Detail { media, result, fresh },
+        );
+    }
+
+    pub fn themes(&self, m: &Media) {
+        let api = self.api.clone();
+        let media = m.media_ref();
+        let (mal, anilist) = (m.id_on(Service::Mal), m.id_on(Service::AniList));
+        self.cached(
+            format!("themes:{media:?}"),
+            7 * 86_400,
+            async move { api.music.themes(mal, anilist).await },
+            move |result, _| Event::Themes { media, result },
+        );
+    }
+
+    pub fn track(&self, theme: Theme) {
+        let api = self.api.clone();
+        let q = theme.clone();
+        self.cached(
+            format!("track:{}:{}", theme.title, theme.artist),
+            30 * 86_400,
+            async move { api.music.apple(&q).await },
+            move |result, _| Event::Track { theme: theme.clone(), result },
+        );
+    }
+
+    pub fn person(&self, id: u64) {
+        let api = self.api.clone();
+        self.cached(
+            format!("person:{id}"),
+            7 * 86_400,
+            async move { api.person(id).await },
+            move |result, _| Event::Person { id, result },
+        );
+    }
+
+    pub fn overview(&self, root: Media) {
+        let api = self.api.clone();
+        let media = root.media_ref();
+        self.cached(
+            format!("overview:{media:?}"),
+            86_400,
+            async move { api.overview(&root).await },
+            move |result, _| Event::Overview { media, result },
+        );
+    }
+
+    pub fn random(&self, kind: MediaKind, adult: bool) {
+        let (api, reply) = (self.api.clone(), self.reply());
+        let seed = chrono::Utc::now().timestamp_subsec_nanos();
+        self.spawn(
+            async move { reply.send(Event::Random(api.anilist.random(kind, adult, seed.into()).await)) },
+        );
+    }
+
+    pub fn resolve(&self, from: MediaRef, to: Service) {
+        let (api, reply) = (self.api.clone(), self.reply());
+        self.spawn(async move { reply.send(Event::Resolved { from, result: api.resolve(from, to).await }) });
+    }
+
+    // Accounts
+
+    pub fn login(&mut self, service: Service) {
+        self.cancel_login();
+        let (api, reply) = (self.api.clone(), self.reply());
+        self.login = self.spawn(async move {
+            let login = match api.begin_login(service).await {
+                Ok(l) => l,
+                Err(e) => return reply.send(Event::Login { service, result: Err(e) }),
+            };
+            let url = login.authorize_url().map(String::from);
+            reply.send(Event::LoginUrl { service, result: url });
+            let result = api.finish_login(service, login).await;
+            let result = result.map(|(p, r)| (p, r.tokens, r.verified));
+            reply.send(Event::Login { service, result });
+        });
+    }
+
+    pub fn cancel_login(&mut self) {
+        if let Some(h) = self.login.take() {
+            h.abort();
+        }
+    }
+
+    pub fn profile(&self, service: Service) {
+        let (api, reply) = (self.api.clone(), self.reply());
+        self.spawn(async move { reply.send(Event::Profile { service, result: api.profile(service).await }) });
+    }
+
+    // Images and files
+
+    pub fn image(&self, url: String) {
+        let (images, reply) = (self.images.clone(), self.reply());
+        self.spawn(async move {
+            let bytes = images.get(&url).await;
+            let image = match bytes {
+                Ok(b) => tokio::task::spawn_blocking(move || decode_image(&b)).await.ok().flatten(),
+                Err(e) => {
+                    tracing::debug!("image failed: {e}");
+                    None
+                }
+            };
+            reply.send(Event::Image { url, image });
+        });
+    }
+
+    pub fn image_cache_size(&self) {
+        let (images, reply) = (self.images.clone(), self.reply());
+        self.spawn(async move {
+            if let Ok(n) = tokio::task::spawn_blocking(move || images.size()).await {
+                reply.send(Event::ImageCacheSize(n));
+            }
+        });
+    }
+
+    pub fn maintenance(&self) {
+        let (images, store) = (self.images.clone(), self.store.clone());
+        self.spawn(async move {
+            let _ = tokio::task::spawn_blocking(move || {
+                images.trim(400 * 1024 * 1024);
+                let _ = lock(&store).prune(now(), 60);
+            })
+            .await;
+        });
+    }
+
+    pub fn export(&self, service: Service) {
+        let (store, reply) = (self.store.clone(), self.reply());
+        std::thread::spawn(move || {
+            let Some(path) = rfd::FileDialog::new()
+                .add_filter("JSON", &["json"])
+                .set_file_name("mango-backup.json")
+                .save_file()
+            else {
+                return;
+            };
+            let text = lock(&store).export(service).map_err(|e| e.to_string());
+            let r = text.and_then(|t| std::fs::write(path, t).map_err(|e| e.to_string()));
+            reply.send(Event::Exported(r));
+        });
+    }
+
+    pub fn import(&self) {
+        const MAX: u64 = 64 * 1024 * 1024;
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            let Some(path) = rfd::FileDialog::new().add_filter("JSON", &["json"]).pick_file() else { return };
+            let r = match std::fs::metadata(&path) {
+                Ok(m) if m.len() > MAX => Err("file is too large".to_owned()),
+                Ok(_) => std::fs::read_to_string(&path).map_err(|e| e.to_string()),
+                Err(e) => Err(e.to_string()),
+            };
+            reply.send(Event::ImportText(r));
+        });
+    }
+}
+
+fn to_page((items, more): (Vec<Media>, bool)) -> Page<Media> {
+    Page { items, more }
+}
+
+async fn add_airing(api: &Api, list: &mut [ListEntry]) {
+    use mango_core::ReleaseStatus as R;
+    let refs: Vec<MediaRef> = list
+        .iter()
+        .filter(|e| matches!(e.media.release, R::Releasing | R::NotYetReleased))
+        .map(|e| e.media.media_ref())
+        .collect();
+    let Ok(found) = api.airing(&refs).await else { return };
+    for e in list {
+        if let Some(m) = found.iter().find(|m| m.media_ref() == e.media.media_ref()) {
+            e.media.next_airing = m.next_airing;
+            e.media.anilist_id = m.anilist_id;
+        }
+    }
+}
+
+async fn run_sync(api: &Api, store: &Mutex<Store>) -> (usize, usize, Option<(Service, ApiError)>) {
+    let pending = match lock(store).pending() {
+        Ok(p) => p,
+        Err(e) => return (0, 0, Some((Service::AniList, ApiError::Service(e.to_string())))),
+    };
+    let mut blocked = HashSet::new();
+    let (mut sent, mut left, mut error) = (0, 0, None);
+    for p in pending {
+        if blocked.contains(&p.target) || !api.is_signed_in(p.target) {
+            left += 1;
+            continue;
+        }
+        match api.push(&p).await {
+            Ok(()) => {
+                let _ = lock(store).sent(p.revision);
+                sent += 1;
+            }
+            // The other service does not have this title; retrying cannot help.
+            Err(ApiError::NotFound) if p.target != p.media.service => {
+                let _ = lock(store).sent(p.revision);
+            }
+            Err(e) => {
+                let _ = lock(store).failed(p.revision, &e.to_string());
+                left += 1;
+                if e.is_transient() || e == ApiError::Unauthorized {
+                    blocked.insert(p.target);
+                }
+                error = Some((p.target, e));
+            }
+        }
+    }
+    (sent, left, error)
+}
+
+/// Decodes within limits that stop decompression bombs.
+fn decode_image(bytes: &[u8]) -> Option<egui::ColorImage> {
+    const MAX_SIDE: u32 = 4096;
+    const SHOWN: u32 = 640;
+    let mut r = image::ImageReader::new(std::io::Cursor::new(bytes)).with_guessed_format().ok()?;
+    let mut limits = image::Limits::default();
+    limits.max_image_width = Some(MAX_SIDE);
+    limits.max_image_height = Some(MAX_SIDE);
+    limits.max_alloc = Some(96 * 1024 * 1024);
+    r.limits(limits);
+    let mut img = r.decode().ok()?;
+    if img.width() > SHOWN || img.height() > SHOWN * 2 {
+        img = img.thumbnail(SHOWN, SHOWN * 2);
+    }
+    let rgba = img.into_rgba8();
+    let size = [rgba.width() as usize, rgba.height() as usize];
+    Some(egui::ColorImage::from_rgba_unmultiplied(size, &rgba))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mango_api::{ClientIds, MemorySecrets};
+
+    #[test]
+    fn hostile_images_are_rejected() {
+        assert!(decode_image(b"not an image").is_none());
+        // PNG header announcing 60000x60000 pixels.
+        let mut png = b"\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR".to_vec();
+        png.extend([0, 0, 0xEA, 0x60, 0, 0, 0xEA, 0x60, 8, 6, 0, 0, 0, 0, 0, 0, 0]);
+        assert!(decode_image(&png).is_none());
+    }
+
+    #[test]
+    fn large_images_are_downscaled() {
+        let mut buf = std::io::Cursor::new(Vec::new());
+        image::RgbImage::new(2000, 1000).write_to(&mut buf, image::ImageFormat::Png).unwrap();
+        assert!(decode_image(buf.get_ref()).unwrap().size[0] <= 640);
+    }
+
+    #[tokio::test]
+    async fn sync_leaves_edits_queued_while_signed_out() {
+        let api = Api::new(Arc::new(MemorySecrets::default()), ClientIds::default()).unwrap();
+        let mut s = Store::in_memory().unwrap();
+        let e = ListEntry::new(Media { id: 1, ..Media::default() });
+        s.save_and_queue(&e, &[Service::AniList]).unwrap();
+        let store = Mutex::new(s);
+        assert_eq!(run_sync(&api, &store).await, (0, 1, None));
+        assert_eq!(lock(&store).pending().unwrap().len(), 1);
+    }
+}
