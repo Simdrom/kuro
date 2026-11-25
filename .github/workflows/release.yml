@@ -77,8 +77,8 @@ jobs:
   package:
     name: Package
     needs: [prepare, ci]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    runs-on: windows-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -93,17 +93,41 @@ jobs:
         with:
           name: release-notes
           path: in
-      - name: Zip and checksums
+      - name: Zip and installer
+        id: build
+        shell: pwsh
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
         run: |
-          name="kuro-$VERSION-windows-x64"
-          mkdir -p "$name" dist
-          cp in/kuro.exe in/THIRD-PARTY-LICENSES.html README.md "$name/"
-          cp crates/app/assets/fonts/PHOSPHOR-LICENSE.txt "$name/"
-          zip -r "dist/$name.zip" "$name"
-          cd dist
-          sha256sum "$name.zip" | tee SHA256SUMS
+          $ErrorActionPreference = 'Stop'
+          $name = "kuro-$env:VERSION-windows-x64"
+          New-Item -ItemType Directory $name, dist | Out-Null
+          Copy-Item in/kuro.exe, in/THIRD-PARTY-LICENSES.html, README.md, crates/app/assets/fonts/PHOSPHOR-LICENSE.txt $name
+          Compress-Archive $name "dist/$name.zip"
+          # Inno Setup comes with the runner.
+          function Build($version, $to) {
+            & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" /Qp "/DAppVersion=$version" "/DFiles=$PWD/$name" "/O$PWD/$to" packaging/windows/kuro.iss
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
+          Build $env:VERSION dist
+          # The same files as other versions, only to test moving between them.
+          # 0.2.0 gives 0.12.0, which sorts the wrong way if compared as text.
+          $newer = $env:VERSION -replace '^(\d+)\.(\d+)\..*', '$1.1$2.0'
+          Build 0.0.9 test
+          Build $newer test
+          "newer=$newer" >> $env:GITHUB_OUTPUT
+      - name: Install, update and uninstall
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          NEWER: ${{ steps.build.outputs.newer }}
+        run: |
+          Copy-Item "dist/kuro-$env:VERSION-windows-x64-setup.exe" test
+          packaging/windows/test.ps1 -Folder "$PWD/test" -Older 0.0.9 -Version $env:VERSION -Newer $env:NEWER
+      - name: Checksums
+        shell: bash
+        working-directory: dist
+        run: sha256sum --text kuro-* | tee SHA256SUMS
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-files

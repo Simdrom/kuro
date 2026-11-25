@@ -13,7 +13,27 @@ AniList and MyAnimeList, or with a list that stays on your computer.
 Independent project. Not affiliated with ManGo, RocketScience IT, AniList or
 MyAnimeList, and built without any of their code or artwork.
 
-## Run
+## Install
+
+Download `kuro-<version>-windows-x64-setup.exe` from
+[Releases](https://github.com/Simdrom/kuro/releases/latest). It installs for
+your user only, without administrator rights. The `.zip` holds the same
+program without an installer.
+
+The installer looks at the version you have:
+
+| Installed | What it does |
+| --- | --- |
+| None | Installs |
+| Older | Updates, closing Kuro first |
+| The same | Asks whether to install it again |
+| Newer | Stops: an older Kuro cannot open a newer database |
+
+The files are not signed, so Windows may warn that the publisher is unknown.
+`SHA256SUMS` has their checksums. Uninstalling keeps your lists and settings,
+in `%LOCALAPPDATA%\Kuro`, and your sessions, in the Windows Credential Manager.
+
+## Run from source
 
     cargo run --release -p kuro
 
