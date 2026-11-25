@@ -1,0 +1,51 @@
+#![allow(clippy::unwrap_used)]
+//! Checks against the real services. Run with `cargo test -p mango-api --test live -- --ignored`.
+
+use std::sync::Arc;
+
+use mango_api::{Api, ClientIds, MemorySecrets, Ranking, RankingQuery, SeasonQuery};
+use mango_core::{MediaKind, MediaRef, Season, SeasonYear, Service};
+
+fn api() -> Api {
+    Api::new(Arc::new(MemorySecrets::default()), ClientIds::default()).unwrap()
+}
+
+#[tokio::test]
+#[ignore = "network"]
+async fn anilist_queries_are_accepted() {
+    let api = api();
+    let s = Service::AniList;
+    let found = api.search(s, MediaKind::Anime, "frieren", false, 1).await.unwrap();
+    assert!(!found.items.is_empty());
+
+    let q = SeasonQuery { season: SeasonYear { season: Season::Fall, year: 2023 }, adult: false };
+    assert!(api.season(s, &q, 1).await.unwrap().items.len() > 20);
+    assert!(!api.continuing(s, &q, 1).await.unwrap().items.is_empty());
+
+    let q = RankingQuery {
+        kind: MediaKind::Anime,
+        ranking: Ranking::All,
+        genre: Some("Drama".into()),
+        year: Some(2023),
+        adult: false,
+    };
+    let top = api.ranking(s, &q, 1).await.unwrap();
+    assert!(top.items.iter().all(|m| m.start.is_some_and(|d| d.year == 2023)));
+    for kind in MediaKind::ALL {
+        for ranking in Ranking::options(kind, s) {
+            let q = RankingQuery { kind, ranking, genre: None, year: None, adult: false };
+            assert!(!api.ranking(s, &q, 1).await.unwrap().items.is_empty(), "{kind:?} {ranking:?}");
+        }
+    }
+
+    let d = api.detail(MediaRef { service: s, kind: MediaKind::Anime, id: 154587 }).await.unwrap();
+    assert!(d.characters.len() > 5 && !d.recommendations.is_empty() && !d.languages.is_empty());
+    let va = d.characters[0].voices[0].id;
+    assert!(!api.person(va).await.unwrap().roles.is_empty());
+    let o = api.overview(&d.media).await.unwrap();
+    assert!(o.iter().map(|s| s.1.len()).sum::<usize>() >= 2);
+    assert!(api.anilist.genres().await.unwrap().len() > 10);
+    assert!(api.anilist.random(MediaKind::Manga, false, 1234).await.unwrap().id > 0);
+    let r = MediaRef { service: s, kind: MediaKind::Anime, id: 154587 };
+    assert_eq!(api.resolve(r, Service::Mal).await.unwrap().id, 52991);
+}
