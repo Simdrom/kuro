@@ -648,3 +648,25 @@ fn kioku_folds_long_lists_of_series_not_found() {
     assert!(r.unmatched.is_empty());
     assert_eq!(r.dismissed.len(), 5);
 }
+
+#[test]
+fn kioku_prime_video_series_without_a_name_show_an_episode() {
+    use kuro_api::kioku::HistorySource;
+    let file = include_bytes!("../../api/tests/fixtures/kioku/amazon.csv");
+    let items = kuro_api::kioku::amazon::Amazon.parse(file).unwrap();
+    let mut h = harness_with(store(), [1240.0, 2400.0], |_| {});
+    let found = review(h.state(), &FakeSource(items));
+    act(&mut h, Act::Push(Route::Kioku));
+    assert_eq!(h.get_all_by_label("Import file").count(), 2);
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(found)));
+    settle(&mut h);
+    let r = h.state().kioku.review.as_ref().unwrap();
+    let nameless: Vec<_> = r.unmatched.iter().filter(|g| g.query() == "Temporada 1").collect();
+    assert_eq!(nameless.len(), 2);
+    if r.unmatched.len() > 3 {
+        click(&mut h, "Show");
+    }
+    assert!(h.query_by_label("For example: Sin nombre").is_some());
+    assert!(h.query_by_label("For example: Otro").is_some());
+}

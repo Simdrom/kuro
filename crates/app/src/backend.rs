@@ -711,11 +711,13 @@ impl Backend {
 
     /// Asks for an exported history file and reviews it like a sync.
     pub fn kioku_import(&self, platform: Platform, service: Service) {
+        use kuro_api::kioku::amazon::Amazon;
         use kuro_api::kioku::netflix::{MAX_FILE, Netflix};
         let Some(rt) = self.rt.as_ref().map(|rt| rt.handle().clone()) else { return };
         let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
         std::thread::spawn(move || {
-            let Some(path) = rfd::FileDialog::new().add_filter("CSV", &["csv"]).pick_file() else {
+            let Some(path) = rfd::FileDialog::new().add_filter("CSV / JSON", &["csv", "json"]).pick_file()
+            else {
                 return reply.send(Event::KiokuCancelled);
             };
             let read = match std::fs::metadata(&path) {
@@ -725,6 +727,7 @@ impl Backend {
             };
             let source: &dyn HistorySource = match platform {
                 Platform::Netflix => &Netflix,
+                Platform::Amazon => &Amazon,
                 _ => return reply.send(Event::KiokuReview(Err(ApiError::Unavailable))),
             };
             match read.and_then(|bytes| source.parse(&bytes)) {

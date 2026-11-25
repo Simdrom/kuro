@@ -14,6 +14,9 @@ use crate::{format, icons, theme};
 /// The name is the same in every language.
 pub const NAME: &str = "Kioku";
 
+/// The community script that saves the Prime Video watch history.
+const AMAZON_HOW: &str = "https://github.com/twocaretcat/watch-history-exporter-for-amazon-prime-video";
+
 /// Longer lists of series not found start folded.
 const UNMATCHED_SHOWN: usize = 3;
 
@@ -26,7 +29,15 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         ui.add_space(8.0);
         warning(app, ui);
         crunchyroll(app, ui);
-        netflix(app, ui);
+        file_source(app, ui, Platform::Netflix, t("kioku.netflix.file"), t("kioku.netflix.note"), None);
+        file_source(
+            app,
+            ui,
+            Platform::Amazon,
+            t("kioku.amazon.file"),
+            t("kioku.amazon.note"),
+            Some(AMAZON_HOW),
+        );
         if app.kioku.syncing {
             progress(app, ui);
         }
@@ -45,12 +56,8 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         }
         section(ui, &p, t("kioku.more"));
         card(ui, &p, |ui| {
-            for (i, platform) in [Platform::DisneyPlus, Platform::Amazon].into_iter().enumerate() {
-                if i > 0 {
-                    separator(ui, &p);
-                }
-                row(ui, &p, icons::MONITOR_PLAY, platform.name(), |ui| widgets::dim(ui, &p, t("kioku.soon")));
-            }
+            let platform = Platform::DisneyPlus;
+            row(ui, &p, icons::MONITOR_PLAY, platform.name(), |ui| widgets::dim(ui, &p, t("kioku.soon")));
         });
     });
 }
@@ -149,12 +156,12 @@ fn crunchyroll(app: &mut App, ui: &mut Ui) {
     note(ui, &p, t("kioku.signin.note"));
 }
 
-fn netflix(app: &mut App, ui: &mut Ui) {
+/// A platform whose history comes in a file the user saves.
+fn file_source(app: &mut App, ui: &mut Ui, platform: Platform, label: &str, how: &str, link: Option<&str>) {
     let p = app.p;
-    let platform = Platform::Netflix;
     section(ui, &p, platform.name());
     card(ui, &p, |ui| {
-        row(ui, &p, icons::TRAY_ARROW_DOWN, t("kioku.netflix.file"), |ui| {
+        row(ui, &p, icons::TRAY_ARROW_DOWN, label, |ui| {
             let ready = app.bg.online() && !app.kioku.syncing;
             ui.add_enabled_ui(ready, |ui| {
                 if widgets::button(ui, &p, icons::TRAY_ARROW_DOWN, t("kioku.import"), true).clicked() && ready
@@ -164,7 +171,15 @@ fn netflix(app: &mut App, ui: &mut Ui) {
             });
         });
     });
-    note(ui, &p, t("kioku.netflix.note"));
+    note(ui, &p, how);
+    if let Some(url) = link {
+        ui.horizontal(|ui| {
+            ui.add_space(12.0);
+            if ui.link(t("kioku.amazon.how")).on_hover_text(url).clicked() {
+                app.act(Act::Url(url.into()));
+            }
+        });
+    }
 }
 
 /// Where a change comes from, as the platform names it.
@@ -286,6 +301,10 @@ fn review(app: &mut App, ui: &mut Ui) {
                         acts.push(Act::KiokuPick(PickFrom::Unmatched(i)));
                     }
                 });
+                // An episode helps to tell which series it is, above all a nameless one.
+                if let Some(e) = g.items.iter().find_map(|i| i.episode_title.as_deref()) {
+                    widgets::dim(ui, &p, tf("kioku.unmatched.example", &[&e]));
+                }
             }
         });
         note(ui, &p, t("kioku.unmatched.note"));

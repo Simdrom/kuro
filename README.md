@@ -76,8 +76,18 @@ into one line. Any of them, or any title matched wrongly, can be set with
 **Choose title**; Kioku remembers the choice for later imports. Title lookups
 are kept for 30 days, so importing again is quick.
 
-Disney+ and Prime Video are planned as imports of the files those services
-hand out, and are not available yet.
+**Prime Video** offers no download of the history. Kioku imports the file
+saved by [Watch History Exporter for Amazon Prime Video](https://github.com/twocaretcat/watch-history-exporter-for-amazon-prime-video),
+a community script, not from Amazon, that you run in the browser console on
+primevideo.com/settings/watch-history. It reads the page and makes no
+requests of its own (checked in November 2026), but read it before running
+it, and expect it to break if Amazon changes that page. Its file gives
+episode numbers and ids, so nothing has to be counted. Some series appear
+only as "Season 1"; the review shows one of their episodes so you can
+choose the right title.
+
+Disney+ is planned as an import of the file Disney hands out, and is not
+available yet.
 
 ## What changes from a phone app
 
@@ -122,6 +132,7 @@ needs a private key.
     cargo test --workspace
     cargo test -p kuro-api --test live -- --ignored     # real AniList; Crunchyroll with KURO_KIOKU_ETP_RT,
                                                         # a Netflix file with KURO_KIOKU_NETFLIX_CSV
+                                                        # a Prime Video file with KURO_KIOKU_AMAZON_FILE
     cargo test -p kuro --test shots -- --ignored # renders every screen
     cargo clippy --workspace --all-targets -- -D warnings
 
