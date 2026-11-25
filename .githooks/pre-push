@@ -1,0 +1,28 @@
+#!/bin/sh
+# Guards main, develop and version tags against slips. Enable it once per clone:
+#   git config core.hooksPath .githooks
+# main only moves through the Release workflow; for a hotfix: KURO_ALLOW_MAIN=1 git push
+
+zero=0000000000000000000000000000000000000000
+status=0
+refuse() { echo "pre-push: $1" >&2; status=1; }
+
+while read -r _ local_sha remote_ref remote_sha; do
+    case "$remote_ref" in
+    refs/heads/main | refs/heads/develop)
+        if [ "$local_sha" = "$zero" ]; then
+            refuse "$remote_ref must not be deleted"
+        elif [ "$remote_sha" != "$zero" ] && ! git merge-base --is-ancestor "$remote_sha" "$local_sha"; then
+            refuse "$remote_ref must not be rewritten (or fetch first)"
+        elif [ "$remote_ref" = refs/heads/main ] && [ "$KURO_ALLOW_MAIN" != 1 ]; then
+            refuse "main only moves through the Release workflow (KURO_ALLOW_MAIN=1 for a hotfix)"
+        fi
+        ;;
+    refs/tags/v*)
+        if [ "$local_sha" = "$zero" ] || [ "$remote_sha" != "$zero" ]; then
+            refuse "$remote_ref is a published version and must not change"
+        fi
+        ;;
+    esac
+done
+exit $status
