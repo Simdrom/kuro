@@ -33,6 +33,8 @@ pub enum ApiError {
     Auth(String),
     #[error("secure storage failed: {0}")]
     Secrets(String),
+    #[error("not available yet")]
+    Unavailable,
     #[error("{0}")]
     Service(String),
 }
@@ -100,21 +102,33 @@ pub struct Http {
 
 impl Http {
     pub fn new() -> Result<Self> {
-        Self::build(true)
+        Self::build(true, "anime-manga-tracker", true)
     }
 
     /// Allows plain HTTP, for mock servers only.
     pub fn insecure_for_tests() -> Result<Self> {
-        Self::build(false)
+        Self::build(false, "anime-manga-tracker", true)
     }
 
-    fn build(https_only: bool) -> Result<Self> {
+    /// A client of its own: another user agent and no redirects, so every
+    /// address it reaches is one the caller chose.
+    pub fn strict(user_agent: &str) -> Result<Self> {
+        Self::build(true, user_agent, false)
+    }
+
+    /// [`Http::strict`] over plain HTTP, for mock servers only.
+    pub fn strict_for_tests(user_agent: &str) -> Result<Self> {
+        Self::build(false, user_agent, false)
+    }
+
+    fn build(https_only: bool, user_agent: &str, follow: bool) -> Result<Self> {
+        let policy = if follow { redirect::Policy::limited(3) } else { redirect::Policy::none() };
         let client = reqwest::Client::builder()
             .https_only(https_only)
-            .user_agent("anime-manga-tracker")
+            .user_agent(user_agent)
             .timeout(Duration::from_secs(30))
             .connect_timeout(Duration::from_secs(10))
-            .redirect(redirect::Policy::limited(3))
+            .redirect(policy)
             .referer(false)
             .build()?;
         Ok(Self { client, https_only })

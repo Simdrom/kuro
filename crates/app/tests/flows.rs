@@ -337,7 +337,8 @@ fn unverified_sign_in_needs_confirmation() {
     let login = |h: &mut H| {
         h.state_mut().login = Some(Service::AniList);
         let profile = UserProfile { id: 1, name: "someone".into(), avatar: None };
-        let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX };
+        let tokens =
+            kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX, device: None };
         h.state_mut()
             .handle(&ctx, Event::Login { service: Service::AniList, result: Ok((profile, tokens, false)) });
         settle(h);
@@ -368,7 +369,7 @@ fn a_cancelled_sign_in_is_ignored_when_it_arrives_late() {
     let mut h = harness();
     let ctx = h.ctx.clone();
     let profile = UserProfile { id: 1, name: "late".into(), avatar: None };
-    let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX };
+    let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX, device: None };
     h.state_mut().handle(&ctx, Event::Login { service: Service::Mal, result: Ok((profile, tokens, true)) });
     settle(&mut h);
     assert!(!h.state().bg.api.is_signed_in(Service::Mal));

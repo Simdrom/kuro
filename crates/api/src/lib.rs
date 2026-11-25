@@ -3,6 +3,7 @@
 pub mod anilist;
 pub mod http;
 pub mod images;
+pub mod kioku;
 pub mod mal;
 pub mod music;
 pub mod oauth;
@@ -19,7 +20,7 @@ use kuro_core::{
 };
 
 pub use http::{ApiError, Http, Result};
-pub use secrets::{Keyring, MemorySecrets, SecretStore, Tokens};
+pub use secrets::{Keyring, MemorySecrets, SecretKey, SecretStore, Tokens};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Page<T> {
@@ -112,6 +113,8 @@ pub struct Api {
     pub anilist: anilist::AniList,
     pub mal: mal::Mal,
     pub music: music::Music,
+    /// Kioku's only account source so far.
+    pub crunchyroll: kioku::crunchyroll::Crunchyroll,
     secrets: Arc<dyn SecretStore>,
     ids: Arc<RwLock<ClientIds>>,
     users: Arc<Mutex<HashMap<Service, u64>>>,
@@ -137,6 +140,7 @@ impl Api {
             anilist: anilist::AniList::new(http.clone()),
             mal: mal::Mal::new(http.clone()),
             music: music::Music::new(http.clone()),
+            crunchyroll: kioku::crunchyroll::Crunchyroll::new(secrets.clone())?,
             http,
             secrets,
             ids: Arc::new(RwLock::new(ids)),
@@ -171,7 +175,7 @@ impl Api {
 
     pub fn is_signed_in(&self, s: Service) -> bool {
         let mut signed = self.signed.lock().unwrap_or_else(|e| e.into_inner());
-        *signed.entry(s).or_insert_with(|| matches!(self.secrets.load(s), Ok(Some(_))))
+        *signed.entry(s).or_insert_with(|| matches!(self.secrets.load(s.into()), Ok(Some(_))))
     }
 
     // Sign-in
@@ -199,7 +203,7 @@ impl Api {
     }
 
     pub fn accept_login(&self, s: Service, user: &UserProfile, tokens: &Tokens) -> Result<()> {
-        self.secrets.save(s, tokens)?;
+        self.secrets.save(s.into(), tokens)?;
         self.signed.lock().unwrap_or_else(|e| e.into_inner()).insert(s, true);
         self.users.lock().unwrap_or_else(|e| e.into_inner()).insert(s, user.id);
         Ok(())
@@ -207,13 +211,13 @@ impl Api {
 
     pub fn sign_out(&self, s: Service) -> Result<()> {
         self.users.lock().unwrap_or_else(|e| e.into_inner()).remove(&s);
-        self.secrets.delete(s)?;
+        self.secrets.delete(s.into())?;
         self.signed.lock().unwrap_or_else(|e| e.into_inner()).insert(s, false);
         Ok(())
     }
 
     async fn token(&self, s: Service) -> Result<Tokens> {
-        let load = || self.secrets.load(s)?.ok_or(ApiError::Unauthorized);
+        let load = || self.secrets.load(s.into())?.ok_or(ApiError::Unauthorized);
         let tokens = load()?;
         if tokens.expires_at - EARLY > (self.clock)() {
             return Ok(tokens);
@@ -235,7 +239,7 @@ impl Api {
             (self.clock)(),
         )
         .await?;
-        self.secrets.save(s, &fresh)?;
+        self.secrets.save(s.into(), &fresh)?;
         Ok(fresh)
     }
 
@@ -477,6 +481,7 @@ mod tests {
             anilist: anilist::AniList::with_endpoint(http.clone(), &format!("{uri}/gql")),
             mal: mal::Mal::with_endpoint(http.clone(), &format!("{uri}/mal")),
             music: music::Music::with_endpoints(http.clone(), uri, uri, uri, Duration::ZERO),
+            crunchyroll: kioku::crunchyroll::Crunchyroll::new(secrets.clone()).unwrap(),
             http,
             secrets,
             ids: Arc::new(RwLock::new(ClientIds { anilist: "1".into(), mal: "cid".into() })),
@@ -489,7 +494,7 @@ mod tests {
     }
 
     fn tokens(expires_at: i64) -> Tokens {
-        Tokens { access: "old".into(), refresh: Some("r1".into()), expires_at }
+        Tokens { access: "old".into(), refresh: Some("r1".into()), expires_at, device: None }
     }
 
     #[tokio::test]
@@ -506,7 +511,7 @@ mod tests {
             .mount(&s)
             .await;
         let secrets = Arc::new(MemorySecrets::default());
-        secrets.save(Service::Mal, &tokens(0)).unwrap();
+        secrets.save(Service::Mal.into(), &tokens(0)).unwrap();
         let a = api(&s.uri(), secrets);
         let (x, y) = tokio::join!(a.token(Service::Mal), a.token(Service::Mal));
         assert_eq!((x.unwrap().access.clone(), y.unwrap().access.clone()), ("new".into(), "new".into()));
@@ -517,7 +522,7 @@ mod tests {
         let s = MockServer::start().await;
         Mock::given(any()).respond_with(ResponseTemplate::new(400)).mount(&s).await;
         let secrets = Arc::new(MemorySecrets::default());
-        secrets.save(Service::Mal, &tokens(0)).unwrap();
+        secrets.save(Service::Mal.into(), &tokens(0)).unwrap();
         let r = api(&s.uri(), secrets).token(Service::Mal).await;
         assert_eq!(r.unwrap_err(), ApiError::Unauthorized);
     }
@@ -539,7 +544,7 @@ mod tests {
             .mount(&s)
             .await;
         let secrets = Arc::new(MemorySecrets::default());
-        secrets.save(Service::AniList, &tokens(99_999)).unwrap();
+        secrets.save(Service::AniList.into(), &tokens(99_999)).unwrap();
         let media = Media { service: Service::Mal, id: 5, mal_id: Some(5), ..Media::default() };
         let p = Pending {
             target: Service::AniList,
@@ -570,7 +575,7 @@ mod tests {
     #[test]
     fn sign_out_removes_tokens() {
         let secrets = Arc::new(MemorySecrets::default());
-        secrets.save(Service::Mal, &tokens(0)).unwrap();
+        secrets.save(Service::Mal.into(), &tokens(0)).unwrap();
         let a = api("http://x", secrets);
         assert!(a.is_signed_in(Service::Mal));
         a.sign_out(Service::Mal).unwrap();

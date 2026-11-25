@@ -49,3 +49,21 @@ async fn anilist_queries_are_accepted() {
     let r = MediaRef { service: s, kind: MediaKind::Anime, id: 154587 };
     assert_eq!(api.resolve(r, Service::Mal).await.unwrap().id, 52991);
 }
+
+/// Reads one's own Crunchyroll history. Needs the `etp_rt` cookie of a signed-in
+/// crunchyroll.com in `KURO_KIOKU_ETP_RT`. Prints only counts, never ids or titles.
+/// The session it opens shows up as a "Kuro" device in the Crunchyroll account.
+#[tokio::test]
+#[ignore = "network, and a Crunchyroll session cookie"]
+async fn crunchyroll_history_is_read() {
+    use kuro_api::kioku::HistorySource;
+    let Ok(cookie) = std::env::var("KURO_KIOKU_ETP_RT") else {
+        panic!("set KURO_KIOKU_ETP_RT");
+    };
+    let api = api();
+    api.crunchyroll.connect(cookie.trim()).await.unwrap();
+    let items = api.crunchyroll.fetch(&Default::default()).await.unwrap();
+    let films = items.iter().filter(|i| i.movie).count();
+    println!("items: {}  films: {films}", items.len());
+    assert!(items.iter().all(|i| !i.external_id.is_empty() && !i.series_title.is_empty()));
+}

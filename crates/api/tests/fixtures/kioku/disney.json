@@ -1,0 +1,7 @@
+{
+  "note": "Invented example. The real Disney+ data export has not been checked.",
+  "viewingHistory": [
+    { "seriesTitle": "Glass Meridian", "seasonNumber": 1, "episodeNumber": 4, "episodeTitle": "Fourth Light", "watchedAt": "2026-08-14T20:11:00Z", "progressPercent": 100 },
+    { "seriesTitle": "Glass Meridian", "seasonNumber": 1, "episodeNumber": 3, "episodeTitle": "Third Light", "watchedAt": "2026-08-13T20:05:00Z", "progressPercent": 97 }
+  ]
+}

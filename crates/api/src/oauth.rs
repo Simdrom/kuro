@@ -97,6 +97,7 @@ impl TokenResponse {
             access: self.access_token,
             refresh: self.refresh_token,
             expires_at: now.saturating_add(self.expires_in.max(0)),
+            device: None,
         })
     }
 }
@@ -484,7 +485,7 @@ mod tests {
             .await;
         let http = Http::insecure_for_tests().unwrap();
         let e = Endpoints { authorize: String::new(), token: s.uri() };
-        let old = Tokens { access: "O".into(), refresh: Some("R".into()), expires_at: 0 };
+        let old = Tokens { access: "O".into(), refresh: Some("R".into()), expires_at: 0, device: None };
         let t = refresh(&http, &Throttle::new(Duration::ZERO), &e, "cid", &old, 5).await.unwrap();
         assert_eq!((t.access.as_str(), t.refresh.as_deref(), t.expires_at), ("N", Some("R"), 15));
     }

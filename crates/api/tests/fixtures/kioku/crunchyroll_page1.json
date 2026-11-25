@@ -1,0 +1,205 @@
+{
+  "total": 6,
+  "data": [
+    {
+      "id": "EP-DUB-3",
+      "parent_id": "SER-LAN",
+      "parent_type": "series",
+      "date_played": "2026-10-03T12:00:00Z",
+      "playhead": 1440,
+      "fully_watched": true,
+      "panel": {
+        "id": "EP-DUB-3",
+        "type": "episode",
+        "title": "The Third Lamp",
+        "slug_title": "invented",
+        "external_id": "EXT.EP-DUB-3",
+        "episode_metadata": {
+          "series_id": "SER-LAN",
+          "series_title": "Lanterns Over Saltmarsh",
+          "series_slug_title": "invented",
+          "season_id": "SEA-1",
+          "season_number": 2,
+          "season_display_number": "2",
+          "season_sequence_number": 2,
+          "season_title": "Lanterns Over Saltmarsh Season 2",
+          "episode_number": 3,
+          "episode": "3",
+          "sequence_number": 3,
+          "duration_ms": 1440000,
+          "audio_locale": "ja-JP",
+          "is_clip": false,
+          "is_dubbed": false,
+          "is_subbed": true,
+          "tenant_categories": [
+            "Fantasy"
+          ],
+          "versions": [
+            {
+              "guid": "EP-DUB-3",
+              "original": false,
+              "audio_locale": "es-419"
+            },
+            {
+              "guid": "EP-ORIG-3",
+              "original": true,
+              "audio_locale": "ja-JP"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "EP-ORIG-2",
+      "parent_id": "SER-LAN",
+      "parent_type": "series",
+      "date_played": "2026-10-02T21:30:00Z",
+      "playhead": 1440,
+      "fully_watched": true,
+      "panel": {
+        "id": "EP-ORIG-2",
+        "type": "episode",
+        "title": "Low Tide",
+        "slug_title": "invented",
+        "external_id": "EXT.EP-ORIG-2",
+        "episode_metadata": {
+          "series_id": "SER-LAN",
+          "series_title": "Lanterns Over Saltmarsh",
+          "series_slug_title": "invented",
+          "season_id": "SEA-1",
+          "season_number": 2,
+          "season_display_number": "2",
+          "season_sequence_number": 2,
+          "season_title": "Lanterns Over Saltmarsh Season 2",
+          "episode_number": 2,
+          "episode": "2",
+          "sequence_number": 2,
+          "duration_ms": 1440000,
+          "audio_locale": "ja-JP",
+          "is_clip": false,
+          "is_dubbed": false,
+          "is_subbed": true,
+          "tenant_categories": [
+            "Fantasy"
+          ],
+          "versions": [
+            {
+              "guid": "EP-ORIG-2",
+              "original": true,
+              "audio_locale": "ja-JP"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "CLIP-1",
+      "parent_id": "SER-LAN",
+      "parent_type": "series",
+      "date_played": "2026-10-02T21:00:00Z",
+      "playhead": 1440,
+      "fully_watched": true,
+      "panel": {
+        "id": "CLIP-1",
+        "type": "episode",
+        "title": "Trailer",
+        "slug_title": "invented",
+        "external_id": "EXT.CLIP-1",
+        "episode_metadata": {
+          "series_id": "SER-LAN",
+          "series_title": "Lanterns Over Saltmarsh",
+          "series_slug_title": "invented",
+          "season_id": "SEA-1",
+          "season_number": 2,
+          "season_display_number": "2",
+          "season_sequence_number": 2,
+          "season_title": "Lanterns Over Saltmarsh Season 2",
+          "episode_number": 0,
+          "episode": "0",
+          "sequence_number": 0,
+          "duration_ms": 1440000,
+          "audio_locale": "ja-JP",
+          "is_clip": true,
+          "is_dubbed": false,
+          "is_subbed": true,
+          "tenant_categories": [
+            "Fantasy"
+          ],
+          "versions": []
+        }
+      }
+    },
+    {
+      "id": "MUSIC-1",
+      "parent_id": "X",
+      "parent_type": "music",
+      "date_played": "2026-10-01T10:00:00Z",
+      "playhead": 10,
+      "fully_watched": true,
+      "panel": {
+        "id": "MUSIC-1",
+        "type": "music_video",
+        "title": "Opening Theme"
+      }
+    },
+    {
+      "id": "EP-B-1",
+      "parent_id": "SER-IRO",
+      "parent_type": "series",
+      "date_played": "2026-09-30T18:00:00Z",
+      "playhead": 720,
+      "fully_watched": false,
+      "panel": {
+        "id": "EP-B-1",
+        "type": "episode",
+        "title": "Seeds",
+        "slug_title": "invented",
+        "external_id": "EXT.EP-B-1",
+        "episode_metadata": {
+          "series_id": "SER-IRO",
+          "series_title": "Iron Orchard",
+          "series_slug_title": "invented",
+          "season_id": "SEA-1",
+          "season_number": 1,
+          "season_display_number": "1",
+          "season_sequence_number": 1,
+          "season_title": "Iron Orchard",
+          "episode_number": 1,
+          "episode": "1",
+          "sequence_number": 1,
+          "duration_ms": 1440000,
+          "audio_locale": "ja-JP",
+          "is_clip": false,
+          "is_dubbed": false,
+          "is_subbed": true,
+          "tenant_categories": [
+            "Fantasy"
+          ],
+          "versions": []
+        }
+      }
+    },
+    {
+      "id": "MV-1",
+      "parent_id": "ML-1",
+      "parent_type": "movie_listing",
+      "date_played": "2026-09-20T20:00:00Z",
+      "playhead": 5400,
+      "fully_watched": true,
+      "panel": {
+        "id": "MV-1",
+        "type": "movie",
+        "title": "Night Star",
+        "movie_metadata": {
+          "movie_listing_title": "Lanterns Over Saltmarsh: Night Star",
+          "duration_ms": 5400000,
+          "is_clip": false
+        }
+      }
+    }
+  ],
+  "meta": {
+    "next_page": "",
+    "prev_page": ""
+  }
+}
