@@ -279,6 +279,8 @@ pub struct Settings {
     pub notifications: NotificationSettings,
     // Automation
     pub backup: BackupSettings,
+    /// Reads the list from the account again this often; 0 never does.
+    pub refresh_hours: u32,
 }
 
 impl Default for Settings {
@@ -323,11 +325,17 @@ impl Default for Settings {
             gestures: Gestures::default(),
             notifications: NotificationSettings::default(),
             backup: BackupSettings::default(),
+            refresh_hours: 0,
         }
     }
 }
 
 impl Settings {
+    /// Whether the list should be read from the account again, last read at `last`.
+    pub fn refresh_due(&self, last: i64, now: i64) -> bool {
+        self.refresh_hours > 0 && now - last >= i64::from(self.refresh_hours) * 3600
+    }
+
     /// Clamps values that could come from a damaged or edited file.
     pub fn normalized(mut self) -> Self {
         let fin = |v: f32, d: f32| if v.is_finite() { v } else { d };
@@ -335,6 +343,7 @@ impl Settings {
         self.zoom = fin(self.zoom, 1.0).clamp(0.75, 1.75);
         self.notifications.date_hour = self.notifications.date_hour.min(23);
         self.notifications.delay_minutes = self.notifications.delay_minutes.min(24 * 60);
+        self.refresh_hours = self.refresh_hours.min(24 * 7);
         self.backup.keep = self.backup.keep.clamp(1, 100);
         if self.backup.folder.len() > 1024 || self.backup.folder.chars().any(char::is_control) {
             self.backup.folder.clear();
@@ -364,6 +373,15 @@ mod tests {
     fn settings_saved_under_the_old_name_still_load() {
         let s: Settings = serde_json::from_str(r#"{"tint":"mango","icon":"sunrise","zoom":1.25}"#).unwrap();
         assert_eq!((s.tint, s.icon, s.zoom), (Tint::Amber, AppIcon::Ink, 1.25));
+    }
+
+    #[test]
+    fn the_list_is_read_again_only_when_asked_and_due() {
+        let mut s = Settings::default();
+        assert!(!s.refresh_due(0, 1_000_000));
+        s.refresh_hours = 3;
+        assert!(!s.refresh_due(1_000_000, 1_000_000 + 3 * 3600 - 1));
+        assert!(s.refresh_due(1_000_000, 1_000_000 + 3 * 3600));
     }
 
     #[test]

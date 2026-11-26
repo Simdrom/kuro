@@ -135,6 +135,9 @@ available yet.
   folder you choose, as `kuro-backup-<date>.json`, and deletes the oldest
   copies beyond the number you keep. Other files in the folder are never
   touched. A copy restores with **Settings › Data › Import…**.
+- **Sync** can read your list from your account again every few hours, so
+  changes made on the website or another device show up on their own. Your
+  own changes are always sent at once, and retried while offline.
 
 ## What changes from a phone app
 

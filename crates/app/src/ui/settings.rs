@@ -552,6 +552,23 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
     });
     note(ui, &p, t("A small window above the others with your progress and statistics."));
     backup_section(app, ui);
+    section(ui, &p, t("Sync"));
+    card(ui, &p, |ui| {
+        let hours = [0, 1, 3, 6, 12, 24];
+        let label = t("Bring in changes made elsewhere");
+        select_row(ui, &p, icons::CLOUD_ARROW_UP, label, &mut app.s.refresh_hours, &hours, |h| match h {
+            0 => t("Off").to_owned(),
+            1 => t("Every hour").to_owned(),
+            h => tf("Every {} hours", &[&h]),
+        });
+    });
+    note(
+        ui,
+        &p,
+        t(
+            "Your list is read again from your account, so changes made on the website or another device show up without refreshing. Your own changes are always sent right away.",
+        ),
+    );
     links_section(app, ui);
 }
 

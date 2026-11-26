@@ -38,6 +38,7 @@ Black|Negro|Noir|Schwarz|Nero|Svart|검정
 Blue|Azul|Bleu|Blau|Blu|Blå|파랑
 Both|Ambos|Les deux|Beide|Entrambi|Begge|둘 다
 Both services|Ambos servicios|Les deux services|Beide Dienste|Entrambi i servizi|Begge tjenester|두 서비스 모두
+Bring in changes made elsewhere|Traer los cambios hechos en otro sitio|Récupérer les changements faits ailleurs|Änderungen von anderswo übernehmen|Recupera le modifiche fatte altrove|Hent endringer gjort andre steder|다른 곳에서 한 변경 가져오기
 Broadcast|Emisión|Diffusion|Ausstrahlung|Trasmissione|Sending|방영 시간
 Caches|Cachés|Caches|Zwischenspeicher|Cache|Hurtiglager|캐시
 Cancel|Cancelar|Annuler|Abbrechen|Annulla|Avbryt|취소
@@ -82,7 +83,9 @@ Display|Visualización|Affichage|Anzeige|Visualizzazione|Visning|표시
 Double-click|Doble clic|Double-clic|Doppelklick|Doppio clic|Dobbeltklikk|더블 클릭
 Each copy is named by its date. Older copies beyond the limit are deleted.|Cada copia lleva su fecha en el nombre. Las más antiguas por encima del límite se borran.|Chaque copie porte sa date dans son nom. Les plus anciennes au-delà de la limite sont supprimées.|Jede Kopie trägt ihr Datum im Namen. Ältere Kopien über dem Limit werden gelöscht.|Ogni copia ha la sua data nel nome. Le più vecchie oltre il limite vengono eliminate.|Hver kopi har datoen i navnet. Eldre kopier over grensen slettes.|각 사본의 이름에는 날짜가 들어갑니다. 한도를 넘는 오래된 사본은 삭제됩니다.
 Every day|Cada día|Chaque jour|Jeden Tag|Ogni giorno|Hver dag|매일
+Every hour|Cada hora|Toutes les heures|Jede Stunde|Ogni ora|Hver time|매시간
 Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
+Every {} hours|Cada {} horas|Toutes les {} heures|Alle {} Stunden|Ogni {} ore|Hver {}. time|{}시간마다
 Folder|Carpeta|Dossier|Ordner|Cartella|Mappe|폴더
 Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
 No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewählt|Nessuna cartella scelta|Ingen mappe valgt|선택한 폴더 없음
@@ -366,6 +369,7 @@ Write dates as YYYY-MM-DD.|Escribe las fechas como AAAA-MM-DD.|Écris les dates 
 YYYY-MM-DD|AAAA-MM-DD|AAAA-MM-JJ|JJJJ-MM-TT|AAAA-MM-GG|ÅÅÅÅ-MM-DD|YYYY-MM-DD
 Year|Año|Année|Jahr|Anno|År|연도
 Your change could not be saved.|No se pudo guardar el cambio.|Le changement n’a pas pu être enregistré.|Deine Änderung konnte nicht gespeichert werden.|Impossibile salvare la modifica.|Endringen kunne ikke lagres.|변경 사항을 저장할 수 없습니다.
+Your list is read again from your account, so changes made on the website or another device show up without refreshing. Your own changes are always sent right away.|Tu lista se vuelve a leer desde tu cuenta, así que los cambios hechos en la web o en otro dispositivo aparecen sin actualizar. Tus propios cambios siempre se envían al momento.|Ta liste est relue depuis ton compte : les changements faits sur le site ou sur un autre appareil apparaissent sans actualiser. Tes propres changements sont toujours envoyés tout de suite.|Deine Liste wird erneut aus deinem Konto gelesen, damit Änderungen auf der Website oder einem anderen Gerät ohne Aktualisieren erscheinen. Deine eigenen Änderungen werden immer sofort gesendet.|La tua lista viene riletta dal tuo account, così le modifiche fatte sul sito o su un altro dispositivo compaiono senza aggiornare. Le tue modifiche vengono sempre inviate subito.|Listen din leses på nytt fra kontoen, så endringer gjort på nettstedet eller en annen enhet vises uten å oppdatere. Dine egne endringer sendes alltid med en gang.|목록을 계정에서 다시 읽어 와서 웹사이트나 다른 기기에서 한 변경이 새로 고침 없이 나타납니다. 내 변경 사항은 항상 바로 전송됩니다.
 Your list stays on this computer until you sign in. Nothing is shared with anyone else.|Tu lista se queda en este equipo hasta que inicies sesión. No se comparte nada con nadie más.|Ta liste reste sur cet ordinateur jusqu’à ce que tu te connectes. Rien n’est partagé avec d’autres.|Deine Liste bleibt auf diesem Computer, bis du dich anmeldest. Nichts wird mit anderen geteilt.|La tua lista resta su questo computer finché non accedi. Nulla viene condiviso con altri.|Listen blir på denne datamaskinen til du logger på. Ingenting deles med andre.|로그인하기 전까지 목록은 이 컴퓨터에만 있습니다. 다른 누구와도 공유하지 않습니다.
 Your progress, score and notes for “{}” will be deleted.|Se borrarán tu progreso, nota y comentarios de «{}».|Ta progression, ta note et tes commentaires pour « {} » seront supprimés.|Dein Fortschritt, deine Wertung und deine Notizen zu „{}“ werden gelöscht.|Progressi, voto e note di “{}” verranno eliminati.|Fremdrift, score og notater for «{}» slettes.|“{}”의 진행, 점수, 메모가 삭제됩니다.
 Your session has expired. Sign in again.|Tu sesión ha caducado. Vuelve a iniciar sesión.|Ta session a expiré. Reconnecte-toi.|Deine Sitzung ist abgelaufen. Melde dich erneut an.|La sessione è scaduta. Accedi di nuovo.|Økten er utløpt. Logg på igjen.|세션이 만료되었습니다. 다시 로그인하세요.

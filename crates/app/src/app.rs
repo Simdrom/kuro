@@ -352,6 +352,8 @@ pub struct App {
     pub backup_error: Option<String>,
     /// When the backup folder is looked at next.
     backup_at: f64,
+    /// When the list was last read from the account.
+    library_at: i64,
     acts: Vec<Act>,
     next_tick: f64,
     airing_at: i64,
@@ -454,6 +456,7 @@ impl App {
             last_backup: None,
             backup_error: None,
             backup_at: 0.0,
+            library_at: now(),
             acts: Vec::new(),
             next_tick: 0.0,
             airing_at: 0,
@@ -1174,6 +1177,7 @@ impl App {
                 match result {
                     Ok(()) => {
                         if service == self.s.primary {
+                            self.library_at = now();
                             self.reload();
                         }
                         self.airing_at = now();
@@ -1440,6 +1444,15 @@ impl App {
             self.refresh_airing();
         }
         self.auto_backup();
+        if self.refreshing == 0
+            && self.bg.online()
+            && self.bg.api.is_signed_in(self.s.primary)
+            && self.s.refresh_due(self.library_at, now())
+        {
+            // Not again for a while, even if this one fails.
+            self.library_at = now();
+            self.refresh();
+        }
         if self.unsynced > 0 && self.sync_error.as_ref().is_none_or(|(_, e)| e.is_transient()) {
             self.bg.sync();
         }
