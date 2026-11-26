@@ -184,6 +184,9 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@81891abc19297b21343b15ef67dc61e4aea74fda # v2.1.4
         with:
           command: check
+          # Its image's rustup no longer installs what rust-toolchain.toml asks for, and
+          # fails before checking anything; this installs that toolchain first.
+          rust-version: stable
 
   workflows:
     name: Workflow lint
