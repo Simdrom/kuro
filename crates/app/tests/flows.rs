@@ -898,3 +898,77 @@ fn toasts_use_their_id_once_and_close_on_click() {
         assert!(h.state().toast.is_none(), "a click closes it (error: {error})");
     }
 }
+
+#[test]
+fn a_title_menu_works_from_the_keyboard() {
+    use egui::{Key, Modifiers};
+    let mut h = harness();
+    let row = "Lanterns Over Saltmarsh, Watching";
+    h.get_by_label_contains(row).focus();
+    settle(&mut h);
+    assert!(h.query_by_label("Add one +").is_none(), "closed");
+
+    // The Menu key opens it with the focus on its first entry; Enter runs it.
+    h.key_press(Key::Menu);
+    settle(&mut h);
+    assert!(h.query_by_label("Add one +").is_some(), "opened by keyboard");
+    h.key_press(Key::Enter);
+    settle(&mut h);
+    assert_eq!(progress(&h, 1), 10);
+    assert!(h.query_by_label("Add one +").is_none(), "closed after the action");
+
+    // The focus is back on the title, so Shift+F10 opens it again; arrows reach the
+    // status submenu (Add one, Remove one, Status), Right enters it.
+    h.key_press_modifiers(Modifiers::SHIFT, Key::F10);
+    settle(&mut h);
+    assert!(h.query_by_label("Add one +").is_some(), "the title kept the focus");
+    for k in [Key::ArrowDown, Key::ArrowDown, Key::ArrowRight, Key::ArrowDown, Key::ArrowDown, Key::Enter] {
+        h.key_press(k);
+        settle(&mut h);
+    }
+    let e = h.state().entry_at(r(1, MediaKind::Anime)).unwrap();
+    assert_eq!(e.status, ListStatus::Paused, "Watching → Completed → Paused");
+
+    // Escape closes it without doing anything, and leaves the list where it was.
+    h.key_press(Key::Menu);
+    settle(&mut h);
+    h.key_press(Key::Escape);
+    settle(&mut h);
+    assert!(h.query_by_label("Add one +").is_none());
+    assert!(h.state().routes.is_empty());
+}
+
+#[test]
+fn a_title_menu_answers_to_the_key_each_entry_shows() {
+    use egui::Key;
+    let mut h = harness();
+    // Another title is open beside the list: its own + must not fire.
+    h.state_mut().details.entry(r(2, MediaKind::Anime)).or_default().data =
+        Some(Rc::new(detail(2, MediaKind::Anime, "The Mapmaker")));
+    act(&mut h, Act::Push(Route::Media(r(2, MediaKind::Anime))));
+    let open = progress(&h, 2);
+    let row = "Lanterns Over Saltmarsh, Watching";
+    let menu = |h: &mut H| {
+        h.get_by_label_contains(row).focus();
+        settle(h);
+        h.key_press(Key::Menu);
+        settle(h);
+        assert!(h.query_by_label("Add one +").is_some(), "menu open");
+    };
+    menu(&mut h);
+    h.key_press(Key::Plus);
+    settle(&mut h);
+    assert_eq!((progress(&h, 1), progress(&h, 2)), (10, open), "only the menu's title moves");
+
+    menu(&mut h);
+    h.key_press(Key::E);
+    settle(&mut h);
+    assert!(h.state().editor.as_ref().is_some_and(|e| e.entry.media.id == 1), "E edits the menu's title");
+    h.state_mut().editor = None;
+    settle(&mut h);
+
+    menu(&mut h);
+    h.key_press(Key::Num3);
+    settle(&mut h);
+    assert_eq!(h.state().entry_at(r(1, MediaKind::Anime)).unwrap().status, ListStatus::Paused);
+}

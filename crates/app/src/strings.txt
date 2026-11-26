@@ -82,6 +82,7 @@ Dark|Oscuro|Sombre|Dunkel|Scuro|Mørk|다크
 Data & caches|Datos y cachés|Données et caches|Daten & Zwischenspeicher|Dati e cache|Data og hurtiglager|데이터 및 캐시
 Data source|Fuente de datos|Source de données|Datenquelle|Origine dei dati|Datakilde|데이터 출처
 Date started|Fecha de inicio|Date de début|Startdatum|Data di inizio|Startdato|시작한 날짜
+Del|Supr|Suppr|Entf|Canc|Del|Del
 Delay after airing|Retraso tras la emisión|Délai après la diffusion|Verzögerung nach Ausstrahlung|Ritardo dopo la trasmissione|Forsinkelse etter sending|방영 후 지연
 Descending|Descendente|Décroissant|Absteigend|Decrescente|Synkende|내림차순
 Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget desktop|Skrivebordswidget|데스크톱 위젯
@@ -96,11 +97,14 @@ Every hour|Cada hora|Toutes les heures|Jede Stunde|Ogni ora|Hver time|매시간
 Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
 Every {} hours|Cada {} horas|Toutes les {} heures|Alle {} Stunden|Ogni {} ore|Hver {}. time|{}시간마다
 Folder|Carpeta|Dossier|Ordner|Cartella|Mappe|폴더
+In a menu, the key shown beside an entry runs it|En un menú, la tecla que aparece junto a una opción la ejecuta|Dans un menu, la touche affichée à côté d’une entrée l’exécute|In einem Menü führt die Taste neben einem Eintrag ihn aus|In un menu, il tasto accanto a una voce la esegue|I en meny kjører tasten ved siden av et valg det|메뉴에서 항목 옆에 표시된 키를 누르면 실행됩니다
 Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
 Links that change your list are off. Turn them on in Settings › Widget & automation.|Los enlaces que cambian tu lista están desactivados. Actívalos en Ajustes › Widget y automatización.|Les liens qui modifient ta liste sont désactivés. Active-les dans Réglages › Widget et automatisation.|Links, die deine Liste ändern, sind aus. Schalte sie unter Einstellungen › Widget & Automatisierung ein.|I link che modificano la tua lista sono disattivati. Attivali in Impostazioni › Widget e automazione.|Lenker som endrer listen din er av. Slå dem på i Innstillinger › Widget og automatisering.|목록을 바꾸는 링크가 꺼져 있습니다. 설정 › 위젯 및 자동화에서 켜세요.
+Move through a menu and choose|Moverse por un menú y elegir|Parcourir un menu et choisir|Durch ein Menü gehen und auswählen|Muoversi in un menu e scegliere|Gå gjennom en meny og velg|메뉴에서 이동하고 선택
 Next episodes|Próximos episodios|Prochains épisodes|Nächste Folgen|Prossimi episodi|Neste episoder|다음 에피소드
 No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewählt|Nessuna cartella scelta|Ingen mappe valgt|선택한 폴더 없음
 No progress for {} days|Sin avances desde hace {} días|Aucun progrès depuis {} jours|Seit {} Tagen kein Fortschritt|Nessun progresso da {} giorni|Ingen fremdrift på {} dager|{}일 동안 진행 없음
+Open the menu of the selected title|Abrir el menú del título seleccionado|Ouvrir le menu du titre sélectionné|Menü des ausgewählten Titels öffnen|Apri il menu del titolo selezionato|Åpne menyen for den valgte tittelen|선택한 작품의 메뉴 열기
 Reminders|Recordatorios|Rappels|Erinnerungen|Promemoria|Påminnelser|리마인더
 Reminders are notifications: turn notifications on to get them.|Los recordatorios son notificaciones: activa las notificaciones para recibirlos.|Les rappels sont des notifications : active les notifications pour les recevoir.|Erinnerungen sind Benachrichtigungen: Schalte Benachrichtigungen ein, um sie zu erhalten.|I promemoria sono notifiche: attiva le notifiche per riceverli.|Påminnelser er varsler: slå på varsler for å få dem.|리마인더는 알림입니다. 받으려면 알림을 켜세요.
 Right-click always opens the full menu. Dragging a row sideways also works on touch screens.|El clic derecho siempre abre el menú completo. Arrastrar una fila de lado también funciona en pantallas táctiles.|Le clic droit ouvre toujours le menu complet. Faire glisser une ligne sur le côté marche aussi sur les écrans tactiles.|Rechtsklick öffnet immer das ganze Menü. Eine Zeile zur Seite ziehen geht auch auf Touchscreens.|Il clic destro apre sempre il menu completo. Trascinare una riga di lato funziona anche sugli schermi touch.|Høyreklikk åpner alltid hele menyen. Å dra en rad sidelengs fungerer også på berøringsskjermer.|오른쪽 클릭하면 항상 전체 메뉴가 열립니다. 행을 옆으로 드래그하는 것은 터치스크린에서도 됩니다.

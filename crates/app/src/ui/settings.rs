@@ -455,6 +455,9 @@ fn gestures(app: &mut App, ui: &mut Ui) {
             ("F5", t("Refresh")),
             ("+ / -", t("Add or remove one on the open title")),
             ("E", t("Edit the open title")),
+            ("Menu / Shift+F10", t("Open the menu of the selected title")),
+            ("↑ ↓ → ← Enter", t("Move through a menu and choose")),
+            ("+ - 1…5 E", t("In a menu, the key shown beside an entry runs it")),
             ("Esc", t("Back")),
         ];
         for (i, (k, v)) in keys.into_iter().enumerate() {

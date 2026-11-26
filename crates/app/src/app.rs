@@ -1818,7 +1818,8 @@ impl App {
         if back || (!typing && !egui::Popup::is_any_open(ctx) && hit(Modifiers::NONE, Key::Escape)) {
             self.act(Act::Back);
         }
-        if typing {
+        // A menu's own keys act on its title, not on the one being shown.
+        if typing || egui::Popup::is_any_open(ctx) {
             return;
         }
         // Acts on the title being shown.

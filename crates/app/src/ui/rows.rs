@@ -3,8 +3,8 @@
 use std::rc::Rc;
 
 use eframe::egui::{
-    self, Align, Align2, Color32, CornerRadius, CursorIcon, Layout, Rect, Response, Role, Sense, Stroke,
-    StrokeKind, Ui, WidgetInfo, pos2, vec2,
+    self, Align, Align2, Color32, CornerRadius, CursorIcon, Key, Layout, Modifiers, Rect, Response, Role,
+    Sense, Stroke, StrokeKind, Ui, WidgetInfo, pos2, vec2,
 };
 use kuro_core::list::SortKey;
 use kuro_core::settings::{GestureAction, ListLayout, PosterProgress, ScoreDisplay};
@@ -302,55 +302,129 @@ fn finish(app: &mut App, r: &Response, item: &Item, hit_button: bool) {
         app.act(Act::Open(item.media.clone()));
     }
     let r = if hit_button { r.clone() } else { r.clone().on_hover_cursor(CursorIcon::PointingHand) };
-    r.context_menu(|ui| menu(app, ui, item));
+    context_menu(app, &r, item);
 }
 
+/// The title's menu, opened by a right-click at the pointer, or by the Menu key or
+/// Shift+F10 under the focused title. Opened by keyboard, its first entry takes the
+/// focus, arrows move through it, and the focus comes back to the title when it closes.
+fn context_menu(app: &mut App, r: &Response, item: &Item) {
+    use egui::{Popup, SetOpenCommand};
+    let ctx = &r.ctx;
+    let by_key_id = Popup::default_response_id(r).with("keyboard");
+    let pressed = r.has_focus()
+        && ctx.input_mut(|i| {
+            i.consume_key(Modifiers::NONE, Key::Menu) || i.consume_key(Modifiers::SHIFT, Key::F10)
+        });
+    if pressed {
+        ctx.data_mut(|d| {
+            d.insert_temp(by_key_id, true);
+            d.insert_temp(focus_first_id(), true);
+        });
+    } else if r.secondary_clicked() {
+        ctx.data_mut(|d| d.remove::<bool>(by_key_id));
+    }
+    let by_key = ctx.data(|d| d.get_temp::<bool>(by_key_id)).unwrap_or(false);
+    let mut popup = Popup::context_menu(r);
+    if pressed {
+        popup = popup.open_memory(SetOpenCommand::Bool(true));
+    }
+    if by_key {
+        popup = popup.anchor(r.rect);
+    }
+    if popup.show(|ui| menu(app, ui, item)).is_none() && by_key {
+        ctx.data_mut(|d| d.remove::<bool>(by_key_id));
+        r.request_focus();
+    }
+}
+
+/// Asks a menu to put the focus on its first entry once it is laid out.
+fn focus_first_id() -> egui::Id {
+    egui::Id::unique("kuro-menu-focus-first")
+}
+
+/// Whether `keys` was pressed while a menu is open, once it is laid out.
+fn menu_key(ui: &mut Ui, keys: &[Key]) -> bool {
+    !ui.is_sizing_pass() && keys.iter().any(|k| ui.input_mut(|i| i.consume_key(Modifiers::NONE, *k)))
+}
+
+/// Keys of the statuses, in the order of [`ListStatus::ALL`].
+const STATUS_KEYS: [(Key, &str); 5] =
+    [(Key::Num1, "1"), (Key::Num2, "2"), (Key::Num3, "3"), (Key::Num4, "4"), (Key::Num5, "5")];
+
+/// What can be done with a title. Every entry shows its key, which works while
+/// the menu is open, besides arrows and Enter.
 pub fn menu(app: &mut App, ui: &mut Ui, item: &Item) {
-    ui.set_min_width(210.0);
+    ui.set_min_width(230.0);
     let m = item.media.clone();
-    let entry = |app: &mut App, ui: &mut Ui, text: &str, a: Act| {
-        if ui.button(text).clicked() {
+    let entry = |app: &mut App, ui: &mut Ui, text: &str, hint: &str, keys: &[Key], a: Act| {
+        let r = ui.add(egui::Button::new(text).shortcut_text(hint));
+        if r.clicked() || menu_key(ui, keys) {
             app.act(a);
             ui.close();
         }
+        r
     };
-    if let Some(e) = &item.entry {
-        entry(app, ui, t("Add one"), Act::Step(m.clone(), 1));
+    let first = item.entry.as_ref().map(|e| {
+        let first = entry(app, ui, t("Add one"), "+", &[Key::Plus, Key::Equals], Act::Step(m.clone(), 1));
         if m.kind == MediaKind::Manga {
-            entry(app, ui, t("Add one volume"), Act::StepVolumes(m.clone(), 1));
+            entry(app, ui, t("Add one volume"), "V", &[Key::V], Act::StepVolumes(m.clone(), 1));
         }
-        entry(app, ui, t("Remove one"), Act::Step(m.clone(), -1));
+        entry(app, ui, t("Remove one"), "-", &[Key::Minus], Act::Step(m.clone(), -1));
         if e.status == ListStatus::Completed && !e.repeating {
             let label = if m.kind == MediaKind::Anime { t("Rewatch") } else { t("Reread") };
-            entry(app, ui, label, Act::Repeat(m.clone()));
+            entry(app, ui, label, "R", &[Key::R], Act::Repeat(m.clone()));
         }
         ui.separator();
-    }
-    ui.menu_button(t("Status"), |ui| {
-        for s in ListStatus::ALL {
-            let on = item.entry.as_ref().is_some_and(|e| e.status == s);
-            if ui.selectable_label(on, format::status(s, m.kind)).clicked() {
+        first
+    });
+    let current = item.entry.as_ref().map(|e| e.status);
+    let status = ui.menu_button(t("Status"), |ui| {
+        for (s, (_, hint)) in ListStatus::ALL.into_iter().zip(STATUS_KEYS) {
+            let b =
+                egui::Button::selectable(current == Some(s), format::status(s, m.kind)).shortcut_text(hint);
+            if ui.add(b).clicked() {
                 app.act(Act::SetStatus(m.clone(), s));
                 ui.close();
             }
         }
     });
-    entry(app, ui, if item.entry.is_some() { t("Edit…") } else { t("Add to list…") }, Act::Edit(m.clone()));
+    // The statuses' keys work from the menu itself, without opening the submenu.
+    for (s, (key, _)) in ListStatus::ALL.into_iter().zip(STATUS_KEYS) {
+        if menu_key(ui, &[key]) {
+            app.act(Act::SetStatus(m.clone(), s));
+            ui.close();
+        }
+    }
+    // Once laid out: the popup's first pass only measures it.
+    let first = first.unwrap_or(status.response);
+    if !ui.is_sizing_pass() && ui.data_mut(|d| d.remove_temp::<bool>(focus_first_id())).is_some() {
+        first.request_focus();
+    }
+    let edit = if item.entry.is_some() { t("Edit…") } else { t("Add to list…") };
+    entry(app, ui, edit, "E", &[Key::E], Act::Edit(m.clone()));
     if item.entry.as_ref().is_some_and(|e| e.status == ListStatus::Current) {
-        entry(app, ui, t("Start binge session"), Act::Gesture(GestureAction::Binge, m.clone()));
+        entry(
+            app,
+            ui,
+            t("Start binge session"),
+            "B",
+            &[Key::B],
+            Act::Gesture(GestureAction::Binge, m.clone()),
+        );
     }
     ui.separator();
     if let Some(u) = m.web_url(m.service) {
-        entry(app, ui, t("Open in browser"), Act::Url(u.clone()));
-        entry(app, ui, t("Copy link"), Act::Copy(u));
+        entry(app, ui, t("Open in browser"), "W", &[Key::W], Act::Url(u.clone()));
+        entry(app, ui, t("Copy link"), "C", &[Key::C], Act::Copy(u));
     }
     if let Some(e) = item.entry.as_ref().filter(|_| app.s.link_actions) {
         let link = kuro_core::links::step_link(e.media.media_ref(), 1);
-        entry(app, ui, t("Copy a link that adds one"), Act::Copy(link));
+        entry(app, ui, t("Copy a link that adds one"), "L", &[Key::L], Act::Copy(link));
     }
     if item.entry.is_some() {
         ui.separator();
-        entry(app, ui, t("Remove from list…"), Act::AskDelete(m));
+        entry(app, ui, t("Remove from list…"), t("Del"), &[Key::Delete], Act::AskDelete(m));
     }
 }
 
