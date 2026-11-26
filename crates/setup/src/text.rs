@@ -35,6 +35,7 @@ const TEXT: &[[&str; 7]] = &[
     ["Kuro {0} is installed.", "Kuro {0} está instalado.", "Kuro {0} est installé.", "Kuro {0} ist installiert.", "Kuro {0} è installato.", "Kuro {0} er installert.", "Kuro {0}이(가) 설치되었습니다."],
     ["Kuro is uninstalled.", "Kuro está desinstalado.", "Kuro est désinstallé.", "Kuro ist deinstalliert.", "Kuro è disinstallato.", "Kuro er avinstallert.", "Kuro가 제거되었습니다."],
     ["Something went wrong", "Algo ha fallado", "Un problème est survenu", "Etwas ist schiefgelaufen", "Qualcosa è andato storto", "Noe gikk galt", "문제가 발생했습니다"],
+    ["What's new", "Novedades", "Nouveautés", "Neuigkeiten", "Novità", "Nytt", "새로운 기능"],
     ["Details", "Detalles", "Détails", "Details", "Dettagli", "Detaljer", "자세히"],
     ["Kuro is still open from {0}. Close it and try again.", "Kuro sigue abierto desde {0}. Ciérralo y vuelve a intentarlo.", "Kuro est toujours ouvert depuis {0}. Fermez-le et réessayez.", "Kuro ist noch geöffnet (aus {0}). Schließen Sie es und versuchen Sie es erneut.", "Kuro è ancora aperto da {0}. Chiudilo e riprova.", "Kuro er fortsatt åpent fra {0}. Lukk det og prøv igjen.", "Kuro가 아직 {0}에서 실행 중입니다. 종료한 후 다시 시도하세요."],
     ["This setup was built without Kuro inside.", "Este instalador se creó sin Kuro dentro.", "Ce programme d'installation ne contient pas Kuro.", "Dieses Setup wurde ohne Kuro erstellt.", "Questa installazione è stata creata senza Kuro.", "Denne installasjonen ble laget uten Kuro.", "이 설치 프로그램에는 Kuro가 들어 있지 않습니다."],
@@ -42,7 +43,8 @@ const TEXT: &[[&str; 7]] = &[
     ["Could not remove {0}: {1}", "No se pudo borrar {0}: {1}", "Impossible de supprimer {0} : {1}", "{0} konnte nicht entfernt werden: {1}", "Impossibile rimuovere {0}: {1}", "Kunne ikke fjerne {0}: {1}", "{0}을(를) 제거할 수 없습니다: {1}"],
 ];
 
-fn column() -> usize {
+/// The column of the Windows display language, English when Kuro does not speak it.
+pub fn column() -> usize {
     static COLUMN: OnceLock<usize> = OnceLock::new();
     *COLUMN.get_or_init(|| {
         let locale = sys_locale::get_locale().unwrap_or_default().to_lowercase();

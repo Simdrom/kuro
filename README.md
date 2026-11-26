@@ -26,7 +26,7 @@ fits:
 | Installed | Button | What it does |
 | --- | --- | --- |
 | None | **Install** | Installs, with a Start menu shortcut and, if you want, a desktop one |
-| Older | **Update to X** | Closes Kuro and replaces it |
+| Older | **Update to X** | Lists what is new since the installed version, then closes Kuro and replaces it |
 | The same | **Reinstall** | Writes the program again, which repairs it |
 | Newer | **Go back to X** | Installs this older version, if it can still read your lists; if a newer Kuro changed them, it says so and changes nothing |
 
@@ -240,6 +240,11 @@ the executable and moves `develop` to the next minor version. Nothing is
 pushed until everything has been built. It needs a write deploy key in the
 `RELEASE_DEPLOY_KEY` secret; the client IDs come from the repository variables
 `KURO_ANILIST_CLIENT_ID` and `KURO_MAL_CLIENT_ID`.
+
+Before a release, add its changes to `crates/setup/whats-new.txt`: a few short
+lines in the user's words, in every language. The setup shows them when it
+updates an older Kuro. The GitHub release notes still come from the commits
+(`git cliff`).
 
 After cloning, turn on the local guard for `main`, `develop` and version tags:
 
