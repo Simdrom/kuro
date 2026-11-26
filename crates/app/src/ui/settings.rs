@@ -570,7 +570,37 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
         ),
     );
     calendar_section(app, ui);
+    reminders_section(app, ui);
     links_section(app, ui);
+}
+
+fn reminders_section(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    let n = &mut app.s.notifications;
+    section(ui, &p, t("Reminders"));
+    card(ui, &p, |ui| {
+        ui.add_enabled_ui(n.enabled, |ui| {
+            let days = [0, 7, 14, 30];
+            let label = t("Titles I stopped watching or reading");
+            select_row(
+                ui,
+                &p,
+                icons::CLOCK_COUNTER_CLOCKWISE,
+                label,
+                &mut n.stale_days,
+                &days,
+                |d| match d {
+                    0 => t("Off").to_owned(),
+                    d => tf("After {} days", &[&d]),
+                },
+            );
+            separator(ui, &p);
+            toggle_row(ui, &p, icons::CALENDAR, t("A summary of the week on Monday"), &mut n.weekly);
+        });
+    });
+    if !n.enabled {
+        note(ui, &p, t("Reminders are notifications: turn notifications on to get them."));
+    }
 }
 
 fn calendar_section(app: &mut App, ui: &mut Ui) {

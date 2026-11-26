@@ -9,6 +9,7 @@ pub mod model;
 pub mod notify;
 pub mod overview;
 pub mod progress;
+pub mod reminders;
 pub mod season;
 pub mod settings;
 pub mod stats;

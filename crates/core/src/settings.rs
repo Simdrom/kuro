@@ -182,6 +182,10 @@ pub struct NotificationSettings {
     /// Hour used when only the date is known.
     pub date_hour: u32,
     pub muted: Vec<MediaRef>,
+    /// Days without progress before a title being watched is mentioned; 0 never.
+    pub stale_days: u32,
+    /// A summary of the week on Monday.
+    pub weekly: bool,
 }
 
 impl Default for NotificationSettings {
@@ -195,6 +199,8 @@ impl Default for NotificationSettings {
             delay_minutes: 0,
             date_hour: 10,
             muted: Vec::new(),
+            stale_days: 0,
+            weekly: false,
         }
     }
 }
@@ -349,6 +355,7 @@ impl Settings {
         self.zoom = fin(self.zoom, 1.0).clamp(0.75, 1.75);
         self.notifications.date_hour = self.notifications.date_hour.min(23);
         self.notifications.delay_minutes = self.notifications.delay_minutes.min(24 * 60);
+        self.notifications.stale_days = self.notifications.stale_days.min(365);
         self.refresh_hours = self.refresh_hours.min(24 * 7);
         self.backup.keep = self.backup.keep.clamp(1, 100);
         for path in [&mut self.backup.folder, &mut self.calendar_file] {

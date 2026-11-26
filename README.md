@@ -142,6 +142,11 @@ available yet.
   watch to an `.ics` file you choose, and rewrites it when the list or the
   schedule changes. Import it into a calendar, or subscribe to it where the
   calendar app allows a file.
+- **Reminders** mention a title you are watching or reading that has not
+  moved for one, two or four weeks (not one that is only waiting for its
+  next episode), with a button to mark the next episode. Several at once
+  come as one notification. A **weekly summary** on Monday counts what airs
+  that week and the episodes you have left to catch up.
 - **Links** open titles, searches and tabs, and a few do things without
   bringing the window forward, so a desktop shortcut, a hotkey tool or a
   Stream Deck can use them:

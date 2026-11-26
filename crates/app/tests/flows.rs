@@ -787,3 +787,17 @@ fn the_episode_calendar_is_written() {
     assert!(h.state().calendar_error.is_none());
     let _ = std::fs::remove_file(&path);
 }
+
+#[test]
+fn titles_left_behind_are_mentioned_once() {
+    let s = store();
+    let mut old = entry(7, MediaKind::Anime, "Quiet Harbor", ListStatus::Current, 4);
+    old.updated_at = kuro_app::backend::now() - 30 * 86_400;
+    s.put_entry(&old).unwrap();
+    let key = kuro_core::reminders::stale_key(&old);
+    let mut h = harness_with(s, [1240.0, 820.0], |s| s.notifications.stale_days = 14);
+    settle(&mut h);
+    assert!(h.state().bg.store().was_notified(&key).unwrap());
+    let fresh = kuro_core::reminders::stale_key(&h.state().entry_at(r(1, MediaKind::Anime)).unwrap());
+    assert!(!h.state().bg.store().was_notified(&fresh).unwrap(), "recent titles are left alone");
+}

@@ -1505,6 +1505,7 @@ impl App {
         }
         self.next_tick = self.time + 20.0;
         self.send_notifications();
+        self.send_reminders();
         let passed = self.lib[0].iter().any(|e| {
             e.status == ListStatus::Current && e.media.next_airing.is_some_and(|a| a.at + 120 < now())
         });
@@ -1563,6 +1564,62 @@ impl App {
         for d in due {
             let notice = self.notice(&d);
             self.sys.notify(notice);
+        }
+    }
+
+    /// Titles left behind, and the summary of the week.
+    fn send_reminders(&mut self) {
+        use kuro_core::reminders;
+        let n = &self.s.notifications;
+        if !n.enabled {
+            return;
+        }
+        let (days, weekly, hour) = (n.stale_days, n.weekly, n.date_hour);
+        let all: Vec<ListEntry> = self.lib.iter().flatten().map(|e| (**e).clone()).collect();
+        let store = self.bg.store();
+        let due: Vec<&ListEntry> = reminders::stale(&all, now(), days, &n.muted)
+            .into_iter()
+            .filter(|e| !store.was_notified(&reminders::stale_key(e)).unwrap_or(true))
+            .collect();
+        for e in &due {
+            let _ = store.mark_notified(&reminders::stale_key(e), now());
+        }
+        let week = weekly
+            .then(|| reminders::week_key(now(), hour, &TimeZone::system()))
+            .flatten()
+            .filter(|k| !store.was_notified(k).unwrap_or(true));
+        if let Some(k) = &week {
+            let _ = store.mark_notified(k, now());
+        }
+        drop(store);
+        let lang = self.s.title_language;
+        match due.as_slice() {
+            [] => {}
+            [e] => {
+                let m = &e.media;
+                let mut notice = Notice::new(m.display_title(lang), tf("No progress for {} days", &[&days]));
+                notice.detail = Some(format!("{} · {}", format::status(e.status, m.kind), e.progress));
+                notice.image = m.cover.as_deref().and_then(|u| self.bg.images.cached(u));
+                notice.link = Some(links::to_link(m.media_ref()));
+                notice.mark = reminders::next_unit(e)
+                    .filter(|_| m.kind == MediaKind::Anime)
+                    .map(|ep| (m.media_ref(), ep));
+                self.sys.notify(notice);
+            }
+            many => {
+                let names: Vec<&str> = many.iter().take(3).map(|e| e.media.display_title(lang)).collect();
+                let title = tf("{} titles with no progress for {} days", &[&many.len(), &days]);
+                self.sys.notify(Notice::new(title, names.join(" · ")));
+            }
+        }
+        if week.is_some() {
+            let w = reminders::week(&self.lib[0].iter().map(|e| (**e).clone()).collect::<Vec<_>>(), now());
+            if w.airing > 0 || w.behind > 0 {
+                let body = tf("{} titles air this week · {} episodes to catch up", &[&w.airing, &w.behind]);
+                let mut notice = Notice::new(t("Your week"), body);
+                notice.link = Some("kuro://tab/anime".into());
+                self.sys.notify(notice);
+            }
         }
     }
 
