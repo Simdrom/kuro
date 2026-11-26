@@ -11,6 +11,8 @@
 # The setup's tests check this file. A release fails if its section is empty, and then starts
 # an empty one for the next version.
 
+[0.3.0]
+
 [0.2.0]
 A new setup with its own window: it updates Kuro in place, lists what's new and can go back to an earlier version.|Nuevo instalador con su propia ventana: actualiza Kuro sin perder nada, muestra las novedades y puede volver a una versión anterior.|Un nouveau programme d'installation avec sa propre fenêtre : il met Kuro à jour, présente les nouveautés et peut revenir à une version précédente.|Ein neues Setup mit eigenem Fenster: Es aktualisiert Kuro, zeigt die Neuigkeiten und kann zu einer älteren Version zurückkehren.|Una nuova installazione con una propria finestra: aggiorna Kuro, mostra le novità e può tornare a una versione precedente.|Ny installasjon med eget vindu: den oppdaterer Kuro, viser hva som er nytt og kan gå tilbake til en eldre versjon.|자체 창을 갖춘 새 설치 프로그램: Kuro를 업데이트하고 새로운 기능을 보여 주며 이전 버전으로 되돌릴 수 있습니다.
 黒 is Kuro's new icon, in every colour scheme.|黒 es el nuevo icono de Kuro, en todos los esquemas de color.|黒 devient l'icône de Kuro, dans chaque jeu de couleurs.|黒 ist Kuros neues Symbol, in jedem Farbschema.|黒 è la nuova icona di Kuro, in ogni schema di colori.|黒 er Kuros nye ikon, i alle fargeoppsett.|黒가 Kuro의 새 아이콘이 되었습니다. 모든 색 구성표에서 사용됩니다.
