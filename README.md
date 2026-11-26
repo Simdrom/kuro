@@ -153,6 +153,11 @@ available yet.
 - **Kioku** can read the Crunchyroll history on its own once a day or week.
   As after **Sync history**, nothing is written: a notification says how
   many changes wait for your review, and opens Kioku.
+  It can also look in your Downloads folder, about once an hour, for a
+  Netflix or Prime Video history saved in the last two weeks: files with
+  "netflix", "prime" or "amazon" in their name that read as that history.
+  Kioku then offers to review the file; nothing is read beyond that folder,
+  and a file you set aside is not offered again.
 - **Links** open titles, searches and tabs, and a few do things without
   bringing the window forward, so a desktop shortcut, a hotkey tool or a
   Stream Deck can use them:

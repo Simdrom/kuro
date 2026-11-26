@@ -323,6 +323,8 @@ pub struct Settings {
     pub refresh_hours: u32,
     /// Kioku reads the Crunchyroll history on its own this often.
     pub kioku_check: Every,
+    /// Kioku looks for streaming history files in the Downloads folder.
+    pub watch_downloads: bool,
     /// An iCalendar file kept up to date with upcoming episodes; empty for none.
     pub calendar_file: String,
 }
@@ -373,6 +375,7 @@ impl Default for Settings {
             backup: BackupSettings::default(),
             refresh_hours: 0,
             kioku_check: Every::Off,
+            watch_downloads: false,
             calendar_file: String::new(),
         }
     }

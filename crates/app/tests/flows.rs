@@ -837,3 +837,41 @@ fn an_automatic_kioku_check_waits_for_review_and_leaves_nothing_when_empty() {
     settle(&mut h);
     assert_eq!(h.state().routes.last(), Some(&Route::Kioku));
 }
+
+#[test]
+fn history_files_in_downloads_are_offered_until_handled() {
+    let dir = std::env::temp_dir().join(format!("kuro-downloads-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let csv = "Title,Date\n\"Lanterns Over Saltmarsh: Season 1: Ten\",\"11/20/26\"\n";
+    std::fs::write(dir.join("NetflixViewingHistory.csv"), csv).unwrap();
+    std::fs::write(dir.join("netflix-notes.csv"), "not a history").unwrap();
+    let mut h = harness();
+    let wait = |h: &mut H| {
+        for _ in 0..100 {
+            if h.state().kioku.found.is_some() {
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+            settle(h);
+        }
+    };
+    h.state().bg.scan_downloads(dir.clone(), 0);
+    wait(&mut h);
+    let found = h.state().kioku.found.clone().expect("found");
+    assert_eq!(
+        (found.platform, found.name().as_str()),
+        (kuro_core::kioku::Platform::Netflix, "NetflixViewingHistory.csv")
+    );
+
+    act(&mut h, Act::Push(Route::Kioku));
+    assert!(h.query_by_label_contains("NetflixViewingHistory.csv").is_some());
+    click(&mut h, "Not this file");
+    assert!(h.state().kioku.found.is_none());
+
+    // Forgotten files are not offered again.
+    h.state().bg.scan_downloads(dir.clone(), 0);
+    wait(&mut h);
+    assert!(h.state().kioku.found.is_none());
+    let _ = std::fs::remove_dir_all(&dir);
+}

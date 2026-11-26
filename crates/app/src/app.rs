@@ -121,6 +121,10 @@ pub enum Act {
     KiokuDismissAll,
     /// Reviews a history file exported from the platform.
     KiokuImport(Platform),
+    /// Reviews the history file found in Downloads.
+    KiokuImportFound,
+    /// Forgets the history file found in Downloads.
+    KiokuForgetFound,
     /// Opens the title picker for a series of the review.
     KiokuPick(PickFrom),
     /// Searches with the picker's text.
@@ -167,6 +171,23 @@ pub struct KiokuView {
     pub background: bool,
     /// The period last looked at for the automatic check.
     pub checked: String,
+    /// A history file in Downloads not reviewed yet, and its key.
+    pub found: Option<FoundFile>,
+}
+
+/// A streaming history file found in the Downloads folder.
+#[derive(Clone)]
+pub struct FoundFile {
+    pub platform: Platform,
+    pub path: std::path::PathBuf,
+    /// Remembered once the file is reviewed or forgotten.
+    pub key: String,
+}
+
+impl FoundFile {
+    pub fn name(&self) -> String {
+        self.path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
+    }
 }
 
 #[derive(Default)]
@@ -357,6 +378,8 @@ pub struct App {
     backup_at: f64,
     /// When the list was last read from the account.
     library_at: i64,
+    /// When Downloads is looked at next.
+    downloads_at: f64,
     /// The calendar text last sent to the file.
     calendar_text: String,
     pub calendar_error: Option<String>,
@@ -464,6 +487,7 @@ impl App {
             backup_error: None,
             backup_at: 0.0,
             library_at: now(),
+            downloads_at: 0.0,
             calendar_text: String::new(),
             calendar_error: None,
             acts: Vec::new(),
@@ -1063,6 +1087,25 @@ impl App {
                 self.kioku.review = None;
                 self.bg.kioku_import(p, self.s.primary);
             }
+            Act::KiokuImportFound => {
+                let Some(f) = self.kioku.found.take() else { return };
+                let _ = self.bg.store().mark_notified(&f.key, now());
+                if !self.bg.online() {
+                    return;
+                }
+                self.kioku.syncing = true;
+                self.kioku.progress = None;
+                self.kioku.started = Some(self.time);
+                self.kioku.took = None;
+                self.kioku.error = None;
+                self.kioku.review = None;
+                self.bg.kioku_import_file(f.platform, self.s.primary, f.path);
+            }
+            Act::KiokuForgetFound => {
+                if let Some(f) = self.kioku.found.take() {
+                    let _ = self.bg.store().mark_notified(&f.key, now());
+                }
+            }
             Act::KiokuDismissAll => {
                 if let Some(r) = self.kioku.review.as_mut() {
                     for g in std::mem::take(&mut r.unmatched) {
@@ -1470,6 +1513,26 @@ impl App {
                     }
                 }
             }
+            Event::KiokuFileFound { platform, path, modified } => {
+                let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                let key = format!("kioku-file:{}:{name}:{modified}", platform.key());
+                let store = self.bg.store();
+                let (handled, told) = (store.was_notified(&key).unwrap_or(true), format!("{key}:told"));
+                let new = !handled && !store.was_notified(&told).unwrap_or(true);
+                if new {
+                    let _ = store.mark_notified(&told, now());
+                }
+                drop(store);
+                if handled || self.kioku.found.as_ref().is_some_and(|f| f.key == key) {
+                    return;
+                }
+                if new {
+                    let mut n = Notice::new("Kioku", tf("kioku.found", &[&platform.name(), &name]));
+                    n.link = Some("kuro://tab/kioku".into());
+                    self.sys.notify(n);
+                }
+                self.kioku.found = Some(FoundFile { platform, path, key });
+            }
             Event::OpenLink(l) => {
                 self.open_link(&l);
             }
@@ -1533,6 +1596,7 @@ impl App {
         }
         self.auto_backup();
         self.kioku_check();
+        self.scan_downloads();
         self.write_calendar();
         if self.refreshing == 0
             && self.bg.online()
@@ -1578,6 +1642,19 @@ impl App {
         let _ = self.bg.store().mark_notified(&key, now());
         self.apply(Act::KiokuSync(Platform::Crunchyroll));
         self.kioku.background = true;
+    }
+
+    /// Looks in Downloads for streaming history files about once an hour.
+    fn scan_downloads(&mut self) {
+        if !self.s.watch_downloads || !self.bg.online() || self.time < self.downloads_at {
+            return;
+        }
+        self.downloads_at = self.time + 3600.0;
+        if let Some(dir) =
+            directories::UserDirs::new().and_then(|d| d.download_dir().map(|p| p.to_path_buf()))
+        {
+            self.bg.scan_downloads(dir, now() - 14 * 86_400);
+        }
     }
 
     /// Says what an automatic Kioku check found.

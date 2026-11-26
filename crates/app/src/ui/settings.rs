@@ -593,6 +593,8 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
         select_row(ui, &p, icons::CLOCK_COUNTER_CLOCKWISE, label, &mut app.s.kioku_check, &Every::ALL, |v| {
             format::every(v).into()
         });
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::TRAY_ARROW_DOWN, t("kioku.downloads"), &mut app.s.watch_downloads);
     });
     note(ui, &p, t("kioku.auto.note"));
     links_section(app, ui);
