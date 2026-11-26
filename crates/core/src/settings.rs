@@ -275,6 +275,8 @@ pub struct Settings {
     pub autostart: bool,
     /// Handle `kuro://` links.
     pub handle_links: bool,
+    /// Links may change the list, such as `kuro://step/…`.
+    pub link_actions: bool,
     pub gestures: Gestures,
     pub notifications: NotificationSettings,
     // Automation
@@ -322,6 +324,7 @@ impl Default for Settings {
             close_to_tray: false,
             autostart: false,
             handle_links: false,
+            link_actions: false,
             gestures: Gestures::default(),
             notifications: NotificationSettings::default(),
             backup: BackupSettings::default(),

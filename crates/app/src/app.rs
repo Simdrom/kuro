@@ -360,6 +360,8 @@ pub struct App {
     clipboard_seen: String,
     really_quit: bool,
     hidden: bool,
+    /// The main window has the keyboard focus.
+    focused: bool,
     /// Frames left in which a hidden start is enforced.
     start_hidden: u8,
     applied: Option<(Palette, bool, f32)>,
@@ -463,6 +465,7 @@ impl App {
             clipboard_seen: String::new(),
             really_quit: false,
             hidden,
+            focused: false,
             start_hidden: if hidden { 3 } else { 0 },
             applied: None,
             icon_applied: None,
@@ -757,7 +760,57 @@ impl App {
                 self.act(Act::Go(tab));
                 true
             }
+            Some(Link::Step { .. }) if !self.s.link_actions => {
+                let off =
+                    t("Links that change your list are off. Turn them on in Settings › Widget & automation.");
+                self.report("Kuro", off);
+                true
+            }
+            Some(Link::Step { media, by }) => {
+                self.step_from_link(media, by);
+                true
+            }
+            Some(Link::Binge(r)) => {
+                match self.entry_at(r) {
+                    Some(_) => self.act(Act::Binge(Some(r))),
+                    None => self.report("Kuro", t("This title is not in your list.")),
+                }
+                true
+            }
+            Some(Link::Random(k)) => {
+                self.act(Act::Random(k));
+                true
+            }
+            Some(Link::Refresh) => {
+                self.act(Act::Refresh);
+                true
+            }
             None => false,
+        }
+    }
+
+    /// Adds or removes episodes as a link asks, and says where the title is now.
+    fn step_from_link(&mut self, r: MediaRef, by: i32) {
+        let Some(e) = self.entry_at(r) else {
+            return self.report("Kuro", t("This title is not in your list."));
+        };
+        let title = e.media.display_title(self.s.title_language).to_owned();
+        if by > 0 && e.status == ListStatus::Completed && !e.repeating {
+            return self.report(&title, format::status(e.status, e.media.kind));
+        }
+        let next = progress::step(&e, by, today());
+        self.save(&next);
+        let total = next.media.total().map_or_else(|| "?".to_owned(), |n| n.to_string());
+        let body = format!("{} · {}/{total}", format::status(next.status, next.media.kind), next.progress);
+        self.report(&title, &body);
+    }
+
+    /// Says something in the window when it has the focus, or as a notification.
+    fn report(&mut self, title: &str, body: &str) {
+        if self.focused && !self.hidden {
+            self.say(if title == "Kuro" { body.to_owned() } else { format!("{title}: {body}") });
+        } else {
+            self.sys.notify(Notice::new(title, body));
         }
     }
 
@@ -1666,6 +1719,7 @@ impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.screen = ctx.content_rect();
+        self.focused = ctx.input(|i| i.focused);
         self.tex.begin_frame();
         // The window is shown after its first frame whatever was asked for.
         if self.start_hidden > 0 {

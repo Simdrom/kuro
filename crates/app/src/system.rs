@@ -83,8 +83,10 @@ fn listen_on(name: &str, reply: Reply) {
                     reply.send(Event::ShowWindow);
                 } else if line == QUIT {
                     reply.send(Event::Quit);
-                } else if links::parse(line).is_some() {
-                    reply.send(Event::ShowWindow);
+                } else if let Some(link) = links::parse(line) {
+                    if !link.quiet() {
+                        reply.send(Event::ShowWindow);
+                    }
                     reply.send(Event::OpenLink(line.to_owned()));
                 }
             });

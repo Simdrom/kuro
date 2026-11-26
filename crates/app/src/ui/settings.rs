@@ -615,6 +615,8 @@ fn links_section(app: &mut App, ui: &mut Ui) {
             t("Open copied AniList and MyAnimeList links"),
             &mut s.watch_clipboard,
         );
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::LIGHTNING, t("Allow links that change my list"), &mut s.link_actions);
     });
     note(ui, &p, t("Copied links open when you return to this window. Other clipboard content is ignored."));
     if app.s.handle_links {
@@ -634,6 +636,10 @@ fn links_section(app: &mut App, ui: &mut Ui) {
             "kuro://mal/manga/<id>",
             "kuro://search/anime?q=<text>",
             "kuro://tab/seasonal",
+            "kuro://random/anime",
+            "kuro://refresh",
+            "kuro://binge/anilist/anime/<id>",
+            "kuro://step/anilist/anime/<id>?by=1",
         ]
         .into_iter()
         .enumerate()
@@ -648,6 +654,13 @@ fn links_section(app: &mut App, ui: &mut Ui) {
         ui,
         &p,
         t("Pass one of these links to the program, or open it from anywhere once link handling is on."),
+    );
+    note(
+        ui,
+        &p,
+        t(
+            "Step, binge and refresh links work without bringing the window forward, so a shortcut, a hotkey tool or a Stream Deck can use them. Step links need the switch above; a title's menu copies one.",
+        ),
     );
 }
 

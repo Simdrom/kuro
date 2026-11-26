@@ -735,3 +735,30 @@ fn automatic_backups_are_dated_and_old_ones_are_removed() {
     assert!(text.contains("Lanterns Over Saltmarsh"));
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn action_links_change_the_list_only_when_allowed() {
+    let mut h = harness();
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/1?by=2"));
+    settle(&mut h);
+    assert_eq!(progress(&h, 1), 9, "off by default");
+
+    h.state_mut().s.link_actions = true;
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/1?by=2"));
+    settle(&mut h);
+    assert_eq!(progress(&h, 1), 11);
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/1?by=-1"));
+    settle(&mut h);
+    assert_eq!(progress(&h, 1), 10);
+
+    // A finished title stays finished, and titles outside the list are left alone.
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/3"));
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/999"));
+    settle(&mut h);
+    assert_eq!(progress(&h, 3), 24);
+    assert!(h.state().entry_at(r(999, MediaKind::Anime)).is_none());
+
+    assert!(h.state_mut().open_link("kuro://binge/anilist/anime/2"));
+    settle(&mut h);
+    assert_eq!(h.state().binge, Some(r(2, MediaKind::Anime)));
+}

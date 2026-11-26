@@ -138,6 +138,21 @@ available yet.
 - **Sync** can read your list from your account again every few hours, so
   changes made on the website or another device show up on their own. Your
   own changes are always sent at once, and retried while offline.
+- **Links** open titles, searches and tabs, and a few do things without
+  bringing the window forward, so a desktop shortcut, a hotkey tool or a
+  Stream Deck can use them:
+
+  | Link | Does |
+  | --- | --- |
+  | `kuro://step/anilist/anime/<id>?by=1` | Adds 1 to 10 episodes or chapters (negative removes them) |
+  | `kuro://binge/anilist/anime/<id>` | Opens the binge session |
+  | `kuro://random/anime` | Opens a random title |
+  | `kuro://refresh` | Reads the list from the account again |
+
+  Step links change your list, so they do nothing until **Allow links that
+  change my list** is on; then a title's menu copies one. They only touch
+  titles already in the list, never move a finished title and answer with a
+  notification when the window is not in front.
 
 ## What changes from a phone app
 
