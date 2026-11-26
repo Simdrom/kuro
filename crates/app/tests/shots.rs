@@ -54,6 +54,12 @@ fn screens() {
     h.state_mut().kioku.picker.as_mut().unwrap().results = Some(Ok(titles));
     shot(&mut h, "kioku-picker");
     h.state_mut().kioku.picker = None;
+    h.state_mut().routes.clear();
+    h.state_mut().act(Act::Go(Tab::Calendar));
+    shot(&mut h, "calendar");
+    h.state_mut().act(Act::Open(m.clone()));
+    shot(&mut h, "calendar-open");
+    h.state_mut().routes.clear();
     h.state_mut().act(Act::Go(Tab::Manga));
     settle(&mut h);
     h.state_mut().s.theme = Theme::Light;

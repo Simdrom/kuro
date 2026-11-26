@@ -10,6 +10,7 @@ pub const HAND_PALM: &str = "\u{E57E}";
 pub const X: &str = "\u{E4F6}";
 pub const CALENDAR_BLANK: &str = "\u{E10A}";
 pub const CALENDAR: &str = "\u{E108}";
+pub const CALENDAR_CHECK: &str = "\u{E712}";
 pub const STAR: &str = "\u{E46A}";
 pub const GEAR: &str = "\u{E270}";
 pub const MAGNIFYING_GLASS: &str = "\u{E30C}";

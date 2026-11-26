@@ -45,6 +45,8 @@ fn google_error(e: &ApiError) -> String {
 pub enum Tab {
     Anime,
     Manga,
+    /// The coming episodes of the user's anime.
+    Calendar,
     Seasonal,
     Ranking,
     Search,
@@ -52,8 +54,15 @@ pub enum Tab {
 }
 
 impl Tab {
-    pub const ALL: [Self; 6] =
-        [Self::Anime, Self::Manga, Self::Seasonal, Self::Ranking, Self::Search, Self::Settings];
+    pub const ALL: [Self; 7] = [
+        Self::Anime,
+        Self::Manga,
+        Self::Calendar,
+        Self::Seasonal,
+        Self::Ranking,
+        Self::Search,
+        Self::Settings,
+    ];
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -816,6 +825,7 @@ impl App {
                 let tab = match name.as_str() {
                     "anime" => Tab::Anime,
                     "manga" => Tab::Manga,
+                    "calendar" => Tab::Calendar,
                     "seasonal" => Tab::Seasonal,
                     "ranking" => Tab::Ranking,
                     "search" => Tab::Search,
@@ -1937,7 +1947,7 @@ impl App {
         if self.editor.is_some() || self.confirm.is_some() || self.command.is_some() {
             return;
         }
-        let tabs = [Key::Num1, Key::Num2, Key::Num3, Key::Num4, Key::Num5, Key::Num6];
+        let tabs = [Key::Num1, Key::Num2, Key::Num3, Key::Num4, Key::Num5, Key::Num6, Key::Num7];
         for (k, tab) in tabs.into_iter().zip(Tab::ALL) {
             if hit(Modifiers::COMMAND, k) {
                 self.act(Act::Go(tab));

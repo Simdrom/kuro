@@ -450,7 +450,7 @@ fn gestures(app: &mut App, ui: &mut Ui) {
     card(ui, &p, |ui| {
         let keys = [
             ("Ctrl+K", t("Go to anything")),
-            ("Ctrl+1 … 6", t("Switch tabs")),
+            ("Ctrl+1 … 7", t("Switch tabs")),
             ("Ctrl+F", t("Search")),
             ("Ctrl+,", t("Settings")),
             ("F5", t("Refresh")),

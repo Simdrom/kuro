@@ -19,16 +19,30 @@ pub struct Episode {
     pub url: Option<String>,
 }
 
-/// The next episode of every anime watched or planned, soonest first.
-pub fn episodes(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> Vec<Episode> {
+impl AsRef<Self> for ListEntry {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
+/// Anime watched or planned whose next episode has a date from `since` on,
+/// soonest first: the titles the calendar holds.
+pub fn upcoming<E: AsRef<ListEntry>>(entries: &[E], since: i64) -> Vec<&ListEntry> {
     let mut due: Vec<&ListEntry> = entries
         .iter()
+        .map(AsRef::as_ref)
         .filter(|e| e.media.kind == MediaKind::Anime)
         .filter(|e| matches!(e.status, ListStatus::Current | ListStatus::Planning))
-        .filter(|e| e.media.next_airing.is_some())
+        .filter(|e| e.media.next_airing.is_some_and(|a| a.at >= since))
         .collect();
     due.sort_by_key(|e| (e.media.next_airing.map(|a| a.at), e.media.id));
-    due.into_iter()
+    due
+}
+
+/// The next episode of every anime watched or planned, soonest first.
+pub fn episodes(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> Vec<Episode> {
+    upcoming(entries, i64::MIN)
+        .into_iter()
         .filter_map(|e| {
             let (m, a) = (&e.media, e.media.next_airing?);
             Some(Episode {
@@ -140,6 +154,18 @@ mod tests {
         assert!(text.contains("DURATION:PT24M"));
         assert!(text.find("Soon").unwrap() < text.find("Later").unwrap(), "sorted by airing time");
         assert_eq!(text, ics(&list, TitleLanguage::Romaji, "Ep."), "stable");
+    }
+
+    #[test]
+    fn upcoming_keeps_what_airs_from_the_given_time() {
+        let list = [
+            airing(1, "Later", ListStatus::Current, 2, 300),
+            airing(2, "Aired", ListStatus::Current, 9, 100),
+            airing(3, "Soon", ListStatus::Planning, 1, 200),
+            airing(4, "Dropped", ListStatus::Dropped, 4, 250),
+        ];
+        let ids: Vec<u64> = upcoming(&list, 150).iter().map(|e| e.media.id).collect();
+        assert_eq!(ids, [3, 1]);
     }
 
     #[test]

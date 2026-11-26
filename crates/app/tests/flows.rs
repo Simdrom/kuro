@@ -189,9 +189,23 @@ fn dragging_a_row_triggers_the_swipe_action() {
 }
 
 #[test]
+fn the_calendar_shows_coming_episodes_and_opens_them() {
+    let mut h = harness();
+    act(&mut h, Act::Go(Tab::Calendar));
+    assert!(h.query_by_label_contains("Today").is_some(), "every day of the week has a heading");
+    assert!(h.query_by_label_contains("Iron Orchard").is_none(), "only titles with a coming episode");
+    h.get_by_label_contains("Ep 10 · ").click();
+    settle(&mut h);
+    assert!(matches!(h.state().routes.last(), Some(Route::Media(r)) if r.id == 1));
+}
+
+#[test]
 fn keyboard_shortcuts() {
     let mut h = harness();
-    h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num4);
+    h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num3);
+    settle(&mut h);
+    assert_eq!(h.state().tab, Tab::Calendar);
+    h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num5);
     settle(&mut h);
     assert_eq!(h.state().tab, Tab::Ranking);
     h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num1);
