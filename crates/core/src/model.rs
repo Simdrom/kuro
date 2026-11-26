@@ -370,6 +370,40 @@ pub struct ExternalLink {
     pub site: String,
     pub url: String,
     pub streaming: bool,
+    /// The site's logo, as AniList hosts it.
+    #[serde(default)]
+    pub icon: Option<String>,
+    /// The brand colour the logo sits on, as `#rrggbb`.
+    #[serde(default)]
+    pub color: Option<String>,
+}
+
+/// The main platforms, in the order they are shown, with the names AniList uses for each.
+const PLATFORMS: [(&str, &[&str]); 4] = [
+    ("Crunchyroll", &["crunchyroll"]),
+    ("Netflix", &["netflix"]),
+    ("Prime Video", &["amazon", "amazon prime video", "prime video", "amazon prime"]),
+    ("Disney+", &["disney plus", "disney+", "disney+ hotstar"]),
+];
+
+/// Streaming links, one per platform: the main platforms first under one name, then the rest.
+pub fn streaming_platforms(links: &[ExternalLink]) -> Vec<ExternalLink> {
+    let rank = |site: &str| {
+        let s = site.trim().to_lowercase();
+        PLATFORMS.iter().position(|(_, names)| names.contains(&s.as_str()))
+    };
+    let mut out: Vec<(usize, ExternalLink)> = Vec::new();
+    for l in links.iter().filter(|l| l.streaming) {
+        let (order, site) = match rank(&l.site) {
+            Some(i) => (i, PLATFORMS[i].0.to_string()),
+            None => (PLATFORMS.len(), l.site.trim().to_string()),
+        };
+        if !site.is_empty() && !out.iter().any(|(_, o)| o.site.eq_ignore_ascii_case(&site)) {
+            out.push((order, ExternalLink { site, streaming: true, ..l.clone() }));
+        }
+    }
+    out.sort_by_key(|(o, _)| *o);
+    out.into_iter().map(|(_, l)| l).collect()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -468,6 +502,31 @@ pub struct UserProfile {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn streaming_platforms_merge_names_and_put_the_main_ones_first() {
+        let link = |site: &str, streaming| ExternalLink {
+            site: site.into(),
+            url: format!("https://{site}"),
+            streaming,
+            icon: Some(format!("https://{site}/icon.png")),
+            color: None,
+        };
+        let links = [
+            link("HIDIVE", true),
+            link("Disney Plus", true),
+            link("Netflix", true),
+            link("Twitter", false),
+            link("Amazon Prime Video", true),
+            link("netflix", true),
+            link("Crunchyroll", true),
+        ];
+        let got = streaming_platforms(&links);
+        let names: Vec<_> = got.iter().map(|l| l.site.as_str()).collect();
+        assert_eq!(names, ["Crunchyroll", "Netflix", "Prime Video", "Disney+", "HIDIVE"]);
+        assert_eq!(got[1].url, "https://Netflix");
+        assert_eq!(got[1].icon.as_deref(), Some("https://Netflix/icon.png"));
+    }
 
     #[test]
     fn fuzzy_date_rejects_nonsense() {

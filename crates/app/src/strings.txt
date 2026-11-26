@@ -135,6 +135,7 @@ Light|Claro|Clair|Hell|Chiaro|Lys|라이트
 Light novel|Novela ligera|Light novel|Light Novel|Light novel|Light novel|라이트 노벨
 Link copied|Enlace copiado|Lien copié|Link kopiert|Link copiato|Lenke kopiert|링크를 복사했습니다
 Links|Enlaces|Liens|Links|Link|Lenker|링크
+Streaming|Streaming|Streaming|Streaming|Streaming|Strømming|스트리밍
 List settings|Ajustes de la lista|Réglages de la liste|Listeneinstellungen|Impostazioni lista|Listeinnstillinger|목록 설정
 Lists|Listas|Listes|Listen|Liste|Lister|목록
 Lists, search, rankings and details come from your primary service.|Las listas, búsquedas, rankings y detalles vienen de tu servicio principal.|Les listes, recherches, classements et détails viennent de ton service principal.|Listen, Suche, Ranglisten und Details kommen aus deinem Hauptdienst.|Liste, ricerca, classifiche e dettagli provengono dal servizio principale.|Lister, søk, rangeringer og detaljer kommer fra hovedtjenesten din.|목록, 검색, 순위, 상세 정보는 기본 서비스에서 가져옵니다.

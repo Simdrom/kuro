@@ -195,7 +195,7 @@ impl AniList {
         };
         let q = format!(
             "query($id:Int){{Media({key}:$id,type:{}){{...M description(asHtml:false) rankings{{rank type allTime}} \
-             tags{{name rank isMediaSpoiler}} trailer{{id site}} externalLinks{{site url type}} \
+             tags{{name rank isMediaSpoiler}} trailer{{id site}} externalLinks{{site url type icon color}} \
              stats{{scoreDistribution{{score amount}} statusDistribution{{status amount}}}} \
              relations{{edges{{relationType(version:2) node{{...M}}}}}} \
              characters(sort:[ROLE,RELEVANCE,ID],perPage:25){{edges{{role node{{id name{{full}} image{{large}}}} \
@@ -641,7 +641,13 @@ fn detail(v: &Value) -> Option<MediaDetail> {
             .filter_map(|l| {
                 let url =
                     opt_text(&l["url"]).filter(|u| u.starts_with("https://") || u.starts_with("http://"))?;
-                Some(ExternalLink { site: text(&l["site"]), url, streaming: l["type"] == "STREAMING" })
+                Some(ExternalLink {
+                    site: text(&l["site"]),
+                    url,
+                    streaming: l["type"] == "STREAMING",
+                    icon: opt_text(&l["icon"]).filter(|u| u.starts_with("https://")),
+                    color: opt_text(&l["color"]),
+                })
             })
             .collect(),
         trailer: opt_text(&v["trailer"]["id"])
@@ -805,7 +811,9 @@ mod tests {
         m["rankings"] = json!([{"rank": 4, "type": "RATED", "allTime": true}, {"rank": 1, "type": "RATED", "allTime": false}]);
         m["characters"] = json!({"edges": [{"role": "MAIN", "node": {"id": 1, "name": {"full": "C"}}, "voiceActors": [
             {"id": 2, "name": {"full": "E"}, "languageV2": "English"}, {"id": 3, "name": {"full": "J"}, "languageV2": "Japanese"}]}]});
-        m["externalLinks"] = json!([{"site": "ok", "url": "https://a.b", "type": "STREAMING"}, {"site": "bad", "url": "file:///c:/x"}]);
+        m["externalLinks"] = json!([
+            {"site": "ok", "url": "https://a.b", "type": "STREAMING", "icon": "file:///c:/i.png"},
+            {"site": "bad", "url": "file:///c:/x"}]);
         m["trailer"] = json!({"id": "ab&c", "site": "youtube"});
         m["stats"] = json!({"scoreDistribution": [{"score": 90, "amount": 3}], "statusDistribution": [{"status": "CURRENT", "amount": 8}]});
         let (_s, a) = server(json!({"data": {"Media": m}})).await;
@@ -815,6 +823,7 @@ mod tests {
         assert_eq!((d.media.rank, d.media.scored_by), (Some(4), Some(3)));
         assert_eq!(d.languages, ["Japanese", "English"]);
         assert_eq!(d.links.len(), 1);
+        assert_eq!(d.links[0].icon, None);
         assert_eq!(d.trailer, None);
         assert_eq!(d.status_stats, [(ListStatus::Current, 8)]);
     }

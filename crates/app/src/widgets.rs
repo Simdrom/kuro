@@ -16,7 +16,7 @@ pub fn label_a11y(r: &Response, kind: Role, text: &str) {
     r.widget_info(|| WidgetInfo::labeled(kind, true, text));
 }
 
-fn focus_ring(ui: &Ui, p: &Palette, r: &Response, radius: u8) {
+pub fn focus_ring(ui: &Ui, p: &Palette, r: &Response, radius: u8) {
     if r.has_focus() {
         ui.painter().rect_stroke(
             r.rect.expand(2.0),

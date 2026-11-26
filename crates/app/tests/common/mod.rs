@@ -87,6 +87,8 @@ pub fn detail(id: u64, kind: MediaKind, title: &str) -> MediaDetail {
             site: "Official Site".into(),
             url: "https://example.com".into(),
             streaming: false,
+            icon: None,
+            color: None,
         }],
         languages: vec!["Japanese".into(), "English".into()],
         ..MediaDetail::default()

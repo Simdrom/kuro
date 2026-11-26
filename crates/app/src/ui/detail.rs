@@ -466,7 +466,8 @@ fn info(app: &mut App, ui: &mut Ui, d: &MediaDetail) {
     add(t("Duration"), m.duration.map(|n| tf("{} min per episode", &[&n])));
     add(t("Rating"), m.rating.clone());
     add(t("Languages"), Some(d.languages.join(", ")));
-    if facts.is_empty() {
+    let platforms = kuro_core::streaming_platforms(&d.links);
+    if facts.is_empty() && platforms.is_empty() {
         return;
     }
     widgets::section(ui, &p, t("Information"));
@@ -477,7 +478,85 @@ fn info(app: &mut App, ui: &mut Ui, d: &MediaDetail) {
             }
             widgets::fact(ui, &p, k, v);
         }
+        if !platforms.is_empty() {
+            if !facts.is_empty() {
+                widgets::separator(ui, &p);
+            }
+            streaming(app, ui, &platforms);
+        }
     });
+}
+
+/// A fold with the platforms that stream the title; open or closed for the whole session.
+fn streaming(app: &mut App, ui: &mut Ui, platforms: &[kuro_core::ExternalLink]) {
+    let p = app.p;
+    let id = egui::Id::unique("detail_streaming_open");
+    let mut open = ui.data(|d| d.get_temp::<bool>(id)).unwrap_or(false);
+    let (rect, r) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::click());
+    widgets::label_a11y(&r, Role::Button, t("Streaming"));
+    if r.clicked() {
+        open = !open;
+        ui.data_mut(|d| d.insert_temp(id, open));
+    }
+    let c = rect.center().y;
+    let caret = if open { icons::CARET_DOWN } else { icons::CARET_RIGHT };
+    let pt = ui.painter();
+    pt.text(pos2(rect.right(), c), Align2::RIGHT_CENTER, caret, theme::icon(13.0), p.faint);
+    let names = platforms.iter().map(|l| l.site.as_str()).collect::<Vec<_>>().join(", ");
+    let summary = if open { String::new() } else { names };
+    let v = widgets::galley(ui, &summary, theme::regular(13.0), p.dim, rect.width() * 0.65, 1);
+    let end = rect.right() - 20.0 - v.size().x;
+    let l = widgets::galley(ui, t("Streaming"), theme::regular(14.0), p.text, end - rect.left() - 8.0, 1);
+    ui.painter().galley(pos2(end, c - v.size().y / 2.0), v, p.dim);
+    ui.painter().galley(pos2(rect.left(), c - l.size().y / 2.0), l, p.text);
+    widgets::focus_ring(ui, &p, &r, 8);
+    r.on_hover_cursor(CursorIcon::PointingHand);
+    if !open {
+        return;
+    }
+    for l in platforms {
+        let (rect, r) = ui.allocate_exact_size(vec2(ui.available_width(), 30.0), Sense::click());
+        widgets::label_a11y(&r, Role::Link, &l.site);
+        if r.hovered() {
+            ui.painter().rect_filled(rect.expand2(vec2(8.0, 0.0)), CornerRadius::same(8), p.hover);
+        }
+        let c = rect.center().y;
+        // AniList's logos are white, drawn on the brand colour.
+        let badge = Rect::from_center_size(pos2(rect.left() + 11.0, c), vec2(22.0, 22.0));
+        let logo = l.icon.as_deref().and_then(|u| app.tex.get(&app.bg, u));
+        match logo {
+            Some(tex) => {
+                let fill =
+                    l.color.as_deref().and_then(|c| egui::Color32::from_hex(c).ok()).unwrap_or(p.raised);
+                ui.painter().rect_filled(badge, CornerRadius::same(6), fill);
+                egui::Image::from_texture(tex).paint_at(ui, badge.shrink(3.0));
+            }
+            None => {
+                let pt = ui.painter();
+                pt.text(
+                    badge.center(),
+                    Align2::CENTER_CENTER,
+                    icons::MONITOR_PLAY,
+                    theme::icon(16.0),
+                    p.tint,
+                );
+            }
+        }
+        let pt = ui.painter();
+        pt.text(
+            pos2(rect.right(), c),
+            Align2::RIGHT_CENTER,
+            icons::ARROW_SQUARE_OUT,
+            theme::icon(14.0),
+            p.faint,
+        );
+        let name = widgets::galley(ui, &l.site, theme::regular(14.0), p.dim, rect.width() - 60.0, 1);
+        ui.painter().galley(pos2(rect.left() + 30.0, c - name.size().y / 2.0), name, p.dim);
+        widgets::focus_ring(ui, &p, &r, 8);
+        if r.on_hover_text(&l.url).on_hover_cursor(CursorIcon::PointingHand).clicked() {
+            app.act(Act::Url(l.url.clone()));
+        }
+    }
 }
 
 fn themes(app: &mut App, ui: &mut Ui, m: &Rc<Media>) {
@@ -805,7 +884,9 @@ fn reviews(app: &mut App, ui: &mut Ui, r: MediaRef, d: &MediaDetail) {
 
 fn links(app: &mut App, ui: &mut Ui, d: &MediaDetail) {
     let p = app.p;
-    if d.links.is_empty() && d.trailer.is_none() {
+    // Streaming platforms live in Information.
+    let others: Vec<_> = d.links.iter().filter(|l| !l.streaming).collect();
+    if others.is_empty() && d.trailer.is_none() {
         return;
     }
     widgets::section(ui, &p, t("Links"));
@@ -816,9 +897,8 @@ fn links(app: &mut App, ui: &mut Ui, d: &MediaDetail) {
             {
                 app.act(Act::Url(u.clone()));
             }
-            for l in &d.links {
-                let icon = if l.streaming { icons::MONITOR_PLAY } else { icons::GLOBE };
-                if widgets::button(ui, &p, icon, &l.site, false).on_hover_text(&l.url).clicked() {
+            for l in others {
+                if widgets::button(ui, &p, icons::GLOBE, &l.site, false).on_hover_text(&l.url).clicked() {
                     app.act(Act::Url(l.url.clone()));
                 }
             }
