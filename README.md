@@ -13,6 +13,151 @@ AniList and MyAnimeList, or with a list that stays on your computer.
 Independent project. Not affiliated with ManGo, RocketScience IT, AniList or
 MyAnimeList, and built without any of their code or artwork.
 
+![Kuro: your anime list with a title open beside it](docs/screenshots/list-and-detail.png)
+
+<sub>Every screenshot in this README is rendered by the test suite
+(`cargo test -p kuro --test shots -- --ignored --test-threads=1`) from
+invented titles, so no cover art appears.</sub>
+
+## Contents
+
+- [Highlights](#highlights)
+- [A tour of Kuro](#a-tour-of-kuro)
+- [Install](#install)
+- [Run from source](#run-from-source)
+- [Kioku](#kioku)
+- [Automation](#automation)
+- [What changes from a phone app](#what-changes-from-a-phone-app)
+- [Layout](#layout) · [Security](#security) · [Tests](#tests) ·
+  [Branches and releases](#branches-and-releases)
+
+## Highlights
+
+- **Your list, where you want it.** Sign in to AniList or MyAnimeList and
+  every change is sent at once (and retried while offline), or keep a list
+  that never leaves this computer.
+- **Anime and manga.** Episodes, or volumes and chapters, with status, score,
+  dates, rewatches and notes.
+- **Made for the desktop.** A sidebar or tab bar, a detail panel beside the
+  list, three layouts, a Ctrl+K palette, and a menu on every title that also
+  opens from the keyboard.
+- **Know what airs next.** The next episode and how far behind you are, a
+  calendar tab, an `.ics` file or a Google Calendar of its own, and Windows
+  notifications with the cover and a button to mark the episode.
+- **Discover.** Seasonal charts, rankings and search across the whole
+  catalogue, with the platforms where each title streams and its openings and
+  endings.
+- **Kioku.** Marks as watched what you watched on Crunchyroll, Netflix or
+  Prime Video, after you review every change.
+- **Works on its own.** Desktop widget, binge sessions, daily or weekly
+  backups, background sync, reminders, and `kuro://` links for a Stream Deck
+  or a hotkey tool.
+- **Your way.** System, light, dark and pure black themes, and the interface
+  in English, Spanish, French, German, Italian, Norwegian and Korean.
+- **Small and private.** One native Rust program, no analytics and no ads,
+  sign-in tokens in the Windows Credential Manager.
+
+## A tour of Kuro
+
+### Your lists
+
+**My Anime** and **My Manga** group your titles by status (watching,
+completed, on hold, dropped, planned) with a count on each chip. Every title
+shows your progress, the average score and yours, and, while it airs, the
+next episode and how many you are behind. **+ Ep** marks the next one; the
+pencil opens the editor.
+
+Search in your list, filter, sort, see what you changed recently, and pick
+the layout that suits the moment:
+
+| Cards | Table |
+| --- | --- |
+| ![Cards layout, filtered to the titles being watched](docs/screenshots/list-cards.png) | ![Table layout with progress, scores and next episode](docs/screenshots/list-table.png) |
+
+| Posters, light theme | Manga, light theme |
+| --- | --- |
+| ![Posters layout in the light theme, with the tab bar on top](docs/screenshots/list-posters-light.png) | ![My Manga, with volumes and chapters](docs/screenshots/manga-light.png) |
+
+The sidebar can fold into a tab bar on top, and a narrow window switches to
+one column with a bottom bar, so Kuro still works snapped to a quarter of the
+screen.
+
+### A title, up close
+
+A title opens beside the list, or full width with the expand button: score,
+rank and popularity, your progress with **−** and **+**, the synopsis and
+information, the streaming platforms with their logos, related titles,
+characters and voice actors, staff, reviews, recommendations, and openings
+and endings with a link to listen to them. **Complete series overview** puts
+every season, film and special of a franchise in order, with your status on
+each.
+
+**Start binge session** opens a small always-on-top window to mark episodes
+one after another while you watch.
+
+<table>
+  <tr>
+    <td width="68%"><img src="docs/screenshots/editor.png" alt="The editor: status, episodes, score, dates, rewatching and notes"></td>
+    <td width="32%"><img src="docs/screenshots/narrow.png" alt="A title in a narrow window, with the bottom bar"></td>
+  </tr>
+  <tr>
+    <td>The editor: status, progress, score (rounded the way your service
+    keeps it), start and finish dates, rewatches and notes.</td>
+    <td>The same title in a narrow window.</td>
+  </tr>
+</table>
+
+### Seasonal, Ranking and Search
+
+**Seasonal** walks through the anime of each season, new or continuing, with
+arrows to move between seasons. **Ranking** lists the top titles overall,
+airing, upcoming, most popular, most favourited, trending or by format.
+**Search** covers the whole catalogue of your service. Every card adds its
+title to your list with one click.
+
+![Seasonal chart in a wide window](docs/screenshots/seasonal.png)
+
+### My Calendar
+
+The coming episodes of everything you watch or plan to watch, day by day, in
+your own time. Click an episode to open its title. The same schedule can go
+to an `.ics` file or to a Google Calendar of its own (see
+[Automation](#automation)).
+
+![My Calendar, with the next episode on Sunday](docs/screenshots/calendar.png)
+
+### Streaming history (Kioku)
+
+Kioku reads your history on streaming platforms and proposes the episodes to
+mark, with the source and how sure each match is. Nothing is written until
+you confirm. [How it works](#kioku).
+
+![Kioku with Crunchyroll, Netflix and Prime Video, and a change to review](docs/screenshots/kioku.png)
+
+### Command palette
+
+**Ctrl+K** jumps to any title in your lists, a tab or a setting, and runs
+actions such as refresh, a random title or Kioku, without touching the mouse.
+
+![The Ctrl+K palette over the posters layout](docs/screenshots/palette.png)
+
+### Settings, statistics and automation
+
+Settings opens with your statistics: titles and days in each status, and your
+average score. Its pages cover general options, lists, accounts,
+notifications, mouse and keyboard (what double-click, middle-click and drag
+do), appearance, widget and automation, data (import, export, backups) and
+about.
+
+![Widget & automation settings beside the statistics](docs/screenshots/automation.png)
+
+### Your first minute
+
+Without an account, Kuro starts with an empty list on this computer and
+offers to sign in or to find something to add.
+
+![The welcome screen](docs/screenshots/welcome.png)
+
 ## Install
 
 Download `kuro-<version>-windows-x64-setup.exe` from
@@ -65,6 +210,12 @@ redirect URL shown, and paste it in **Settings › Accounts**:
 
 To build them in, set `KURO_ANILIST_CLIENT_ID` and `KURO_MAL_CLIENT_ID` when
 compiling. No client secret is used.
+
+Google Calendar works only when it is built in: create an OAuth client of type
+"Desktop app" in the Google Cloud console and set `KURO_GOOGLE_CLIENT_ID` and
+`KURO_GOOGLE_CLIENT_SECRET` when compiling. Google treats that secret as
+public for desktop apps; sign-in uses a loopback address on a free port, and
+Kuro asks only for the calendars it creates.
 
 ## Kioku
 
@@ -144,7 +295,8 @@ available yet.
 - **Calendar** writes the next episode of everything you watch or plan to
   watch to an `.ics` file you choose, and rewrites it when the list or the
   schedule changes. Import it into a calendar, or subscribe to it where the
-  calendar app allows a file.
+  calendar app allows a file. Or sign in to Google and Kuro keeps the same
+  episodes in a Google Calendar of its own, which you can choose or name.
 - **Reminders** mention a title you are watching or reading that has not
   moved for one, two or four weeks (not one that is only waiting for its
   next episode), with a button to mark the next episode. Several at once
@@ -223,7 +375,7 @@ needs a private key.
     cargo test -p kuro-api --test live -- --ignored     # real AniList; Crunchyroll with KURO_KIOKU_ETP_RT,
                                                         # a Netflix file with KURO_KIOKU_NETFLIX_CSV
                                                         # a Prime Video file with KURO_KIOKU_AMAZON_FILE
-    cargo test -p kuro --test shots -- --ignored # renders every screen
+    cargo test -p kuro --test shots -- --ignored --test-threads=1 # renders every screen to target/shots
     cargo clippy --workspace --all-targets -- -D warnings
 
 `KURO_PROFILE_DIR=<folder>` runs a separate profile.
