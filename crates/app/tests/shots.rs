@@ -57,6 +57,7 @@ fn screens() {
     h.state_mut().routes.clear();
     h.state_mut().act(Act::Go(Tab::Calendar));
     shot(&mut h, "calendar");
+    friends(&mut h);
     h.state_mut().act(Act::Open(m.clone()));
     shot(&mut h, "calendar-open");
     h.state_mut().routes.clear();
@@ -134,4 +135,32 @@ fn sizes() {
     shot(&mut h, "s-360-cards");
     h.state_mut().act(Act::Open(m));
     shot(&mut h, "s-360-open");
+}
+
+/// The Friends tab with one friend, then their profile.
+fn friends(h: &mut egui_kittest::Harness<'static, App>) {
+    use kuro_app::app::FriendView;
+    use kuro_core::friends::{Friend, FriendProfile};
+    use kuro_core::{ListEntry, ListStatus, Service};
+    let f = Friend { service: Service::AniList, name: "InkReader".into() };
+    let titles = [(1, "Lanterns Over Saltmarsh", 85), (3, "Iron Orchard", 70), (40, "Paper Comet", 0)];
+    let entries = titles
+        .into_iter()
+        .map(|(id, title, score)| {
+            let mut e = ListEntry::new(media(id, MediaKind::Anime, title));
+            (e.status, e.progress, e.score) = (ListStatus::Current, 4, score);
+            e
+        })
+        .collect();
+    let data = FriendProfile { name: f.name.clone(), avatar: None, entries };
+    h.state_mut().s.friends = vec![f.clone()];
+    h.state_mut()
+        .friends
+        .insert(f.clone(), FriendView { data: Some(Rc::new(data)), error: None, loading: false });
+    h.state_mut().routes.clear();
+    h.state_mut().act(Act::Go(Tab::Friends));
+    shot(h, "friends");
+    h.state_mut().act(Act::Push(Route::Friend(f)));
+    shot(h, "friend-profile");
+    h.state_mut().routes.clear();
 }

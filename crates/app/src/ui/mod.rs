@@ -10,6 +10,7 @@ pub mod detail;
 pub mod dialogs;
 pub mod extra;
 pub mod float;
+pub mod friends;
 pub mod kioku;
 pub mod mylist;
 pub mod rows;
@@ -43,6 +44,7 @@ pub fn tab_label(tab: Tab) -> &'static str {
         Tab::Seasonal => t("Seasonal"),
         Tab::Ranking => t("Ranking"),
         Tab::Search => t("Search"),
+        Tab::Friends => t("Friends"),
         Tab::Settings => t("Settings"),
     }
 }
@@ -56,6 +58,7 @@ fn tab_icon(app: &App, tab: Tab) -> &'static str {
         Tab::Seasonal => icons::CALENDAR,
         Tab::Ranking => icons::STAR,
         Tab::Search => icons::MAGNIFYING_GLASS,
+        Tab::Friends => icons::USERS,
         Tab::Settings => icons::GEAR,
     }
 }
@@ -142,6 +145,7 @@ fn content(app: &mut App, ui: &mut Ui) {
         Tab::Seasonal => browse::seasonal(app, ui),
         Tab::Ranking => browse::ranking(app, ui),
         Tab::Search => browse::search(app, ui),
+        Tab::Friends => friends::show(app, ui),
         Tab::Settings => settings::master(app, ui),
     }
 }

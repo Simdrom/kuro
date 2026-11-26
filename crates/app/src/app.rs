@@ -8,6 +8,7 @@ use jiff::civil::Date;
 use jiff::tz::TimeZone;
 use kuro_api::music::Track;
 use kuro_api::{ApiError, Page, Ranking, RankingQuery, SeasonQuery, Tokens};
+use kuro_core::friends::{Friend, FriendProfile, MAX_FRIENDS, valid_name};
 use kuro_core::kioku::{Group, Platform};
 use kuro_core::links::{self, Link};
 use kuro_core::list::{Filter, SortKey};
@@ -53,17 +54,20 @@ pub enum Tab {
     Seasonal,
     Ranking,
     Search,
+    /// Other people's lists.
+    Friends,
     Settings,
 }
 
 impl Tab {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::Anime,
         Self::Manga,
         Self::Calendar,
         Self::Seasonal,
         Self::Ranking,
         Self::Search,
+        Self::Friends,
         Self::Settings,
     ];
 }
@@ -104,6 +108,8 @@ pub enum Route {
     Settings(SettingsPage),
     /// Kioku: viewing history from streaming platforms.
     Kioku,
+    /// A friend's profile and list.
+    Friend(Friend),
 }
 
 /// Something requested by the interface, applied after drawing.
@@ -156,6 +162,13 @@ pub enum Act {
     /// Searches with the picker's text.
     KiokuLookup,
     KiokuChoose(Box<Media>),
+    /// Adds the friend typed in the Friends tab.
+    AddFriend,
+    RemoveFriend(Friend),
+    /// Adds the people followed on AniList.
+    ImportFollowing,
+    /// Reads one friend's list again, or everyone's.
+    RefreshFriends(Option<Friend>),
 }
 
 /// The part of a review a series comes from.
@@ -305,6 +318,14 @@ pub struct SearchView {
     pub random_busy: bool,
 }
 
+/// A friend's profile as far as it has loaded.
+#[derive(Default)]
+pub struct FriendView {
+    pub data: Option<Rc<FriendProfile>>,
+    pub error: Option<ApiError>,
+    pub loading: bool,
+}
+
 #[derive(Default)]
 pub struct DetailView {
     pub data: Option<Rc<MediaDetail>>,
@@ -377,6 +398,13 @@ pub struct App {
     pub people: HashMap<u64, Load<PersonDetail>>,
     pub overviews: HashMap<MediaRef, Load<Overview>>,
     pub tracks: HashMap<(String, String), Option<Track>>,
+    pub friends: HashMap<Friend, FriendView>,
+    /// The name or link being typed in the Friends tab.
+    pub friend_text: String,
+    /// The service a typed name belongs to.
+    pub friend_service: Service,
+    /// Waiting for the people followed on AniList.
+    pub following_busy: bool,
     pub roles_completed_only: bool,
     pub editor: Option<Editor>,
     pub confirm: Option<Confirm>,
@@ -454,6 +482,7 @@ fn slot(k: MediaKind) -> usize {
 impl App {
     pub fn new(ctx: &egui::Context, bg: Backend, sys: Box<dyn System>, hidden: bool) -> Self {
         let s = bg.store().settings().unwrap_or_default();
+        let saved_primary = s.primary;
         i18n::set(&s.language);
         theme::install_fonts(ctx);
         let p = Palette::new(s.theme, true, s.tint);
@@ -505,6 +534,10 @@ impl App {
             people: HashMap::new(),
             overviews: HashMap::new(),
             tracks: HashMap::new(),
+            friends: HashMap::new(),
+            friend_text: String::new(),
+            friend_service: saved_primary,
+            following_busy: false,
             roles_completed_only: false,
             editor: None,
             confirm: None,
@@ -808,6 +841,24 @@ impl App {
         }
     }
 
+    /// Starts reading a friend's list unless it is known or on its way.
+    pub fn ensure_friend(&mut self, f: &Friend) {
+        let v = self.friends.entry(f.clone()).or_default();
+        if v.data.is_none() && v.error.is_none() && !v.loading {
+            v.loading = true;
+            self.bg.friend(f.clone(), false);
+        }
+    }
+
+    /// Adds `f` unless it is there already or the list is full.
+    fn add_friend(&mut self, f: Friend) -> bool {
+        if self.s.friends.len() >= MAX_FRIENDS || self.s.friends.iter().any(|x| x.same(&f)) {
+            return false;
+        }
+        self.s.friends.push(f);
+        true
+    }
+
     fn open(&mut self, r: MediaRef) {
         if self.routes.last() != Some(&Route::Media(r)) {
             self.routes.push(Route::Media(r));
@@ -835,6 +886,7 @@ impl App {
                     "seasonal" => Tab::Seasonal,
                     "ranking" => Tab::Ranking,
                     "search" => Tab::Search,
+                    "friends" => Tab::Friends,
                     _ => Tab::Settings,
                 };
                 self.act(Act::Go(tab));
@@ -912,6 +964,10 @@ impl App {
         match a {
             Act::Open(m) => {
                 let r = self.home_ref(&m);
+                // A friend's title from the other service is looked up on this one.
+                if r.service != self.s.primary && self.bg.online() {
+                    return self.apply(Act::OpenRef(r));
+                }
                 // Show what is known while the rest loads.
                 let d = self.details.entry(r).or_default();
                 if d.data.is_none() {
@@ -1186,6 +1242,37 @@ impl App {
                 self.bg.kioku_search(self.s.primary, text);
             }
             Act::KiokuChoose(m) => self.kioku_choose(*m),
+            Act::AddFriend => {
+                let Some(f) = Friend::parse(&self.friend_text, self.friend_service) else {
+                    return self.say_error(t("Type a user name or paste a link to a profile."));
+                };
+                if self.s.friends.iter().any(|x| x.same(&f)) {
+                    return self.say(tf("{} is already in your friends", &[&f.name]));
+                }
+                if !self.add_friend(f.clone()) {
+                    return self.say_error(tf("You can add up to {} friends.", &[&MAX_FRIENDS]));
+                }
+                self.friend_text.clear();
+                self.ensure_friend(&f);
+            }
+            Act::RemoveFriend(f) => {
+                self.s.friends.retain(|x| !x.same(&f));
+                self.friends.remove(&f);
+                self.routes.retain(|r| !matches!(r, Route::Friend(x) if x.same(&f)));
+                self.say(tf("{} removed from your friends", &[&f.name]));
+            }
+            Act::ImportFollowing => {
+                self.following_busy = true;
+                self.bg.following();
+            }
+            Act::RefreshFriends(one) => {
+                for f in one.map_or_else(|| self.s.friends.clone(), |f| vec![f]) {
+                    let v = self.friends.entry(f.clone()).or_default();
+                    v.loading = true;
+                    v.error = None;
+                    self.bg.friend(f, true);
+                }
+            }
             Act::KiokuDismiss(i) => {
                 if let Some(r) = self.kioku.review.as_mut()
                     && i < r.unmatched.len()
@@ -1387,6 +1474,37 @@ impl App {
             }
             Event::Overview { media, result } => {
                 self.overviews.insert(media, result.map_or_else(Load::Failed, |p| Load::Ready(Rc::new(p))));
+            }
+            Event::Friend { friend, result, fresh } => {
+                let v = self.friends.entry(friend).or_default();
+                v.loading = !fresh;
+                match result {
+                    Ok(p) => {
+                        v.error = None;
+                        v.data = Some(Rc::new(p));
+                    }
+                    Err(e) => v.error = Some(e),
+                }
+            }
+            Event::Following(r) => {
+                self.following_busy = false;
+                match r {
+                    Ok(names) => {
+                        let added = names
+                            .into_iter()
+                            .filter(|n| valid_name(n))
+                            .filter(|n| {
+                                self.add_friend(Friend { service: Service::AniList, name: n.clone() })
+                            })
+                            .count();
+                        if added == 0 {
+                            self.say(t("Everyone you follow is already here"));
+                        } else {
+                            self.say(tf("{} friends added", &[&added]));
+                        }
+                    }
+                    Err(e) => self.say_error(format::error(&e)),
+                }
             }
             Event::Random(r) => {
                 self.search.random_busy = false;
@@ -1966,7 +2084,7 @@ impl App {
         if self.editor.is_some() || self.confirm.is_some() || self.command.is_some() {
             return;
         }
-        let tabs = [Key::Num1, Key::Num2, Key::Num3, Key::Num4, Key::Num5, Key::Num6, Key::Num7];
+        let tabs = [Key::Num1, Key::Num2, Key::Num3, Key::Num4, Key::Num5, Key::Num6, Key::Num7, Key::Num8];
         for (k, tab) in tabs.into_iter().zip(Tab::ALL) {
             if hit(Modifiers::COMMAND, k) {
                 self.act(Act::Go(tab));

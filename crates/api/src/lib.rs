@@ -13,6 +13,7 @@ pub mod secrets;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
 
+use kuro_core::friends::{Friend, FriendProfile};
 use kuro_core::overview::{Section, Walk};
 use kuro_core::store::{Change, Pending};
 use kuro_core::{
@@ -415,6 +416,22 @@ impl Api {
 
     pub async fn person(&self, id: u64) -> Result<PersonDetail> {
         self.anilist.person(id).await
+    }
+
+    // Friends
+
+    /// A friend's profile and public list.
+    pub async fn friend(&self, f: &Friend) -> Result<FriendProfile> {
+        match f.service {
+            Service::AniList => self.anilist.user(&f.name).await,
+            Service::Mal => self.mal_call(async |a| self.mal.user(a, &f.name).await).await,
+        }
+    }
+
+    /// The people the signed-in AniList user follows.
+    pub async fn following(&self) -> Result<Vec<String>> {
+        let user = self.user_id(Service::AniList).await?;
+        self.anilist.following(user).await
     }
 
     /// Every title of a franchise, converted to the namespace of `root`.

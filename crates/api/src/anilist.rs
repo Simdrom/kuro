@@ -2,6 +2,7 @@
 
 use std::time::Duration;
 
+use kuro_core::friends::{FriendProfile, MAX_FRIENDS, valid_name};
 use kuro_core::{
     Airing, CharacterRole, ExternalLink, Format, FuzzyDate, ListEntry, ListStatus, Media, MediaDetail,
     MediaKind, MediaRef, Person, PersonDetail, Relation, RelationKind, ReleaseStatus, Review, Season,
@@ -292,6 +293,66 @@ impl AniList {
         Ok(out)
     }
 
+    /// Someone's profile and whole public list, by user name. Needs no sign-in.
+    pub async fn user(&self, name: &str) -> Result<FriendProfile> {
+        if !valid_name(name) {
+            return Err(ApiError::NotFound);
+        }
+        // The profile and the first chunk of each list come in one request.
+        let lists = |kind: MediaKind| {
+            format!(
+                "{}:MediaListCollection(userName:$name,type:{},chunk:1,perChunk:500){{{FRIEND_LIST}}}",
+                kind.key(),
+                gql_kind(kind)
+            )
+        };
+        let q = format!(
+            "query($name:String){{User(name:$name){{name avatar{{large}}}} {} {}}} {SUMMARY}",
+            lists(MediaKind::Anime),
+            lists(MediaKind::Manga)
+        );
+        let d = self.query(None, &q, json!({ "name": name })).await?;
+        let u = &d["User"];
+        let mut out = FriendProfile {
+            name: opt_text(&u["name"]).ok_or(ApiError::NotFound)?,
+            avatar: opt_text(&u["avatar"]["large"]),
+            entries: Vec::new(),
+        };
+        for kind in MediaKind::ALL {
+            let mut c = d[kind.key()].clone();
+            for chunk in 2..=41 {
+                add_lists(&mut out.entries, &c);
+                if c["hasNextChunk"].as_bool() != Some(true) || chunk > 40 {
+                    break;
+                }
+                let q = format!(
+                    "query($name:String,$chunk:Int){{MediaListCollection(userName:$name,type:{},chunk:$chunk,\
+                     perChunk:500){{{FRIEND_LIST}}}}} {SUMMARY}",
+                    gql_kind(kind)
+                );
+                let mut d = self.query(None, &q, json!({ "name": name, "chunk": chunk })).await?;
+                c = d["MediaListCollection"].take();
+            }
+        }
+        Ok(out)
+    }
+
+    /// The names of the people `user` follows.
+    pub async fn following(&self, user: u64) -> Result<Vec<String>> {
+        let q = "query($user:Int,$page:Int){Page(page:$page,perPage:50){pageInfo{hasNextPage} \
+                 following(userId:$user){name}}}";
+        let mut out = Vec::new();
+        for page in 1..=(MAX_FRIENDS / 50) {
+            let d = self.query(None, q, json!({ "user": user, "page": page })).await?;
+            let p = &d["Page"];
+            out.extend(list(&p["following"]).iter().filter_map(|u| opt_text(&u["name"])));
+            if p["pageInfo"]["hasNextPage"].as_bool() != Some(true) {
+                break;
+            }
+        }
+        Ok(out)
+    }
+
     pub async fn save(&self, token: &str, media_id: u64, e: &ListEntry) -> Result<()> {
         let q = "mutation($mediaId:Int,$status:MediaListStatus,$score:Int,$progress:Int,$volumes:Int,$repeat:Int,\
                  $notes:String,$start:FuzzyDateInput,$finish:FuzzyDateInput){SaveMediaListEntry(mediaId:$mediaId,\
@@ -343,6 +404,18 @@ fn gql_kind(kind: MediaKind) -> &'static str {
     match kind {
         MediaKind::Anime => "ANIME",
         MediaKind::Manga => "MANGA",
+    }
+}
+
+/// A friend's list chunk: like the user's own, without notes.
+const FRIEND_LIST: &str = "hasNextChunk lists{isCustomList entries{status score(format:POINT_100) progress \
+progressVolumes repeat startedAt{year month day} completedAt{year month day} updatedAt media{...M}}}";
+
+fn add_lists(out: &mut Vec<ListEntry>, collection: &Value) {
+    for l in list(&collection["lists"]) {
+        if l["isCustomList"].as_bool() != Some(true) {
+            out.extend(list(&l["entries"]).iter().filter_map(entry));
+        }
     }
 }
 
@@ -743,6 +816,35 @@ mod tests {
         assert_eq!(m.next_airing, Some(Airing { episode: 3, at: 99 }));
         assert_eq!(m.source.as_deref(), Some("Light Novel"));
         assert_eq!(m.start.unwrap().iso(), "2026-10");
+    }
+
+    #[tokio::test]
+    async fn a_friend_comes_with_both_lists_in_one_request() {
+        let entry =
+            |status: &str| json!({"status": status, "progress": 5, "score": 80, "media": media_json(1)});
+        let s = MockServer::start().await;
+        Mock::given(body_string_contains("User(name:$name)"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"data": {
+                "User": {"name": "Reader", "avatar": {"large": "https://s4.anilist.co/a.png"}},
+                "anime": {"hasNextChunk": false, "lists": [
+                    {"isCustomList": false, "entries": [entry("CURRENT"), entry("REPEATING")]},
+                    {"isCustomList": true, "entries": [entry("CURRENT")]}]},
+                "manga": {"hasNextChunk": false, "lists": []}}})))
+            .expect(1)
+            .mount(&s)
+            .await;
+        let a = AniList::with_endpoint(Http::insecure_for_tests().unwrap(), &s.uri());
+        let p = a.user("reader").await.unwrap();
+        assert_eq!((p.name.as_str(), p.avatar.is_some(), p.entries.len()), ("Reader", true, 2));
+        assert!(p.entries[1].repeating);
+    }
+
+    #[tokio::test]
+    async fn an_unknown_friend_is_not_found() {
+        let (_s, a) = server(json!({"errors": [{"message": "Not Found.", "status": 404}],
+            "data": {"User": null}}))
+        .await;
+        assert_eq!(a.user("nobody").await, Err(ApiError::NotFound));
     }
 
     #[tokio::test]

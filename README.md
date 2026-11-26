@@ -47,6 +47,8 @@ invented titles, so no cover art appears.</sub>
 - **Discover.** Seasonal charts, rankings and search across the whole
   catalogue, with the platforms where each title streams and its openings and
   endings.
+- **Friends.** Add people by their AniList or MyAnimeList name to see what
+  they are watching, their statistics and the titles you share.
 - **Kioku.** Marks as watched what you watched on Crunchyroll, Netflix or
   Prime Video, after you review every change.
 - **Works on its own.** Desktop widget, binge sessions, daily or weekly

@@ -99,6 +99,24 @@ fn app_in(language: &str, w: f32) -> H {
     harness_with(many(), [w, 800.0], move |s| s.language = language)
 }
 
+/// A friend with a long name watching a few titles.
+fn add_friend(h: &mut H) {
+    use kuro_app::app::FriendView;
+    use kuro_core::friends::{Friend, FriendProfile};
+    let f = Friend { service: Service::Mal, name: "AVeryLongUserNameOfThirty_Two".into() };
+    let entries = (1..6)
+        .map(|i| {
+            let mut e = ListEntry::new(media(i, MediaKind::Anime, "Lanterns Over Saltmarsh"));
+            e.status = ListStatus::Current;
+            e
+        })
+        .collect();
+    let data = FriendProfile { name: f.name.clone(), avatar: None, entries };
+    h.state_mut().s.friends.push(f.clone());
+    let view = FriendView { data: Some(Rc::new(data)), error: None, loading: false };
+    h.state_mut().friends.insert(f, view);
+}
+
 #[test]
 fn every_tab_fits_every_width_in_every_layout() {
     for language in ["en", "de"] {
@@ -109,6 +127,7 @@ fn every_tab_fits_every_width_in_every_layout() {
         h.state_mut().search.text = "x".into();
         h.state_mut().search.sent = "x".into();
         h.state_mut().lists[0].filter.status = None;
+        add_friend(&mut h);
         for layout in ListLayout::ALL {
             h.state_mut().s.list_layout = layout;
             h.state_mut().s.browse_layout = layout;
@@ -361,4 +380,19 @@ fn kioku_and_its_review_fit() {
 fn act_now(h: &mut H, a: Act) {
     h.state_mut().act(a);
     settle(h);
+}
+
+#[test]
+fn a_friends_profile_fits_beside_or_instead_of_the_list() {
+    for language in ["en", "de", "fr"] {
+        let mut h = app_in(language, 1240.0);
+        add_friend(&mut h);
+        act_now(&mut h, Act::Go(Tab::Friends));
+        let f = h.state().s.friends[0].clone();
+        act_now(&mut h, Act::Push(Route::Friend(f)));
+        for w in WIDTHS {
+            resize(&mut h, w, 800.0);
+            check(&h, w, 800.0, &format!("{language} friend"));
+        }
+    }
 }
