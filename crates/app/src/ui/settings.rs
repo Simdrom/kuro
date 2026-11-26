@@ -17,9 +17,9 @@ pub fn page_label(p: SettingsPage) -> &'static str {
         SettingsPage::Lists => t("Lists"),
         SettingsPage::Accounts => t("Accounts"),
         SettingsPage::Notifications => t("Notifications"),
-        SettingsPage::Gestures => t("Gestures"),
+        SettingsPage::Gestures => t("Mouse & keyboard"),
         SettingsPage::Appearance => t("Appearance"),
-        SettingsPage::Widgets => t("Widgets & shortcuts"),
+        SettingsPage::Widgets => t("Widget & automation"),
         SettingsPage::Data => t("Data & caches"),
         SettingsPage::About => t("About"),
     }
@@ -31,7 +31,7 @@ fn page_icon(p: SettingsPage) -> &'static str {
         SettingsPage::Lists => icons::LIST_BULLETS,
         SettingsPage::Accounts => icons::USER,
         SettingsPage::Notifications => icons::BELL,
-        SettingsPage::Gestures => icons::HAND_SWIPE_RIGHT,
+        SettingsPage::Gestures => icons::MOUSE,
         SettingsPage::Appearance => icons::PALETTE,
         SettingsPage::Widgets => icons::APP_WINDOW,
         SettingsPage::Data => icons::DATABASE,
@@ -452,19 +452,38 @@ fn gestures(app: &mut App, ui: &mut Ui) {
     card(ui, &p, |ui| {
         let all = &GestureAction::ALL;
         let name = |v| format::gesture(v).to_owned();
+        select_row(ui, &p, icons::MOUSE_LEFT_CLICK, t("Double-click"), &mut g.double_click, all, name);
+        separator(ui, &p);
+        select_row(ui, &p, icons::MOUSE_MIDDLE_CLICK, t("Middle-click"), &mut g.middle_click, all, name);
+        separator(ui, &p);
         select_row(ui, &p, icons::HAND_SWIPE_RIGHT, t("Drag right"), &mut g.swipe_right, all, name);
         separator(ui, &p);
-        select_row(ui, &p, icons::HAND_SWIPE_RIGHT, t("Drag left"), &mut g.swipe_left, all, name);
-        separator(ui, &p);
-        select_row(ui, &p, icons::LIGHTNING, t("Double-click"), &mut g.double_click, all, name);
-        separator(ui, &p);
-        select_row(ui, &p, icons::LIGHTNING, t("Middle-click"), &mut g.middle_click, all, name);
+        select_row(ui, &p, icons::HAND_SWIPE_LEFT, t("Drag left"), &mut g.swipe_left, all, name);
     });
     note(
         ui,
         &p,
-        t("Drag a row sideways with the mouse or a finger. Right-click always opens the full menu."),
+        t("Right-click always opens the full menu. Dragging a row sideways also works on touch screens."),
     );
+    section(ui, &p, t("Keyboard"));
+    card(ui, &p, |ui| {
+        let keys = [
+            ("Ctrl+K", t("Go to anything")),
+            ("Ctrl+1 … 6", t("Switch tabs")),
+            ("Ctrl+F", t("Search")),
+            ("Ctrl+,", t("Settings")),
+            ("F5", t("Refresh")),
+            ("+ / -", t("Add or remove one on the open title")),
+            ("E", t("Edit the open title")),
+            ("Esc", t("Back")),
+        ];
+        for (i, (k, v)) in keys.into_iter().enumerate() {
+            if i > 0 {
+                separator(ui, &p);
+            }
+            widgets::fact(ui, &p, v, k);
+        }
+    });
 }
 
 fn appearance(app: &mut App, ui: &mut Ui) {
@@ -552,25 +571,6 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
         toggle_row(ui, &p, icons::PUSH_PIN, t("Show the desktop widget"), &mut app.widget);
     });
     note(ui, &p, t("A small window above the others with your progress and statistics."));
-    section(ui, &p, t("Keyboard"));
-    card(ui, &p, |ui| {
-        let keys = [
-            ("Ctrl+K", t("Go to anything")),
-            ("Ctrl+1 … 6", t("Switch tabs")),
-            ("Ctrl+F", t("Search")),
-            ("Ctrl+,", t("Settings")),
-            ("F5", t("Refresh")),
-            ("+ / -", t("Add or remove one on the open title")),
-            ("E", t("Edit the open title")),
-            ("Esc", t("Back")),
-        ];
-        for (i, (k, v)) in keys.into_iter().enumerate() {
-            if i > 0 {
-                separator(ui, &p);
-            }
-            widgets::fact(ui, &p, v, k);
-        }
-    });
     section(ui, &p, t("Automation"));
     card(ui, &p, |ui| {
         for (i, link) in [

@@ -76,7 +76,7 @@ Descending|Descendente|Décroissant|Absteigend|Decrescente|Synkende|내림차순
 Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget desktop|Skrivebordswidget|데스크톱 위젯
 Display|Visualización|Affichage|Anzeige|Visualizzazione|Visning|표시
 Double-click|Doble clic|Double-clic|Doppelklick|Doppio clic|Dobbeltklikk|더블 클릭
-Drag a row sideways with the mouse or a finger. Right-click always opens the full menu.|Arrastra una fila de lado con el ratón o el dedo. El clic derecho siempre abre el menú completo.|Fais glisser une ligne sur le côté avec la souris ou le doigt. Le clic droit ouvre toujours le menu complet.|Ziehe eine Zeile mit Maus oder Finger zur Seite. Rechtsklick öffnet immer das ganze Menü.|Trascina una riga di lato con il mouse o con il dito. Il clic destro apre sempre il menu completo.|Dra en rad sidelengs med musen eller fingeren. Høyreklikk åpner alltid hele menyen.|마우스나 손가락으로 행을 옆으로 드래그하세요. 오른쪽 클릭하면 항상 전체 메뉴가 열립니다.
+Right-click always opens the full menu. Dragging a row sideways also works on touch screens.|El clic derecho siempre abre el menú completo. Arrastrar una fila de lado también funciona en pantallas táctiles.|Le clic droit ouvre toujours le menu complet. Faire glisser une ligne sur le côté marche aussi sur les écrans tactiles.|Rechtsklick öffnet immer das ganze Menü. Eine Zeile zur Seite ziehen geht auch auf Touchscreens.|Il clic destro apre sempre il menu completo. Trascinare una riga di lato funziona anche sugli schermi touch.|Høyreklikk åpner alltid hele menyen. Å dra en rad sidelengs fungerer også på berøringsskjermer.|오른쪽 클릭하면 항상 전체 메뉴가 열립니다. 행을 옆으로 드래그하는 것은 터치스크린에서도 됩니다.
 Drag left|Arrastrar a la izquierda|Glisser à gauche|Nach links ziehen|Trascina a sinistra|Dra til venstre|왼쪽으로 드래그
 Drag right|Arrastrar a la derecha|Glisser à droite|Nach rechts ziehen|Trascina a destra|Dra til høyre|오른쪽으로 드래그
 Dropped|Abandonado|Abandonné|Abgebrochen|Abbandonato|Droppet|하차
@@ -109,7 +109,7 @@ Format|Formato|Format|Format|Formato|Format|형식
 General|General|Général|Allgemein|Generali|Generelt|일반
 Genre|Género|Genre|Genre|Genere|Sjanger|장르
 Genres|Géneros|Genres|Genres|Generi|Sjangre|장르
-Gestures|Gestos|Gestes|Gesten|Gesti|Bevegelser|제스처
+Mouse & keyboard|Ratón y teclado|Souris et clavier|Maus & Tastatur|Mouse e tastiera|Mus og tastatur|마우스 및 키보드
 Go to a title, page or link|Ir a un título, página o enlace|Aller à un titre, une page ou un lien|Zu Titel, Seite oder Link gehen|Vai a un titolo, una pagina o un link|Gå til tittel, side eller lenke|작품, 페이지 또는 링크로 이동
 Go to anything|Ir a cualquier sitio|Aller n’importe où|Überallhin springen|Vai ovunque|Gå hvor som helst|어디든 이동
 Green|Verde|Vert|Grün|Verde|Grønn|초록
@@ -348,7 +348,7 @@ Updating…|Actualizando…|Mise à jour…|Wird aktualisiert…|Aggiornamento�
 Version|Versión|Version|Version|Versione|Versjon|버전
 Volumes|Tomos|Tomes|Bände|Volumi|Bind|권
 Watching|Viendo|En cours|Schaue ich|In visione|Ser på|보는 중
-Widgets & shortcuts|Widgets y atajos|Widgets et raccourcis|Widgets & Kurzbefehle|Widget e scorciatoie|Widgeter og snarveier|위젯 및 단축키
+Widget & automation|Widget y automatización|Widget et automatisation|Widget & Automatisierung|Widget e automazione|Widget og automatisering|위젯 및 자동화
 Windows|Windows|Windows|Windows|Windows|Windows|Windows
 Winter|Invierno|Hiver|Winter|Inverno|Vinter|겨울
 Write dates as YYYY-MM-DD.|Escribe las fechas como AAAA-MM-DD.|Écris les dates au format AAAA-MM-JJ.|Schreibe Daten als JJJJ-MM-TT.|Scrivi le date come AAAA-MM-GG.|Skriv datoer som ÅÅÅÅ-MM-DD.|날짜를 YYYY-MM-DD 형식으로 입력하세요.
