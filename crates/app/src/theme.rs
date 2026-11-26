@@ -191,6 +191,16 @@ pub fn install_fonts(ctx: &egui::Context) {
         f.font_data.insert("symbols".into(), Arc::new(d));
         base.push("symbols".into());
     }
+    // Japanese (and most Chinese characters), then Hangul: the mark 黒, native titles and the
+    // Korean interface. Segoe UI and egui's own fonts have none of them.
+    let cjk: [(&str, &[&str]); 2] =
+        [("cjk", &["YuGothM.ttc", "meiryo.ttc", "msgothic.ttc"]), ("hangul", &["malgun.ttf"])];
+    for (name, files) in cjk {
+        if let Some(d) = system_font(files) {
+            f.font_data.insert(name.into(), Arc::new(d));
+            base.push(name.into());
+        }
+    }
     let add = |name: &str, key: FontFamily, data: Option<FontData>, f: &mut FontDefinitions| {
         let mut list = base.clone();
         if let Some(d) = data {
