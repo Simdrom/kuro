@@ -93,6 +93,8 @@ jobs:
     uses: ./.github/workflows/ci.yml # zizmor: ignore[self-repository]
     with:
       installer-tests: true
+    secrets:
+      KURO_GOOGLE_CLIENT_SECRET: ${{ secrets.KURO_GOOGLE_CLIENT_SECRET }}
 
   package:
     name: Package
