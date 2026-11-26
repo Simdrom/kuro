@@ -875,3 +875,26 @@ fn history_files_in_downloads_are_offered_until_handled() {
     assert!(h.state().kioku.found.is_none());
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn toasts_use_their_id_once_and_close_on_click() {
+    let mut h = harness();
+    let clash = |h: &H| {
+        h.output()
+            .shapes
+            .iter()
+            .any(|s| matches!(&s.shape, egui::Shape::Text(t) if t.galley.text().contains("use of widget ID")))
+    };
+    for error in [false, true] {
+        let text = "Something long enough to wrap onto a second line of the toast, surely.";
+        if error {
+            h.state_mut().say_error(text);
+        } else {
+            h.state_mut().say(text);
+        }
+        settle(&mut h);
+        assert!(!clash(&h), "error: {error}");
+        click(&mut h, text);
+        assert!(h.state().toast.is_none(), "a click closes it (error: {error})");
+    }
+}

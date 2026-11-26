@@ -366,6 +366,9 @@ fn toast(app: &mut App, ctx: &Context) {
     let r = egui::Area::new(Id::unique("toast"))
         .anchor(Align2::CENTER_BOTTOM, vec2(0.0, -26.0))
         .order(egui::Order::Tooltip)
+        // The area takes the click itself: interacting with its response
+        // again would use its id twice.
+        .sense(egui::Sense::click())
         .show(ctx, |ui| {
             egui::Frame::new()
                 .fill(fill)
@@ -377,7 +380,7 @@ fn toast(app: &mut App, ctx: &Context) {
                     ui.add(egui::Label::new(RichText::new(&toast.text).color(fg)).wrap());
                 });
         });
-    if r.response.interact(egui::Sense::click()).clicked() {
+    if r.response.clicked() {
         app.toast = None;
     }
 }
