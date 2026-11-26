@@ -333,7 +333,6 @@ pub struct App {
     pub confetti: Confetti,
     pub command: Option<String>,
     pub binge: Option<MediaRef>,
-    pub widget: bool,
     /// An open title uses the whole window.
     pub detail_full: bool,
     /// Content and an open title fit side by side.
@@ -446,7 +445,6 @@ impl App {
             confetti: Confetti::default(),
             command: None,
             binge: None,
-            widget: false,
             detail_full: false,
             can_split: true,
             profiles: HashMap::new(),

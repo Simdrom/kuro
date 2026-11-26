@@ -801,3 +801,15 @@ fn titles_left_behind_are_mentioned_once() {
     let fresh = kuro_core::reminders::stale_key(&h.state().entry_at(r(1, MediaKind::Anime)).unwrap());
     assert!(!h.state().bg.store().was_notified(&fresh).unwrap(), "recent titles are left alone");
 }
+
+#[test]
+fn the_widget_shows_what_was_chosen_and_stays_open() {
+    let mut h = harness();
+    h.state_mut().s.widget.open = true;
+    for (up_next, watching, stats) in [(true, true, true), (false, false, false), (true, false, false)] {
+        let w = &mut h.state_mut().s.widget;
+        (w.up_next, w.watching, w.stats, w.rows) = (up_next, watching, stats, 3);
+        settle(&mut h);
+    }
+    assert!(h.state().bg.store().settings().unwrap().widget.open, "remembered for the next start");
+}

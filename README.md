@@ -131,6 +131,9 @@ available yet.
 
 **Settings › Widget & automation** gathers what Kuro does on its own.
 
+- The **desktop widget** shows the next episodes to air with a countdown,
+  what you are watching and reading with a +1 button, and your statistics;
+  each can be turned off. Left open, it opens again with Kuro.
 - **Automatic backup** saves a copy of your list every day or week in a
   folder you choose, as `kuro-backup-<date>.json`, and deletes the oldest
   copies beyond the number you keep. Other files in the folder are never

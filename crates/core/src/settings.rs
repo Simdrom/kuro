@@ -205,6 +205,25 @@ impl Default for NotificationSettings {
     }
 }
 
+/// What the desktop widget shows. It stays open across restarts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct WidgetSettings {
+    pub open: bool,
+    /// The next episodes to air, with a countdown.
+    pub up_next: bool,
+    pub watching: bool,
+    pub stats: bool,
+    /// Titles shown in each group.
+    pub rows: u32,
+}
+
+impl Default for WidgetSettings {
+    fn default() -> Self {
+        Self { open: false, up_next: true, watching: true, stats: true, rows: 5 }
+    }
+}
+
 /// How often a copy of the list is saved on its own.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -286,6 +305,7 @@ pub struct Settings {
     pub gestures: Gestures,
     pub notifications: NotificationSettings,
     // Automation
+    pub widget: WidgetSettings,
     pub backup: BackupSettings,
     /// Reads the list from the account again this often; 0 never does.
     pub refresh_hours: u32,
@@ -335,6 +355,7 @@ impl Default for Settings {
             link_actions: false,
             gestures: Gestures::default(),
             notifications: NotificationSettings::default(),
+            widget: WidgetSettings::default(),
             backup: BackupSettings::default(),
             refresh_hours: 0,
             calendar_file: String::new(),
@@ -357,6 +378,7 @@ impl Settings {
         self.notifications.delay_minutes = self.notifications.delay_minutes.min(24 * 60);
         self.notifications.stale_days = self.notifications.stale_days.min(365);
         self.refresh_hours = self.refresh_hours.min(24 * 7);
+        self.widget.rows = self.widget.rows.clamp(1, 20);
         self.backup.keep = self.backup.keep.clamp(1, 100);
         for path in [&mut self.backup.folder, &mut self.calendar_file] {
             if path.len() > 1024 || path.chars().any(char::is_control) {

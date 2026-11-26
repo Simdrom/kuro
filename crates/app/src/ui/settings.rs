@@ -548,9 +548,25 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
     let p = app.p;
     section(ui, &p, t("Desktop widget"));
     card(ui, &p, |ui| {
-        toggle_row(ui, &p, icons::PUSH_PIN, t("Show the desktop widget"), &mut app.widget);
+        let w = &mut app.s.widget;
+        toggle_row(ui, &p, icons::PUSH_PIN, t("Show the desktop widget"), &mut w.open);
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::CALENDAR_BLANK, t("Next episodes"), &mut w.up_next);
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::PLAY, t("Watching and reading"), &mut w.watching);
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::CHART_BAR, t("Statistics"), &mut w.stats);
+        separator(ui, &p);
+        let rows = [3, 5, 8, 10];
+        select_row(ui, &p, icons::LIST_BULLETS, t("Titles per group"), &mut w.rows, &rows, |n| n.to_string());
     });
-    note(ui, &p, t("A small window above the others with your progress and statistics."));
+    note(
+        ui,
+        &p,
+        t(
+            "A small window above the others with your progress and statistics. It opens again with Kuro if you leave it open.",
+        ),
+    );
     backup_section(app, ui);
     section(ui, &p, t("Sync"));
     card(ui, &p, |ui| {

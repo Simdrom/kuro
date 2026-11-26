@@ -35,7 +35,7 @@ pub fn show(app: &mut App, ui: &mut Ui, kind: MediaKind) {
             }
             let name = t("Desktop widget");
             if widgets::icon_button_colored(ui, &p, icons::PUSH_PIN, name, p.tint, false).clicked() {
-                app.widget = !app.widget;
+                app.s.widget.open = !app.s.widget.open;
             }
             if !app.s.separate_tabs {
                 let other = kind.other();
