@@ -1,9 +1,15 @@
-# What's new in each version. The setup has it built in and, when it updates Kuro, lists the
-# versions after the installed one up to its own.
+# Kuro's changelog, for users. The setup has it built in and, when it updates Kuro, lists the
+# versions after the installed one up to its own. The GitHub release starts with the English
+# lines of its version, followed by the commits (git cliff).
 #
-# "[x.y.z]" starts a version, newest first. Each line under it is one change, short and in
-# the user's words (not a commit message), in the setup's languages, split by |:
-# en | es | fr | de | it | nb | ko. Like the setup's other texts, fr and de say vous and Sie.
+# "[x.y.z]" starts a version, newest first. The first one is always the version in Cargo.toml,
+# the next release: a change users will notice adds its line there in the same commit, like a
+# new text in strings.txt. Each line is one change, short and in the user's words (not a commit
+# message), in the setup's languages, split by |: en | es | fr | de | it | nb | ko. Like the
+# setup's other texts, fr and de say vous and Sie.
+#
+# The setup's tests check this file. A release fails if its section is empty, and then starts
+# an empty one for the next version.
 
 [0.2.0]
 A new setup with its own window: it updates Kuro in place, lists what's new and can go back to an earlier version.|Nuevo instalador con su propia ventana: actualiza Kuro sin perder nada, muestra las novedades y puede volver a una versión anterior.|Un nouveau programme d'installation avec sa propre fenêtre : il met Kuro à jour, présente les nouveautés et peut revenir à une version précédente.|Ein neues Setup mit eigenem Fenster: Es aktualisiert Kuro, zeigt die Neuigkeiten und kann zu einer älteren Version zurückkehren.|Una nuova installazione con una propria finestra: aggiorna Kuro, mostra le novità e può tornare a una versione precedente.|Ny installasjon med eget vindu: den oppdaterer Kuro, viser hva som er nytt og kan gå tilbake til en eldre versjon.|자체 창을 갖춘 새 설치 프로그램: Kuro를 업데이트하고 새로운 기능을 보여 주며 이전 버전으로 되돌릴 수 있습니다.

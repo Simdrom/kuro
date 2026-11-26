@@ -65,20 +65,72 @@ mod tests {
         assert_eq!(all[1], ("0.2.0", vec!["Dos a", "Two b"]));
     }
 
-    #[test]
-    fn the_notes_are_complete_and_newest_first() {
-        let all = parse(NOTES, 0);
-        assert!(!all.is_empty());
-        for w in all.windows(2) {
-            assert_eq!(compare(w[0].0, w[1].0), Ordering::Greater, "{} before {}", w[0].0, w[1].0);
-        }
-        for line in NOTES.lines().map(str::trim) {
-            if line.is_empty() || line.starts_with('#') || line.starts_with('[') {
+    /// What is wrong with `src` as the notes of a build of `version`, as advice.
+    fn check(src: &str, version: &str) -> Vec<String> {
+        const LANGS: &str = "en|es|fr|de|it|nb|ko";
+        let mut problems = Vec::new();
+        let mut seen: Vec<&str> = Vec::new();
+        for (n, line) in src.lines().map(str::trim).enumerate().map(|(i, l)| (i + 1, l)) {
+            if line.is_empty() || line.starts_with('#') {
                 continue;
             }
+            if let Some(v) = line.strip_prefix('[').and_then(|l| l.strip_suffix(']')) {
+                let v = v.trim();
+                if seen.is_empty() && v != version {
+                    problems.push(format!(
+                        "line {n}: the first version is [{v}], but this is {version}. Add [{version}] above it, with what changed for users."
+                    ));
+                }
+                if let Some(prev) = seen.last()
+                    && compare(prev, v) != Ordering::Greater
+                {
+                    problems.push(format!(
+                        "line {n}: [{v}] comes after [{prev}]; versions go newest first, once each."
+                    ));
+                }
+                seen.push(v);
+                continue;
+            }
+            if seen.is_empty() {
+                problems.push(format!("line {n}: a change before any [version] header."));
+            }
             let cells: Vec<_> = line.split('|').map(str::trim).collect();
-            assert_eq!(cells.len(), 7, "{line}");
-            assert!(cells.iter().all(|c| !c.is_empty()), "{line}");
+            if cells.len() != 7 || cells.iter().any(|c| c.is_empty()) {
+                problems.push(format!(
+                    "line {n}: {} of 7 languages ({LANGS}); write every one, split by |: {line}",
+                    cells.iter().filter(|c| !c.is_empty()).count()
+                ));
+            }
+        }
+        if seen.is_empty() {
+            problems.push(format!("No versions: add [{version}] with what changed for users."));
+        }
+        problems
+    }
+
+    #[test]
+    fn the_notes_are_complete_and_newest_first() {
+        // An empty section for the version being built is fine: the release asks for lines.
+        let problems = check(NOTES, env!("CARGO_PKG_VERSION"));
+        assert!(problems.is_empty(), "crates/setup/whats-new.txt:\n{}", problems.join("\n"));
+    }
+
+    #[test]
+    fn the_check_finds_what_is_wrong() {
+        const FULL: &str = "a|b|c|d|e|f|g";
+        assert!(check(&format!("[0.3.0]\n[0.2.0]\n{FULL}\n"), "0.3.0").is_empty());
+        let wrong = [
+            (format!("[0.2.0]\n{FULL}\n"), "Add [0.3.0] above it"),
+            (format!("{FULL}\n[0.3.0]\n"), "before any [version]"),
+            (format!("[0.3.0]\n[0.3.0]\n{FULL}\n"), "newest first"),
+            ("[0.3.0]\n[0.1.0]\n[0.2.0]\n".to_owned(), "newest first"),
+            ("[0.3.0]\na|b|c\n".to_owned(), "3 of 7"),
+            ("[0.3.0]\na|b|c|d||f|g\n".to_owned(), "6 of 7"),
+            ("# nothing\n".to_owned(), "No versions"),
+        ];
+        for (src, says) in wrong {
+            let problems = check(&src, "0.3.0").join("\n");
+            assert!(problems.contains(says), "{src:?}: {problems}");
         }
     }
 }

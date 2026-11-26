@@ -241,10 +241,13 @@ pushed until everything has been built. It needs a write deploy key in the
 `RELEASE_DEPLOY_KEY` secret; the client IDs come from the repository variables
 `KURO_ANILIST_CLIENT_ID` and `KURO_MAL_CLIENT_ID`.
 
-Before a release, add its changes to `crates/setup/whats-new.txt`: a few short
-lines in the user's words, in every language. The setup shows them when it
-updates an older Kuro. The GitHub release notes still come from the commits
-(`git cliff`).
+`crates/setup/whats-new.txt` is the changelog users read. Its first section is
+always the version in `Cargo.toml`, and a change users will notice adds a short
+line there, in every language, in the same commit. The setup lists these lines
+when it updates an older Kuro, and the GitHub release starts with their English,
+followed by the commits (`git cliff`). Tests check the file; CI warns when
+`feat` or `fix` commits leave it untouched; the release refuses an empty
+section and starts the next version's.
 
 After cloning, turn on the local guard for `main`, `develop` and version tags:
 

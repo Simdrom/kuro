@@ -55,9 +55,28 @@ jobs:
       - name: Notes
         env:
           VERSION: ${{ steps.version.outputs.version }}
+        # What users read first is the English of crates/setup/whats-new.txt, the same lines
+        # the setup shows; the commits follow, for the details. CI checks the file's shape, but
+        # only here must this version's section have lines: develop starts each one empty.
         run: |
           mkdir out
-          git cliff --unreleased --tag "v$VERSION" --strip header -o out/notes.md
+          awk -v want="[$VERSION]" '
+            { sub(/\r$/, ""); sub(/^[ \t]+/, ""); sub(/[ \t]+$/, "") }
+            /^(#|$)/ { next }
+            /^\[/ { on = ($0 == want); next }
+            on { split($0, cell, "|"); sub(/[ \t]+$/, "", cell[1]); print "- " cell[1] }
+          ' crates/setup/whats-new.txt > out/whats-new.md
+          if [ ! -s out/whats-new.md ]; then
+            echo "::error file=crates/setup/whats-new.txt::No changes under [$VERSION]: add what is new for users, in every language, before releasing"
+            exit 1
+          fi
+          {
+            cat out/whats-new.md
+            echo
+            echo "## Changes in detail"
+            echo
+            git cliff --unreleased --tag "v$VERSION" --strip header
+          } > out/notes.md
           cat out/notes.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -189,6 +208,10 @@ jobs:
           IFS=. read -r major minor _ <<< "$VERSION"
           next="$major.$((minor + 1)).0"
           sed -i "s/^version = \"$VERSION\"$/version = \"$next\"/" Cargo.toml
+          # An empty section for the next version, filled as changes land; CI checks it is there.
+          awk -v next_version="$next" '!done && /^\[/ { print "[" next_version "]"; print ""; done = 1 } { print }' \
+            crates/setup/whats-new.txt > "$RUNNER_TEMP/whats-new.txt"
+          mv "$RUNNER_TEMP/whats-new.txt" crates/setup/whats-new.txt
           # Only the workspace's own entries change in the lock file.
           cargo update --workspace
           git config user.name "github-actions[bot]"
