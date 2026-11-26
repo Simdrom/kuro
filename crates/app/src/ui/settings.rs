@@ -2,7 +2,10 @@
 
 use eframe::egui::{self, Align2, CornerRadius, RichText, Role, Sense, Ui, WidgetInfo, vec2};
 use kuro_api::oauth;
-use kuro_core::settings::{AppIcon, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint};
+use kuro_core::backup;
+use kuro_core::settings::{
+    AppIcon, BackupEvery, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint,
+};
 use kuro_core::{ListStatus, MediaKind, Service, TitleLanguage, stats};
 
 use crate::app::{Act, App, Route, SettingsPage};
@@ -548,7 +551,37 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
         toggle_row(ui, &p, icons::PUSH_PIN, t("Show the desktop widget"), &mut app.widget);
     });
     note(ui, &p, t("A small window above the others with your progress and statistics."));
+    backup_section(app, ui);
     links_section(app, ui);
+}
+
+fn backup_section(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    section(ui, &p, t("Automatic backup"));
+    card(ui, &p, |ui| {
+        let b = &mut app.s.backup;
+        let label = t("Back up my list");
+        select_row(ui, &p, icons::ARROWS_CLOCKWISE, label, &mut b.every, &BackupEvery::ALL, |v| {
+            format::backup_every(v).into()
+        });
+        separator(ui, &p);
+        widgets::wide_row(ui, &p, icons::EXPORT, t("Folder"), |ui| {
+            if widgets::button(ui, &p, "", t("Choose…"), false).clicked() {
+                app.bg.pick_folder();
+            }
+            let folder = if b.folder.is_empty() { t("No folder chosen") } else { b.folder.as_str() };
+            widgets::dim(ui, &p, folder).on_hover_text(folder);
+        });
+        separator(ui, &p);
+        let keep = [3, 5, 10, 30];
+        select_row(ui, &p, icons::STACK, t("Copies to keep"), &mut b.keep, &keep, |n| n.to_string());
+    });
+    if let Some(e) = &app.backup_error {
+        note(ui, &p, &tf("The automatic backup failed: {}", &[e]));
+    } else if let Some(d) = app.last_backup.as_deref().and_then(backup::date_of) {
+        note(ui, &p, &tf("Last backup: {}", &[&crate::i18n::current().date(d, true)]));
+    }
+    note(ui, &p, t("Each copy is named by its date. Older copies beyond the limit are deleted."));
 }
 
 fn links_section(app: &mut App, ui: &mut Ui) {

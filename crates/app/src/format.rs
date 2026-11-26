@@ -5,7 +5,9 @@ use jiff::{Timestamp, ZonedDateTime};
 use kuro_api::{ApiError, Ranking};
 use kuro_core::list::SortKey;
 use kuro_core::overview::Section;
-use kuro_core::settings::{AppIcon, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint};
+use kuro_core::settings::{
+    AppIcon, BackupEvery, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint,
+};
 use kuro_core::{
     Format, FuzzyDate, ListStatus, Media, MediaKind, RelationKind, ReleaseStatus, Season, SeasonYear,
     TitleLanguage,
@@ -221,6 +223,14 @@ pub fn poster_progress(v: PosterProgress) -> &'static str {
         PosterProgress::Badge => t("Badge"),
         PosterProgress::Bar => t("Progress bar"),
         PosterProgress::Both => t("Both"),
+    }
+}
+
+pub fn backup_every(v: BackupEvery) -> &'static str {
+    match v {
+        BackupEvery::Off => t("Off"),
+        BackupEvery::Daily => t("Every day"),
+        BackupEvery::Weekly => t("Every week"),
     }
 }
 

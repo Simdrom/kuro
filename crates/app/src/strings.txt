@@ -24,9 +24,11 @@ App icon|Icono de la app|Icône de l’app|App-Symbol|Icona dell’app|Appikon|�
 Appearance|Apariencia|Apparence|Darstellung|Aspetto|Utseende|화면 스타일
 Ascending|Ascendente|Croissant|Aufsteigend|Crescente|Stigende|오름차순
 Ask before removing a title|Preguntar antes de quitar un título|Demander avant de retirer un titre|Vor dem Entfernen nachfragen|Chiedi prima di rimuovere un titolo|Spør før en tittel fjernes|작품을 제거하기 전에 확인
+Automatic backup|Copia de seguridad automática|Sauvegarde automatique|Automatische Sicherung|Backup automatico|Automatisk sikkerhetskopi|자동 백업
 Automation|Automatización|Automatisation|Automatisierung|Automazione|Automatisering|자동화
 Average score|Nota media|Note moyenne|Durchschnitt|Voto medio|Gjennomsnitt|평균 점수
 Back|Atrás|Retour|Zurück|Indietro|Tilbake|뒤로
+Back up my list|Copiar mi lista|Sauvegarder ma liste|Meine Liste sichern|Salva la mia lista|Sikkerhetskopier listen min|내 목록 백업
 Background|Contexto|Contexte|Hintergrund|Contesto|Bakgrunn|배경
 Backup|Copia de seguridad|Sauvegarde|Sicherung|Backup|Sikkerhetskopi|백업
 Backup saved|Copia guardada|Sauvegarde enregistrée|Sicherung gespeichert|Backup salvato|Sikkerhetskopi lagret|백업을 저장했습니다
@@ -47,6 +49,7 @@ Chapters|Capítulos|Chapitres|Kapitel|Capitoli|Kapitler|챕터
 Characters & voice actors|Personajes y actores de voz|Personnages et doubleurs|Figuren & Synchronsprecher|Personaggi e doppiatori|Figurer og stemmeskuespillere|캐릭터 및 성우
 Choose a setting|Elige un ajuste|Choisis un réglage|Wähle eine Einstellung|Scegli un’impostazione|Velg en innstilling|설정을 선택하세요
 Choose a title|Elige un título|Choisis un titre|Wähle einen Titel|Scegli un titolo|Velg en tittel|작품을 선택하세요
+Choose…|Elegir…|Choisir…|Auswählen…|Scegli…|Velg…|선택…
 Clear|Borrar|Effacer|Leeren|Cancella|Tøm|지우기
 Clear filters|Quitar filtros|Effacer les filtres|Filter löschen|Cancella filtri|Fjern filtre|필터 지우기
 Client ID|ID de cliente|ID client|Client-ID|ID client|Klient-ID|클라이언트 ID
@@ -60,6 +63,7 @@ Contains|Contiene|Contient|Enthält|Contiene|Inneholder|포함
 Continue only if this is your account.|Continúa solo si esta es tu cuenta.|Continue seulement si c’est ton compte.|Fahre nur fort, wenn das dein Konto ist.|Continua solo se questo è il tuo account.|Fortsett bare hvis dette er kontoen din.|본인 계정인 경우에만 계속하세요.
 Continuing|Continúan|Suites|Fortlaufend|In corso|Fortsetter|계속 방영
 Copied links open when you return to this window. Other clipboard content is ignored.|Los enlaces copiados se abren al volver a esta ventana. El resto del portapapeles se ignora.|Les liens copiés s’ouvrent quand tu reviens à cette fenêtre. Le reste du presse-papiers est ignoré.|Kopierte Links öffnen sich, wenn du zu diesem Fenster zurückkehrst. Alles andere in der Zwischenablage wird ignoriert.|I link copiati si aprono quando torni a questa finestra. Il resto degli appunti viene ignorato.|Kopierte lenker åpnes når du går tilbake til vinduet. Annet innhold på utklippstavlen ignoreres.|이 창으로 돌아오면 복사한 링크가 열립니다. 다른 클립보드 내용은 무시합니다.
+Copies to keep|Copias que conservar|Copies à garder|Aufbewahrte Kopien|Copie da conservare|Kopier som beholdes|보관할 사본 수
 Copy|Copiar|Copier|Kopieren|Copia|Kopier|복사
 Copy a bookmarklet that opens the current page here|Copiar un marcador que abre aquí la página actual|Copier un favori qui ouvre ici la page actuelle|Bookmarklet kopieren, das die aktuelle Seite hier öffnet|Copia un bookmarklet che apre qui la pagina corrente|Kopier et bokmerke som åpner gjeldende side her|현재 페이지를 여기에서 여는 북마클릿 복사
 Copy link|Copiar enlace|Copier le lien|Link kopieren|Copia link|Kopier lenke|링크 복사
@@ -76,6 +80,12 @@ Descending|Descendente|Décroissant|Absteigend|Decrescente|Synkende|내림차순
 Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget desktop|Skrivebordswidget|데스크톱 위젯
 Display|Visualización|Affichage|Anzeige|Visualizzazione|Visning|표시
 Double-click|Doble clic|Double-clic|Doppelklick|Doppio clic|Dobbeltklikk|더블 클릭
+Each copy is named by its date. Older copies beyond the limit are deleted.|Cada copia lleva su fecha en el nombre. Las más antiguas por encima del límite se borran.|Chaque copie porte sa date dans son nom. Les plus anciennes au-delà de la limite sont supprimées.|Jede Kopie trägt ihr Datum im Namen. Ältere Kopien über dem Limit werden gelöscht.|Ogni copia ha la sua data nel nome. Le più vecchie oltre il limite vengono eliminate.|Hver kopi har datoen i navnet. Eldre kopier over grensen slettes.|각 사본의 이름에는 날짜가 들어갑니다. 한도를 넘는 오래된 사본은 삭제됩니다.
+Every day|Cada día|Chaque jour|Jeden Tag|Ogni giorno|Hver dag|매일
+Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
+Folder|Carpeta|Dossier|Ordner|Cartella|Mappe|폴더
+Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
+No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewählt|Nessuna cartella scelta|Ingen mappe valgt|선택한 폴더 없음
 Right-click always opens the full menu. Dragging a row sideways also works on touch screens.|El clic derecho siempre abre el menú completo. Arrastrar una fila de lado también funciona en pantallas táctiles.|Le clic droit ouvre toujours le menu complet. Faire glisser une ligne sur le côté marche aussi sur les écrans tactiles.|Rechtsklick öffnet immer das ganze Menü. Eine Zeile zur Seite ziehen geht auch auf Touchscreens.|Il clic destro apre sempre il menu completo. Trascinare una riga di lato funziona anche sugli schermi touch.|Høyreklikk åpner alltid hele menyen. Å dra en rad sidelengs fungerer også på berøringsskjermer.|오른쪽 클릭하면 항상 전체 메뉴가 열립니다. 행을 옆으로 드래그하는 것은 터치스크린에서도 됩니다.
 Drag left|Arrastrar a la izquierda|Glisser à gauche|Nach links ziehen|Trascina a sinistra|Dra til venstre|왼쪽으로 드래그
 Drag right|Arrastrar a la derecha|Glisser à droite|Nach rechts ziehen|Trascina a destra|Dra til høyre|오른쪽으로 드래그
@@ -319,6 +329,7 @@ Synopsis|Sinopsis|Synopsis|Handlung|Trama|Sammendrag|줄거리
 System|Sistema|Système|System|Sistema|System|시스템
 Tags|Etiquetas|Tags|Tags|Tag|Stikkord|태그
 Teal|Turquesa|Turquoise|Türkis|Turchese|Blågrønn|청록
+The automatic backup failed: {}|La copia automática ha fallado: {}|La sauvegarde automatique a échoué : {}|Die automatische Sicherung ist fehlgeschlagen: {}|Il backup automatico non è riuscito: {}|Den automatiske sikkerhetskopien mislyktes: {}|자동 백업에 실패했습니다: {}
 The first episode is out|Ya está el primer episodio|Le premier épisode est sorti|Die erste Folge ist da|È uscito il primo episodio|Første episode er ute|첫 에피소드가 나왔습니다
 The last episode is out|Ya está el último episodio|Le dernier épisode est sorti|Die letzte Folge ist da|È uscito l’ultimo episodio|Siste episode er ute|마지막 에피소드가 나왔습니다
 The service is not available right now ({}).|El servicio no está disponible ahora ({}).|Le service est indisponible pour le moment ({}).|Der Dienst ist gerade nicht verfügbar ({}).|Il servizio non è disponibile al momento ({}).|Tjenesten er ikke tilgjengelig akkurat nå ({}).|지금은 서비스를 사용할 수 없습니다({}).

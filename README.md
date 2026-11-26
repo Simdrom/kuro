@@ -127,6 +127,15 @@ choose the right title.
 Disney+ is planned as an import of the file Disney hands out, and is not
 available yet.
 
+## Automation
+
+**Settings › Widget & automation** gathers what Kuro does on its own.
+
+- **Automatic backup** saves a copy of your list every day or week in a
+  folder you choose, as `kuro-backup-<date>.json`, and deletes the oldest
+  copies beyond the number you keep. Other files in the folder are never
+  touched. A copy restores with **Settings › Data › Import…**.
+
 ## What changes from a phone app
 
 | On a phone | Here |

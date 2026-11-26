@@ -703,3 +703,35 @@ fn kioku_prime_video_series_without_a_name_show_an_episode() {
     assert!(h.query_by_label("For example: Sin nombre").is_some());
     assert!(h.query_by_label("For example: Otro").is_some());
 }
+
+#[test]
+fn automatic_backups_are_dated_and_old_ones_are_removed() {
+    let dir = std::env::temp_dir().join(format!("kuro-backups-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    for old in ["kuro-backup-2020-01-01.json", "kuro-backup-2020-01-02.json", "notes.json"] {
+        std::fs::write(dir.join(old), "{}").unwrap();
+    }
+    let folder = dir.display().to_string();
+    let mut h = harness_with(store(), [1240.0, 820.0], |s| {
+        s.backup.every = kuro_core::settings::BackupEvery::Daily;
+        s.backup.folder = folder;
+        s.backup.keep = 2;
+    });
+    for _ in 0..100 {
+        if h.state().last_backup.is_some() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        settle(&mut h);
+    }
+    let today = kuro_core::backup::file_name(kuro_app::app::today());
+    assert_eq!(h.state().last_backup.as_deref(), Some(today.as_str()));
+    let mut names: Vec<_> =
+        std::fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name().into_string().unwrap()).collect();
+    names.sort();
+    assert_eq!(names, ["kuro-backup-2020-01-02.json", today.as_str(), "notes.json"]);
+    let text = std::fs::read_to_string(dir.join(&today)).unwrap();
+    assert!(text.contains("Lanterns Over Saltmarsh"));
+    let _ = std::fs::remove_dir_all(&dir);
+}

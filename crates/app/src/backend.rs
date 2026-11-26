@@ -8,12 +8,15 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use eframe::egui;
+use jiff::civil::Date;
 use kuro_api::images::ImageCache;
 use kuro_api::kioku::HistorySource;
 use kuro_api::music::Track;
 use kuro_api::{Api, ApiError, Page, RankingQuery, SeasonQuery, Tokens};
+use kuro_core::backup;
 use kuro_core::kioku::{self, Group, Platform, Proposal, WatchedItem};
 use kuro_core::overview::Section;
+use kuro_core::settings::BackupEvery;
 use kuro_core::{
     ListEntry, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, Service, Store, Theme, UserProfile,
 };
@@ -97,6 +100,10 @@ pub enum Event {
     /// Text chosen in a file dialog.
     ImportText(Result<String, String>),
     Exported(Result<(), String>),
+    /// A folder chosen for automatic backups.
+    BackupFolder(String),
+    /// An automatic backup ran: the newest copy in the folder afterwards.
+    AutoBackup(Result<Option<String>, String>),
     /// Kioku: the sign-in window closed.
     KiokuConnected {
         platform: Platform,
@@ -812,6 +819,28 @@ impl Backend {
         });
     }
 
+    pub fn pick_folder(&self) {
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                reply.send(Event::BackupFolder(path.display().to_string()));
+            }
+        });
+    }
+
+    /// Saves a dated copy of the list in `folder` when one is due, then
+    /// removes automatic copies beyond `keep`. Other files are left alone.
+    pub fn auto_backup(&self, service: Service, folder: PathBuf, every: BackupEvery, keep: u32, today: Date) {
+        let (store, reply) = (self.store.clone(), self.reply());
+        std::thread::spawn(move || {
+            let r = run_backup(&store, service, &folder, every, keep, today).map_err(|e| e.to_string());
+            if let Err(e) = &r {
+                tracing::warn!("automatic backup failed: {e}");
+            }
+            reply.send(Event::AutoBackup(r));
+        });
+    }
+
     pub fn import(&self) {
         const MAX: u64 = 64 * 1024 * 1024;
         let reply = self.reply();
@@ -825,6 +854,37 @@ impl Backend {
             reply.send(Event::ImportText(r));
         });
     }
+}
+
+fn run_backup(
+    store: &Mutex<Store>,
+    service: Service,
+    folder: &std::path::Path,
+    every: BackupEvery,
+    keep: u32,
+    today: Date,
+) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    let names = |folder: &std::path::Path| -> std::io::Result<Vec<String>> {
+        Ok(std::fs::read_dir(folder)?
+            .flatten()
+            .filter(|e| e.file_type().is_ok_and(|t| t.is_file()))
+            .filter_map(|e| e.file_name().into_string().ok())
+            .collect())
+    };
+    let before = names(folder)?;
+    if backup::due(before.iter().map(String::as_str), today, every) {
+        let text = lock(store).export(service)?;
+        let path = folder.join(backup::file_name(today));
+        // Written aside first, so a failed write never leaves half a backup.
+        let part = path.with_extension("json.part");
+        std::fs::write(&part, text)?;
+        std::fs::rename(&part, &path)?;
+    }
+    let after = names(folder)?;
+    for old in backup::surplus(after.iter().map(String::as_str), keep) {
+        std::fs::remove_file(folder.join(&old))?;
+    }
+    Ok(backup::latest(after.iter().map(String::as_str)).map(backup::file_name))
 }
 
 #[cfg(windows)]

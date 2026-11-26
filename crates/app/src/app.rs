@@ -13,7 +13,7 @@ use kuro_core::links::{self, Link};
 use kuro_core::list::{Filter, SortKey};
 use kuro_core::notify;
 use kuro_core::overview::Section;
-use kuro_core::settings::{GestureAction, Settings};
+use kuro_core::settings::{BackupEvery, GestureAction, Settings};
 use kuro_core::{
     ListEntry, ListStatus, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, SeasonYear, Service, Theme,
     TitleLanguage, UserProfile, progress,
@@ -347,6 +347,11 @@ pub struct App {
     pub image_bytes: Option<u64>,
     pub cache_bytes: Option<u64>,
     pub kioku: KiokuView,
+    /// Newest automatic backup in the chosen folder, once known.
+    pub last_backup: Option<String>,
+    pub backup_error: Option<String>,
+    /// When the backup folder is looked at next.
+    backup_at: f64,
     acts: Vec<Act>,
     next_tick: f64,
     airing_at: i64,
@@ -446,6 +451,9 @@ impl App {
             image_bytes: None,
             cache_bytes: None,
             kioku: KiokuView::default(),
+            last_backup: None,
+            backup_error: None,
+            backup_at: 0.0,
             acts: Vec::new(),
             next_tick: 0.0,
             airing_at: 0,
@@ -1309,6 +1317,25 @@ impl App {
                 Ok(()) => self.say(t("Backup saved")),
                 Err(e) => self.say_error(tf("Something went wrong: {}", &[&e])),
             },
+            Event::BackupFolder(folder) => {
+                self.s.backup.folder = folder;
+                if self.s.backup.every == BackupEvery::Off {
+                    self.s.backup.every = BackupEvery::Daily;
+                }
+            }
+            Event::AutoBackup(r) => match r {
+                Ok(latest) => {
+                    self.last_backup = latest;
+                    self.backup_error = None;
+                }
+                Err(e) => {
+                    // Said once; the page keeps showing it.
+                    if self.backup_error.as_ref() != Some(&e) {
+                        self.say_error(tf("The automatic backup failed: {}", &[&e]));
+                    }
+                    self.backup_error = Some(e);
+                }
+            },
             Event::KiokuConnected { platform, result } => {
                 self.kioku.connecting = false;
                 self.show_window(ctx);
@@ -1412,9 +1439,20 @@ impl App {
         if age > 6 * 3600 || (passed && age > 600) {
             self.refresh_airing();
         }
+        self.auto_backup();
         if self.unsynced > 0 && self.sync_error.as_ref().is_none_or(|(_, e)| e.is_transient()) {
             self.bg.sync();
         }
+    }
+
+    /// Looks at the backup folder about once an hour.
+    fn auto_backup(&mut self) {
+        let b = &self.s.backup;
+        if b.every == BackupEvery::Off || b.folder.is_empty() || self.time < self.backup_at {
+            return;
+        }
+        self.backup_at = self.time + 3600.0;
+        self.bg.auto_backup(self.s.primary, b.folder.clone().into(), b.every, b.keep, today());
     }
 
     fn send_notifications(&mut self) {
@@ -1545,6 +1583,11 @@ impl App {
                     &self.s.anilist_client_id,
                     &self.s.mal_client_id,
                 ));
+            }
+            if old.backup != self.s.backup {
+                // Look at the new folder now rather than within the hour.
+                (self.backup_at, self.next_tick) = (0.0, 0.0);
+                (self.last_backup, self.backup_error) = (None, None);
             }
             if old.autostart != self.s.autostart
                 && let Err(e) = self.sys.set_autostart(self.s.autostart)

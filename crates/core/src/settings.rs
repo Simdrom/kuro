@@ -199,6 +199,36 @@ impl Default for NotificationSettings {
     }
 }
 
+/// How often a copy of the list is saved on its own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum BackupEvery {
+    #[default]
+    Off,
+    Daily,
+    Weekly,
+}
+
+impl BackupEvery {
+    pub const ALL: [Self; 3] = [Self::Off, Self::Daily, Self::Weekly];
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct BackupSettings {
+    pub every: BackupEvery,
+    /// Empty until a folder is chosen.
+    pub folder: String,
+    /// Automatic copies kept in the folder.
+    pub keep: u32,
+}
+
+impl Default for BackupSettings {
+    fn default() -> Self {
+        Self { every: BackupEvery::Off, folder: String::new(), keep: 10 }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
@@ -247,6 +277,8 @@ pub struct Settings {
     pub handle_links: bool,
     pub gestures: Gestures,
     pub notifications: NotificationSettings,
+    // Automation
+    pub backup: BackupSettings,
 }
 
 impl Default for Settings {
@@ -290,6 +322,7 @@ impl Default for Settings {
             handle_links: false,
             gestures: Gestures::default(),
             notifications: NotificationSettings::default(),
+            backup: BackupSettings::default(),
         }
     }
 }
@@ -302,6 +335,10 @@ impl Settings {
         self.zoom = fin(self.zoom, 1.0).clamp(0.75, 1.75);
         self.notifications.date_hour = self.notifications.date_hour.min(23);
         self.notifications.delay_minutes = self.notifications.delay_minutes.min(24 * 60);
+        self.backup.keep = self.backup.keep.clamp(1, 100);
+        if self.backup.folder.len() > 1024 || self.backup.folder.chars().any(char::is_control) {
+            self.backup.folder.clear();
+        }
         for id in [&mut self.mal_client_id, &mut self.anilist_client_id] {
             *id = id.trim().to_owned();
             if id.len() > 128 || !id.chars().all(|c| c.is_ascii_alphanumeric()) {
