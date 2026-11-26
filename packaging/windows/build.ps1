@@ -8,7 +8,8 @@
         kuro-<version>-windows-x64.zip       (with -Zip)
         SHA256SUMS
     Needs Rust and cargo-about. The version comes from Cargo.toml. Client ids are taken from
-    KURO_ANILIST_CLIENT_ID and KURO_MAL_CLIENT_ID when set, as in the release.
+    KURO_ANILIST_CLIENT_ID, KURO_MAL_CLIENT_ID, KURO_GOOGLE_CLIENT_ID and
+    KURO_GOOGLE_CLIENT_SECRET when set, as in the release.
 
 .EXAMPLE
     packaging\windows\build.ps1

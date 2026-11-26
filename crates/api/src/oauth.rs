@@ -21,8 +21,8 @@ use crate::secrets::Tokens;
 
 /// Must match the redirect URL registered with each service.
 pub const PORT: u16 = 42813;
-const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
-const READ_TIMEOUT: Duration = Duration::from_secs(5);
+pub(crate) const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
+pub(crate) const READ_TIMEOUT: Duration = Duration::from_secs(5);
 const MAX_REQUEST: usize = 16 * 1024;
 
 pub fn redirect_uri(service: Service) -> String {
@@ -36,7 +36,7 @@ pub fn random_token() -> Result<String> {
 }
 
 /// Compares without leaking where the strings differ.
-fn same(a: &str, b: &str) -> bool {
+pub(crate) fn same(a: &str, b: &str) -> bool {
     let (a, b) = (Sha256::digest(a), Sha256::digest(b));
     a.iter().zip(b.iter()).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
@@ -82,14 +82,14 @@ pub struct LoginResult {
 }
 
 #[derive(Deserialize)]
-struct TokenResponse {
+pub(crate) struct TokenResponse {
     access_token: String,
     refresh_token: Option<String>,
     expires_in: i64,
 }
 
 impl TokenResponse {
-    fn into_tokens(self, now: i64) -> Result<Tokens> {
+    pub(crate) fn into_tokens(self, now: i64) -> Result<Tokens> {
         if self.access_token.is_empty() {
             return Err(ApiError::Auth("empty token".into()));
         }
@@ -244,11 +244,11 @@ enum Answer {
     Token { response: TokenResponse, verified: bool },
 }
 
-const DONE: &str = "You are signed in. You can close this tab.";
-const CANCELLED: &str = "Sign-in was cancelled. You can close this tab.";
+pub(crate) const DONE: &str = "You are signed in. You can close this tab.";
+pub(crate) const CANCELLED: &str = "Sign-in was cancelled. You can close this tab.";
 
 /// `nonce` enables the script that forwards the URL fragment.
-fn page(status: u16, text: &str, nonce: &str) -> String {
+pub(crate) fn page(status: u16, text: &str, nonce: &str) -> String {
     let script = if nonce.is_empty() {
         String::new()
     } else {
@@ -280,17 +280,17 @@ fn page(status: u16, text: &str, nonce: &str) -> String {
 }
 
 #[derive(Debug, Default)]
-struct Request {
-    method: String,
-    path: String,
-    query: Vec<(String, String)>,
-    host: String,
-    origin: String,
-    nonce: String,
-    body: String,
+pub(crate) struct Request {
+    pub(crate) method: String,
+    pub(crate) path: String,
+    pub(crate) query: Vec<(String, String)>,
+    pub(crate) host: String,
+    pub(crate) origin: String,
+    pub(crate) nonce: String,
+    pub(crate) body: String,
 }
 
-async fn read_request(sock: &mut TcpStream) -> Option<Request> {
+pub(crate) async fn read_request(sock: &mut TcpStream) -> Option<Request> {
     let mut buf = Vec::new();
     let mut chunk = [0u8; 2048];
     let head_end = loop {

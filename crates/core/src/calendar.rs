@@ -7,9 +7,20 @@ use crate::model::{ListEntry, ListStatus, MediaKind, TitleLanguage};
 /// Minutes an episode lasts when the service does not say.
 const DEFAULT_MINUTES: u32 = 24;
 
-/// The calendar for `entries`. The same list always gives the same text, so
-/// the file is only rewritten when something changed.
-pub fn ics(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> String {
+/// One upcoming episode, as any calendar shows it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Episode {
+    /// Stable across runs: the same title and episode always give the same id.
+    pub uid: String,
+    /// Unix seconds.
+    pub start: i64,
+    pub minutes: u32,
+    pub title: String,
+    pub url: Option<String>,
+}
+
+/// The next episode of every anime watched or planned, soonest first.
+pub fn episodes(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> Vec<Episode> {
     let mut due: Vec<&ListEntry> = entries
         .iter()
         .filter(|e| e.media.kind == MediaKind::Anime)
@@ -17,24 +28,38 @@ pub fn ics(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> St
         .filter(|e| e.media.next_airing.is_some())
         .collect();
     due.sort_by_key(|e| (e.media.next_airing.map(|a| a.at), e.media.id));
+    due.into_iter()
+        .filter_map(|e| {
+            let (m, a) = (&e.media, e.media.next_airing?);
+            Some(Episode {
+                uid: format!("kuro-{}-{}-{}@kuro", m.service.key(), m.id, a.episode),
+                start: a.at,
+                minutes: m.duration.filter(|d| *d > 0).unwrap_or(DEFAULT_MINUTES),
+                title: format!("{} · {episode_word} {}", m.display_title(lang), a.episode),
+                url: m.web_url(m.service),
+            })
+        })
+        .collect()
+}
+
+/// The calendar for `entries`. The same list always gives the same text, so
+/// the file is only rewritten when something changed.
+pub fn ics(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> String {
     let mut out = String::new();
     for line in ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Kuro//Episodes//EN", "CALSCALE:GREGORIAN"] {
         push(&mut out, line);
     }
     push(&mut out, "X-WR-CALNAME:Kuro");
-    for e in due {
-        let (m, Some(a)) = (&e.media, e.media.next_airing) else { continue };
-        let minutes = m.duration.filter(|d| *d > 0).unwrap_or(DEFAULT_MINUTES);
-        let title = format!("{} · {episode_word} {}", m.display_title(lang), a.episode);
+    for e in episodes(entries, lang, episode_word) {
         push(&mut out, "BEGIN:VEVENT");
-        push(&mut out, &format!("UID:kuro-{}-{}-{}@kuro", m.service.key(), m.id, a.episode));
+        push(&mut out, &format!("UID:{}", e.uid));
         // Stamped with the airing time, not the time of writing, to keep the text stable.
-        push(&mut out, &format!("DTSTAMP:{}", utc(a.at)));
-        push(&mut out, &format!("DTSTART:{}", utc(a.at)));
-        push(&mut out, &format!("DURATION:PT{minutes}M"));
-        push(&mut out, &format!("SUMMARY:{}", escape(&title)));
-        if let Some(u) = m.web_url(m.service) {
-            push(&mut out, &format!("URL:{}", escape(&u)));
+        push(&mut out, &format!("DTSTAMP:{}", utc(e.start)));
+        push(&mut out, &format!("DTSTART:{}", utc(e.start)));
+        push(&mut out, &format!("DURATION:PT{}M", e.minutes));
+        push(&mut out, &format!("SUMMARY:{}", escape(&e.title)));
+        if let Some(u) = &e.url {
+            push(&mut out, &format!("URL:{}", escape(u)));
         }
         push(&mut out, "TRANSP:TRANSPARENT");
         push(&mut out, "END:VEVENT");

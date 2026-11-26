@@ -647,9 +647,14 @@ fn calendar_section(app: &mut App, ui: &mut Ui) {
             let shown = if file.is_empty() { t("Off") } else { file.as_str() };
             widgets::dim(ui, &p, shown).on_hover_text(shown);
         });
+        separator(ui, &p);
+        google_row(app, ui);
     });
     if let Some(e) = &app.calendar_error {
         note(ui, &p, &tf("The calendar could not be saved: {}", &[e]));
+    }
+    if let Some(e) = &app.google_error {
+        note(ui, &p, &tf("Google Calendar could not be updated: {}", &[e]));
     }
     note(
         ui,
@@ -658,6 +663,42 @@ fn calendar_section(app: &mut App, ui: &mut Ui) {
             "The next episode of everything you watch or plan to watch is written to this .ics file and kept up to date. Import it into your calendar, or subscribe to it where your calendar app allows.",
         ),
     );
+    note(
+        ui,
+        &p,
+        t(
+            "With Google, Kuro makes a calendar of its own called Kuro in your account and keeps it up to date. It cannot see or change your other calendars.",
+        ),
+    );
+}
+
+fn google_row(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    let google = &app.bg.api.google;
+    let ready = google.is_configured();
+    let account =
+        (google.is_signed_in() && !app.s.google_account.is_empty()).then(|| app.s.google_account.clone());
+    widgets::wide_row(ui, &p, icons::CALENDAR_BLANK, t("Google Calendar"), |ui| {
+        if let Some(account) = account {
+            if widgets::button(ui, &p, icons::SIGN_OUT, t("Sign out"), false).clicked() {
+                app.google_disconnect();
+            }
+            widgets::dim(ui, &p, &account).on_hover_text(&account);
+        } else if app.google_connecting {
+            if widgets::button(ui, &p, "", t("Cancel"), false).clicked() {
+                app.google_connecting = false;
+                app.bg.cancel_login();
+            }
+            widgets::dim(ui, &p, t("Waiting for the browser…"));
+        } else {
+            ui.add_enabled_ui(ready, |ui| {
+                if widgets::button(ui, &p, icons::SIGN_IN, t("Sign in"), true).clicked() && ready {
+                    app.google_connect();
+                }
+            });
+            widgets::dim(ui, &p, if ready { t("Off") } else { t("Not available in this build") });
+        }
+    });
 }
 
 fn backup_section(app: &mut App, ui: &mut Ui) {

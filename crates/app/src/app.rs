@@ -27,6 +27,20 @@ use crate::textures::Textures;
 use crate::theme::{self, Palette};
 use crate::{format, icon};
 
+/// Google Calendar is sent the episodes at least this often, in seconds.
+const GOOGLE_EVERY: i64 = 6 * 3600;
+
+/// A Google Calendar error in words, naming the unticked calendar box.
+fn google_error(e: &ApiError) -> String {
+    match e {
+        ApiError::Auth(m) if m == kuro_api::google::NO_CALENDAR => t("Google did not give Kuro access to the calendar. Sign out, sign in again and tick the calendar box.").into(),
+        ApiError::Service(m) if m.contains("insufficient authentication scopes") => {
+            t("Google did not give Kuro access to the calendar. Sign out, sign in again and tick the calendar box.").into()
+        }
+        e => format::error(e),
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Tab {
     Anime,
@@ -383,6 +397,14 @@ pub struct App {
     /// The calendar text last sent to the file.
     calendar_text: String,
     pub calendar_error: Option<String>,
+    /// Waiting for the Google sign-in in the browser.
+    pub google_connecting: bool,
+    /// A Google Calendar sync is under way.
+    google_busy: bool,
+    /// The episodes last sent to Google Calendar, and when.
+    google_sent: Vec<kuro_core::calendar::Episode>,
+    google_at: i64,
+    pub google_error: Option<String>,
     acts: Vec<Act>,
     next_tick: f64,
     airing_at: i64,
@@ -490,6 +512,11 @@ impl App {
             downloads_at: 0.0,
             calendar_text: String::new(),
             calendar_error: None,
+            google_connecting: false,
+            google_busy: false,
+            google_sent: Vec::new(),
+            google_at: 0,
+            google_error: None,
             acts: Vec::new(),
             next_tick: 0.0,
             airing_at: 0,
@@ -1457,6 +1484,45 @@ impl App {
                 }
                 self.calendar_error = r.err();
             }
+            Event::GoogleUrl(r) => match r {
+                Ok(u) if self.google_connecting => self.sys.open_url(&u),
+                Ok(_) => {}
+                Err(e) => {
+                    self.google_connecting = false;
+                    self.say_error(format::error(&e));
+                }
+            },
+            Event::GoogleConnected(r) => {
+                self.google_connecting = false;
+                self.show_window(ctx);
+                match r {
+                    Ok(email) => {
+                        self.s.google_account = if email.is_empty() { "Google".into() } else { email };
+                        self.google_error = None;
+                    }
+                    Err(e) => self.say_error(google_error(&e)),
+                }
+            }
+            Event::GoogleSynced(r) => {
+                self.google_busy = false;
+                match r {
+                    Ok(id) => {
+                        self.s.google_calendar = id;
+                        self.google_error = None;
+                    }
+                    Err(e) => {
+                        let text = google_error(&e);
+                        // Said once; the page keeps showing it.
+                        if self.google_error.as_ref() != Some(&text) {
+                            self.say_error(tf("Google Calendar could not be updated: {}", &[&text]));
+                        }
+                        self.google_error = Some(text);
+                        // Tried again with the next change, or within the hour.
+                        self.google_sent.clear();
+                        self.google_at = now() - GOOGLE_EVERY + 3600;
+                    }
+                }
+            }
             Event::KiokuConnected { platform, result } => {
                 self.kioku.connecting = false;
                 self.show_window(ctx);
@@ -1598,6 +1664,7 @@ impl App {
         self.kioku_check();
         self.scan_downloads();
         self.write_calendar();
+        self.sync_google();
         if self.refreshing == 0
             && self.bg.online()
             && self.bg.api.is_signed_in(self.s.primary)
@@ -1623,6 +1690,38 @@ impl App {
             self.calendar_text = text.clone();
             self.bg.write_calendar(self.s.calendar_file.clone().into(), text);
         }
+    }
+
+    /// Sends the upcoming episodes to Google Calendar when they changed, and
+    /// now and then anyway in case events were edited there.
+    fn sync_google(&mut self) {
+        if self.google_busy
+            || self.s.google_account.is_empty()
+            || !self.bg.online()
+            || !self.bg.api.google.is_signed_in()
+        {
+            return;
+        }
+        let all: Vec<ListEntry> = self.lib[0].iter().map(|e| (**e).clone()).collect();
+        let episodes = kuro_core::calendar::episodes(&all, self.s.title_language, t("Episode"));
+        if episodes == self.google_sent && now() - self.google_at < GOOGLE_EVERY {
+            return;
+        }
+        (self.google_busy, self.google_at) = (true, now());
+        self.google_sent = episodes.clone();
+        self.bg.google_sync(self.s.google_calendar.clone(), "Kuro".into(), episodes);
+    }
+
+    pub fn google_connect(&mut self) {
+        self.google_connecting = true;
+        self.bg.google_connect();
+    }
+
+    pub fn google_disconnect(&mut self) {
+        self.bg.google_sign_out();
+        self.s.google_account.clear();
+        self.s.google_calendar.clear();
+        (self.google_sent, self.google_error) = (Vec::new(), None);
     }
 
     /// Reads the Crunchyroll history once a day or week, without the user.
@@ -1865,6 +1964,9 @@ impl App {
                     &self.s.anilist_client_id,
                     &self.s.mal_client_id,
                 ));
+            }
+            if old.title_language != self.s.title_language {
+                self.google_sent.clear();
             }
             if old.calendar_file != self.s.calendar_file || old.title_language != self.s.title_language {
                 self.calendar_text.clear();

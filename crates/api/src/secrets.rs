@@ -33,6 +33,8 @@ pub enum SecretKey {
     Service(Service),
     /// A streaming platform connected to Kioku.
     Kioku(Platform),
+    /// The Google account the episode calendar is kept in.
+    Google,
 }
 
 impl SecretKey {
@@ -41,6 +43,7 @@ impl SecretKey {
         match self {
             Self::Service(s) => s.key().to_owned(),
             Self::Kioku(p) => format!("kioku.{}", p.key()),
+            Self::Google => "google".to_owned(),
         }
     }
 }
@@ -86,7 +89,8 @@ impl Keyring {
     /// Removes every session: the setup does it when the user deletes their data.
     pub fn forget_all(&self) -> Result<()> {
         let services = Service::ALL.map(SecretKey::Service);
-        for key in services.into_iter().chain(Platform::ALL.map(SecretKey::Kioku)) {
+        let others = Platform::ALL.map(SecretKey::Kioku).into_iter().chain([SecretKey::Google]);
+        for key in services.into_iter().chain(others) {
             self.delete(key)?;
         }
         Ok(())

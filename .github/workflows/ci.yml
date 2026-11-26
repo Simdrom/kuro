@@ -132,6 +132,9 @@ jobs:
           # Public identifiers, not secrets. Empty means everyone brings their own.
           KURO_ANILIST_CLIENT_ID: ${{ vars.KURO_ANILIST_CLIENT_ID }}
           KURO_MAL_CLIENT_ID: ${{ vars.KURO_MAL_CLIENT_ID }}
+          # Google calls a desktop app's secret not confidential; kept out of sight anyway.
+          KURO_GOOGLE_CLIENT_ID: ${{ vars.KURO_GOOGLE_CLIENT_ID }}
+          KURO_GOOGLE_CLIENT_SECRET: ${{ secrets.KURO_GOOGLE_CLIENT_SECRET }}
       - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
         with:
           tool: cargo-about@0.9.3

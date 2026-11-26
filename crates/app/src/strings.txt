@@ -97,6 +97,9 @@ Every hour|Cada hora|Toutes les heures|Jede Stunde|Ogni ora|Hver time|매시간
 Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
 Every {} hours|Cada {} horas|Toutes les {} heures|Alle {} Stunden|Ogni {} ore|Hver {}. time|{}시간마다
 Folder|Carpeta|Dossier|Ordner|Cartella|Mappe|폴더
+Google Calendar|Google Calendar|Google Agenda|Google Kalender|Google Calendar|Google Kalender|Google 캘린더
+Google Calendar could not be updated: {}|No se ha podido actualizar Google Calendar: {}|Google Agenda n’a pas pu être mis à jour : {}|Google Kalender konnte nicht aktualisiert werden: {}|Impossibile aggiornare Google Calendar: {}|Google Kalender kunne ikke oppdateres: {}|Google 캘린더를 업데이트하지 못했습니다: {}
+Google did not give Kuro access to the calendar. Sign out, sign in again and tick the calendar box.|Google no ha dado a Kuro acceso al calendario. Cierra sesión, vuelve a iniciarla y marca la casilla del calendario.|Google n’a pas donné à Kuro l’accès à l’agenda. Déconnecte-toi, reconnecte-toi et coche la case de l’agenda.|Google hat Kuro keinen Zugriff auf den Kalender gegeben. Melde dich ab, wieder an und setze das Häkchen beim Kalender.|Google non ha dato a Kuro l’accesso al calendario. Esci, accedi di nuovo e spunta la casella del calendario.|Google ga ikke Kuro tilgang til kalenderen. Logg av, logg på igjen og kryss av for kalenderen.|Google에서 Kuro에 캘린더 접근 권한을 주지 않았습니다. 로그아웃한 뒤 다시 로그인하고 캘린더 항목을 선택하세요.
 In a menu, the key shown beside an entry runs it|En un menú, la tecla que aparece junto a una opción la ejecuta|Dans un menu, la touche affichée à côté d’une entrée l’exécute|In einem Menü führt die Taste neben einem Eintrag ihn aus|In un menu, il tasto accanto a una voce la esegue|I en meny kjører tasten ved siden av et valg det|메뉴에서 항목 옆에 표시된 키를 누르면 실행됩니다
 Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
 Links that change your list are off. Turn them on in Settings › Widget & automation.|Los enlaces que cambian tu lista están desactivados. Actívalos en Ajustes › Widget y automatización.|Les liens qui modifient ta liste sont désactivés. Active-les dans Réglages › Widget et automatisation.|Links, die deine Liste ändern, sind aus. Schalte sie unter Einstellungen › Widget & Automatisierung ein.|I link che modificano la tua lista sono disattivati. Attivali in Impostazioni › Widget e automazione.|Lenker som endrer listen din er av. Slå dem på i Innstillinger › Widget og automatisering.|목록을 바꾸는 링크가 꺼져 있습니다. 설정 › 위젯 및 자동화에서 켜세요.
@@ -104,6 +107,7 @@ Move through a menu and choose|Moverse por un menú y elegir|Parcourir un menu e
 Next episodes|Próximos episodios|Prochains épisodes|Nächste Folgen|Prossimi episodi|Neste episoder|다음 에피소드
 No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewählt|Nessuna cartella scelta|Ingen mappe valgt|선택한 폴더 없음
 No progress for {} days|Sin avances desde hace {} días|Aucun progrès depuis {} jours|Seit {} Tagen kein Fortschritt|Nessun progresso da {} giorni|Ingen fremdrift på {} dager|{}일 동안 진행 없음
+Not available in this build|No disponible en esta versión|Indisponible dans cette version|In dieser Version nicht verfügbar|Non disponibile in questa versione|Ikke tilgjengelig i denne versjonen|이 버전에서는 사용할 수 없습니다
 Open the menu of the selected title|Abrir el menú del título seleccionado|Ouvrir le menu du titre sélectionné|Menü des ausgewählten Titels öffnen|Apri il menu del titolo selezionato|Åpne menyen for den valgte tittelen|선택한 작품의 메뉴 열기
 Reminders|Recordatorios|Rappels|Erinnerungen|Promemoria|Påminnelser|리마인더
 Reminders are notifications: turn notifications on to get them.|Los recordatorios son notificaciones: activa las notificaciones para recibirlos.|Les rappels sont des notifications : active les notifications pour les recevoir.|Erinnerungen sind Benachrichtigungen: Schalte Benachrichtigungen ein, um sie zu erhalten.|I promemoria sono notifiche: attiva le notifiche per riceverli.|Påminnelser er varsler: slå på varsler for å få dem.|리마인더는 알림입니다. 받으려면 알림을 켜세요.
@@ -387,11 +391,13 @@ Updated {}|Actualizado el {}|Mis à jour le {}|Aktualisiert am {}|Aggiornato il 
 Updating…|Actualizando…|Mise à jour…|Wird aktualisiert…|Aggiornamento…|Oppdaterer…|업데이트 중…
 Version|Versión|Version|Version|Versione|Versjon|버전
 Volumes|Tomos|Tomes|Bände|Volumi|Bind|권
+Waiting for the browser…|Esperando al navegador…|En attente du navigateur…|Warte auf den Browser…|In attesa del browser…|Venter på nettleseren…|브라우저를 기다리는 중…
 Watching|Viendo|En cours|Schaue ich|In visione|Ser på|보는 중
 Watching and reading|Viendo y leyendo|En cours de visionnage et de lecture|Am Schauen und Lesen|In visione e in lettura|Ser og leser|보는 중 및 읽는 중
 Widget & automation|Widget y automatización|Widget et automatisation|Widget & Automatisierung|Widget e automazione|Widget og automatisering|위젯 및 자동화
 Windows|Windows|Windows|Windows|Windows|Windows|Windows
 Winter|Invierno|Hiver|Winter|Inverno|Vinter|겨울
+With Google, Kuro makes a calendar of its own called Kuro in your account and keeps it up to date. It cannot see or change your other calendars.|Con Google, Kuro crea en tu cuenta un calendario propio llamado Kuro y lo mantiene al día. No puede ver ni cambiar tus otros calendarios.|Avec Google, Kuro crée dans ton compte un agenda à lui appelé Kuro et le tient à jour. Il ne peut ni voir ni modifier tes autres agendas.|Mit Google legt Kuro in deinem Konto einen eigenen Kalender namens Kuro an und hält ihn aktuell. Deine anderen Kalender kann Kuro weder sehen noch ändern.|Con Google, Kuro crea nel tuo account un calendario tutto suo chiamato Kuro e lo tiene aggiornato. Non può vedere né modificare gli altri tuoi calendari.|Med Google lager Kuro en egen kalender kalt Kuro i kontoen din og holder den oppdatert. Den kan ikke se eller endre de andre kalenderne dine.|Google을 사용하면 Kuro가 계정에 Kuro라는 전용 캘린더를 만들고 최신 상태로 유지합니다. 다른 캘린더는 보거나 바꿀 수 없습니다.
 Write dates as YYYY-MM-DD.|Escribe las fechas como AAAA-MM-DD.|Écris les dates au format AAAA-MM-JJ.|Schreibe Daten als JJJJ-MM-TT.|Scrivi le date come AAAA-MM-GG.|Skriv datoer som ÅÅÅÅ-MM-DD.|날짜를 YYYY-MM-DD 형식으로 입력하세요.
 YYYY-MM-DD|AAAA-MM-DD|AAAA-MM-JJ|JJJJ-MM-TT|AAAA-MM-GG|ÅÅÅÅ-MM-DD|YYYY-MM-DD
 Year|Año|Année|Jahr|Anno|År|연도

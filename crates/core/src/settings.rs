@@ -327,6 +327,10 @@ pub struct Settings {
     pub watch_downloads: bool,
     /// An iCalendar file kept up to date with upcoming episodes; empty for none.
     pub calendar_file: String,
+    /// The Google account the episode calendar is kept in; empty for none.
+    pub google_account: String,
+    /// Kuro's own calendar in that account, once it was made.
+    pub google_calendar: String,
 }
 
 impl Default for Settings {
@@ -377,6 +381,8 @@ impl Default for Settings {
             kioku_check: Every::Off,
             watch_downloads: false,
             calendar_file: String::new(),
+            google_account: String::new(),
+            google_calendar: String::new(),
         }
     }
 }
@@ -398,7 +404,12 @@ impl Settings {
         self.refresh_hours = self.refresh_hours.min(24 * 7);
         self.widget.rows = self.widget.rows.clamp(1, 20);
         self.backup.keep = self.backup.keep.clamp(1, 100);
-        for path in [&mut self.backup.folder, &mut self.calendar_file] {
+        for path in [
+            &mut self.backup.folder,
+            &mut self.calendar_file,
+            &mut self.google_account,
+            &mut self.google_calendar,
+        ] {
             if path.len() > 1024 || path.chars().any(char::is_control) {
                 path.clear();
             }
