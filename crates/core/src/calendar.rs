@@ -7,34 +7,73 @@ use crate::model::{ListEntry, ListStatus, MediaKind, TitleLanguage};
 /// Minutes an episode lasts when the service does not say.
 const DEFAULT_MINUTES: u32 = 24;
 
+/// One upcoming episode, as any calendar shows it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Episode {
+    /// Stable across runs: the same title and episode always give the same id.
+    pub uid: String,
+    /// Unix seconds.
+    pub start: i64,
+    pub minutes: u32,
+    pub title: String,
+    pub url: Option<String>,
+}
+
+impl AsRef<Self> for ListEntry {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
+/// Anime watched or planned whose next episode has a date from `since` on,
+/// soonest first: the titles the calendar holds.
+pub fn upcoming<E: AsRef<ListEntry>>(entries: &[E], since: i64) -> Vec<&ListEntry> {
+    let mut due: Vec<&ListEntry> = entries
+        .iter()
+        .map(AsRef::as_ref)
+        .filter(|e| e.media.kind == MediaKind::Anime)
+        .filter(|e| matches!(e.status, ListStatus::Current | ListStatus::Planning))
+        .filter(|e| e.media.next_airing.is_some_and(|a| a.at >= since))
+        .collect();
+    due.sort_by_key(|e| (e.media.next_airing.map(|a| a.at), e.media.id));
+    due
+}
+
+/// The next episode of every anime watched or planned, soonest first.
+pub fn episodes(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> Vec<Episode> {
+    upcoming(entries, i64::MIN)
+        .into_iter()
+        .filter_map(|e| {
+            let (m, a) = (&e.media, e.media.next_airing?);
+            Some(Episode {
+                uid: format!("kuro-{}-{}-{}@kuro", m.service.key(), m.id, a.episode),
+                start: a.at,
+                minutes: m.duration.filter(|d| *d > 0).unwrap_or(DEFAULT_MINUTES),
+                title: format!("{} · {episode_word} {}", m.display_title(lang), a.episode),
+                url: m.web_url(m.service),
+            })
+        })
+        .collect()
+}
+
 /// The calendar for `entries`. The same list always gives the same text, so
 /// the file is only rewritten when something changed.
 pub fn ics(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> String {
-    let mut due: Vec<&ListEntry> = entries
-        .iter()
-        .filter(|e| e.media.kind == MediaKind::Anime)
-        .filter(|e| matches!(e.status, ListStatus::Current | ListStatus::Planning))
-        .filter(|e| e.media.next_airing.is_some())
-        .collect();
-    due.sort_by_key(|e| (e.media.next_airing.map(|a| a.at), e.media.id));
     let mut out = String::new();
     for line in ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Kuro//Episodes//EN", "CALSCALE:GREGORIAN"] {
         push(&mut out, line);
     }
     push(&mut out, "X-WR-CALNAME:Kuro");
-    for e in due {
-        let (m, Some(a)) = (&e.media, e.media.next_airing) else { continue };
-        let minutes = m.duration.filter(|d| *d > 0).unwrap_or(DEFAULT_MINUTES);
-        let title = format!("{} · {episode_word} {}", m.display_title(lang), a.episode);
+    for e in episodes(entries, lang, episode_word) {
         push(&mut out, "BEGIN:VEVENT");
-        push(&mut out, &format!("UID:kuro-{}-{}-{}@kuro", m.service.key(), m.id, a.episode));
+        push(&mut out, &format!("UID:{}", e.uid));
         // Stamped with the airing time, not the time of writing, to keep the text stable.
-        push(&mut out, &format!("DTSTAMP:{}", utc(a.at)));
-        push(&mut out, &format!("DTSTART:{}", utc(a.at)));
-        push(&mut out, &format!("DURATION:PT{minutes}M"));
-        push(&mut out, &format!("SUMMARY:{}", escape(&title)));
-        if let Some(u) = m.web_url(m.service) {
-            push(&mut out, &format!("URL:{}", escape(&u)));
+        push(&mut out, &format!("DTSTAMP:{}", utc(e.start)));
+        push(&mut out, &format!("DTSTART:{}", utc(e.start)));
+        push(&mut out, &format!("DURATION:PT{}M", e.minutes));
+        push(&mut out, &format!("SUMMARY:{}", escape(&e.title)));
+        if let Some(u) = &e.url {
+            push(&mut out, &format!("URL:{}", escape(u)));
         }
         push(&mut out, "TRANSP:TRANSPARENT");
         push(&mut out, "END:VEVENT");
@@ -115,6 +154,18 @@ mod tests {
         assert!(text.contains("DURATION:PT24M"));
         assert!(text.find("Soon").unwrap() < text.find("Later").unwrap(), "sorted by airing time");
         assert_eq!(text, ics(&list, TitleLanguage::Romaji, "Ep."), "stable");
+    }
+
+    #[test]
+    fn upcoming_keeps_what_airs_from_the_given_time() {
+        let list = [
+            airing(1, "Later", ListStatus::Current, 2, 300),
+            airing(2, "Aired", ListStatus::Current, 9, 100),
+            airing(3, "Soon", ListStatus::Planning, 1, 200),
+            airing(4, "Dropped", ListStatus::Dropped, 4, 250),
+        ];
+        let ids: Vec<u64> = upcoming(&list, 150).iter().map(|e| e.media.id).collect();
+        assert_eq!(ids, [3, 1]);
     }
 
     #[test]

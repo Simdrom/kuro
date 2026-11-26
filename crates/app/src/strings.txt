@@ -45,6 +45,7 @@ Bring in changes made elsewhere|Traer los cambios hechos en otro sitio|Récupér
 Broadcast|Emisión|Diffusion|Ausstrahlung|Trasmissione|Sending|방영 시간
 Caches|Cachés|Caches|Zwischenspeicher|Cache|Hurtiglager|캐시
 Calendar|Calendario|Calendrier|Kalender|Calendario|Kalender|캘린더
+Calendar name|Nombre del calendario|Nom de l’agenda|Name des Kalenders|Nome del calendario|Navn på kalenderen|캘린더 이름
 Cancel|Cancelar|Annuler|Abbrechen|Annulla|Avbryt|취소
 Cancelled|Cancelado|Annulé|Abgebrochen|Annullato|Avlyst|취소됨
 Candy|Caramelo|Bonbon|Bonbon|Caramella|Sukkertøy|캔디
@@ -75,6 +76,7 @@ Copy a bookmarklet that opens the current page here|Copiar un marcador que abre 
 Copy a link that adds one|Copiar un enlace que suma uno|Copier un lien qui ajoute un|Link kopieren, der eins hinzufügt|Copia un link che aggiunge uno|Kopier en lenke som legger til én|하나 추가하는 링크 복사
 Copy link|Copiar enlace|Copier le lien|Link kopieren|Copia link|Kopier lenke|링크 복사
 Copy {} link|Copiar enlace de {}|Copier le lien {}|{}-Link kopieren|Copia link {}|Kopier {}-lenke|{} 링크 복사
+Create|Crear|Créer|Erstellen|Crea|Opprett|만들기
 Create a client on AniList with this redirect URL, then paste its ID here. It is free.|Crea un cliente en AniList con esta URL de redirección y pega aquí su ID. Es gratis.|Crée un client sur AniList avec cette URL de redirection, puis colle son ID ici. C’est gratuit.|Erstelle auf AniList einen Client mit dieser Weiterleitungs-URL und füge die ID hier ein. Das ist kostenlos.|Crea un client su AniList con questo URL di reindirizzamento e incolla qui il suo ID. È gratuito.|Opprett en klient på AniList med denne omdirigerings-URL-en, og lim inn ID-en her. Det er gratis.|AniList에서 이 리디렉션 URL로 클라이언트를 만든 뒤 ID를 여기에 붙여 넣으세요. 무료입니다.
 Create a client on MyAnimeList (app type “other”) with this redirect URL, then paste its ID here. It is free.|Crea un cliente en MyAnimeList (tipo de app «other») con esta URL de redirección y pega aquí su ID. Es gratis.|Crée un client sur MyAnimeList (type « other ») avec cette URL de redirection, puis colle son ID ici. C’est gratuit.|Erstelle auf MyAnimeList einen Client (App-Typ „other“) mit dieser Weiterleitungs-URL und füge die ID hier ein. Das ist kostenlos.|Crea un client su MyAnimeList (tipo “other”) con questo URL di reindirizzamento e incolla qui il suo ID. È gratuito.|Opprett en klient på MyAnimeList (apptype «other») med denne omdirigerings-URL-en, og lim inn ID-en her. Det er gratis.|MyAnimeList에서 이 리디렉션 URL로 클라이언트(앱 유형 “other”)를 만든 뒤 ID를 여기에 붙여 넣으세요. 무료입니다.
 Credits|Créditos|Crédits|Danksagung|Riconoscimenti|Bidrag|크레딧
@@ -82,6 +84,7 @@ Dark|Oscuro|Sombre|Dunkel|Scuro|Mørk|다크
 Data & caches|Datos y cachés|Données et caches|Daten & Zwischenspeicher|Dati e cache|Data og hurtiglager|데이터 및 캐시
 Data source|Fuente de datos|Source de données|Datenquelle|Origine dei dati|Datakilde|데이터 출처
 Date started|Fecha de inicio|Date de début|Startdatum|Data di inizio|Startdato|시작한 날짜
+Del|Supr|Suppr|Entf|Canc|Del|Del
 Delay after airing|Retraso tras la emisión|Délai après la diffusion|Verzögerung nach Ausstrahlung|Ritardo dopo la trasmissione|Forsinkelse etter sending|방영 후 지연
 Descending|Descendente|Décroissant|Absteigend|Decrescente|Synkende|내림차순
 Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget desktop|Skrivebordswidget|데스크톱 위젯
@@ -91,16 +94,25 @@ Each copy is named by its date. Older copies beyond the limit are deleted.|Cada 
 Episode|Episodio|Épisode|Folge|Episodio|Episode|에피소드
 Episode calendar|Calendario de episodios|Calendrier des épisodes|Episodenkalender|Calendario degli episodi|Episodekalender|에피소드 캘린더
 Episode {} · {}|Episodio {} · {}|Épisode {} · {}|Folge {} · {}|Episodio {} · {}|Episode {} · {}|{}화 · {}
+Episodes go to|Los episodios van a|Les épisodes vont dans|Folgen landen in|Gli episodi vanno in|Episodene havner i|에피소드를 넣을 곳
 Every day|Cada día|Chaque jour|Jeden Tag|Ogni giorno|Hver dag|매일
 Every hour|Cada hora|Toutes les heures|Jede Stunde|Ogni ora|Hver time|매시간
 Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
 Every {} hours|Cada {} horas|Toutes les {} heures|Alle {} Stunden|Ogni {} ore|Hver {}. time|{}시간마다
 Folder|Carpeta|Dossier|Ordner|Cartella|Mappe|폴더
+Google Calendar|Google Calendar|Google Agenda|Google Kalender|Google Calendar|Google Kalender|Google 캘린더
+Google Calendar could not be updated: {}|No se ha podido actualizar Google Calendar: {}|Google Agenda n’a pas pu être mis à jour : {}|Google Kalender konnte nicht aktualisiert werden: {}|Impossibile aggiornare Google Calendar: {}|Google Kalender kunne ikke oppdateres: {}|Google 캘린더를 업데이트하지 못했습니다: {}
+Google did not give Kuro access to the calendar. Sign out, sign in again and tick the calendar box.|Google no ha dado a Kuro acceso al calendario. Cierra sesión, vuelve a iniciarla y marca la casilla del calendario.|Google n’a pas donné à Kuro l’accès à l’agenda. Déconnecte-toi, reconnecte-toi et coche la case de l’agenda.|Google hat Kuro keinen Zugriff auf den Kalender gegeben. Melde dich ab, wieder an und setze das Häkchen beim Kalender.|Google non ha dato a Kuro l’accesso al calendario. Esci, accedi di nuovo e spunta la casella del calendario.|Google ga ikke Kuro tilgang til kalenderen. Logg av, logg på igjen og kryss av for kalenderen.|Google에서 Kuro에 캘린더 접근 권한을 주지 않았습니다. 로그아웃한 뒤 다시 로그인하고 캘린더 항목을 선택하세요.
+In a menu, the key shown beside an entry runs it|En un menú, la tecla que aparece junto a una opción la ejecuta|Dans un menu, la touche affichée à côté d’une entrée l’exécute|In einem Menü führt die Taste neben einem Eintrag ihn aus|In un menu, il tasto accanto a una voce la esegue|I en meny kjører tasten ved siden av et valg det|메뉴에서 항목 옆에 표시된 키를 누르면 실행됩니다
 Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
 Links that change your list are off. Turn them on in Settings › Widget & automation.|Los enlaces que cambian tu lista están desactivados. Actívalos en Ajustes › Widget y automatización.|Les liens qui modifient ta liste sont désactivés. Active-les dans Réglages › Widget et automatisation.|Links, die deine Liste ändern, sind aus. Schalte sie unter Einstellungen › Widget & Automatisierung ein.|I link che modificano la tua lista sono disattivati. Attivali in Impostazioni › Widget e automazione.|Lenker som endrer listen din er av. Slå dem på i Innstillinger › Widget og automatisering.|목록을 바꾸는 링크가 꺼져 있습니다. 설정 › 위젯 및 자동화에서 켜세요.
+Move through a menu and choose|Moverse por un menú y elegir|Parcourir un menu et choisir|Durch ein Menü gehen und auswählen|Muoversi in un menu e scegliere|Gå gjennom en meny og velg|메뉴에서 이동하고 선택
+New calendar…|Calendario nuevo…|Nouvel agenda…|Neuer Kalender…|Nuovo calendario…|Ny kalender…|새 캘린더…
 Next episodes|Próximos episodios|Prochains épisodes|Nächste Folgen|Prossimi episodi|Neste episoder|다음 에피소드
 No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewählt|Nessuna cartella scelta|Ingen mappe valgt|선택한 폴더 없음
 No progress for {} days|Sin avances desde hace {} días|Aucun progrès depuis {} jours|Seit {} Tagen kein Fortschritt|Nessun progresso da {} giorni|Ingen fremdrift på {} dager|{}일 동안 진행 없음
+Not available in this build|No disponible en esta versión|Indisponible dans cette version|In dieser Version nicht verfügbar|Non disponibile in questa versione|Ikke tilgjengelig i denne versjonen|이 버전에서는 사용할 수 없습니다
+Open the menu of the selected title|Abrir el menú del título seleccionado|Ouvrir le menu du titre sélectionné|Menü des ausgewählten Titels öffnen|Apri il menu del titolo selezionato|Åpne menyen for den valgte tittelen|선택한 작품의 메뉴 열기
 Reminders|Recordatorios|Rappels|Erinnerungen|Promemoria|Påminnelser|리마인더
 Reminders are notifications: turn notifications on to get them.|Los recordatorios son notificaciones: activa las notificaciones para recibirlos.|Les rappels sont des notifications : active les notifications pour les recevoir.|Erinnerungen sind Benachrichtigungen: Schalte Benachrichtigungen ein, um sie zu erhalten.|I promemoria sono notifiche: attiva le notifiche per riceverli.|Påminnelser er varsler: slå på varsler for å få dem.|리마인더는 알림입니다. 받으려면 알림을 켜세요.
 Right-click always opens the full menu. Dragging a row sideways also works on touch screens.|El clic derecho siempre abre el menú completo. Arrastrar una fila de lado también funciona en pantallas táctiles.|Le clic droit ouvre toujours le menu complet. Faire glisser une ligne sur le côté marche aussi sur les écrans tactiles.|Rechtsklick öffnet immer das ganze Menü. Eine Zeile zur Seite ziehen geht auch auf Touchscreens.|Il clic destro apre sempre il menu completo. Trascinare una riga di lato funziona anche sugli schermi touch.|Høyreklikk åpner alltid hele menyen. Å dra en rad sidelengs fungerer også på berøringsskjermer.|오른쪽 클릭하면 항상 전체 메뉴가 열립니다. 행을 옆으로 드래그하는 것은 터치스크린에서도 됩니다.
@@ -383,11 +395,13 @@ Updated {}|Actualizado el {}|Mis à jour le {}|Aktualisiert am {}|Aggiornato il 
 Updating…|Actualizando…|Mise à jour…|Wird aktualisiert…|Aggiornamento…|Oppdaterer…|업데이트 중…
 Version|Versión|Version|Version|Versione|Versjon|버전
 Volumes|Tomos|Tomes|Bände|Volumi|Bind|권
+Waiting for the browser…|Esperando al navegador…|En attente du navigateur…|Warte auf den Browser…|In attesa del browser…|Venter på nettleseren…|브라우저를 기다리는 중…
 Watching|Viendo|En cours|Schaue ich|In visione|Ser på|보는 중
 Watching and reading|Viendo y leyendo|En cours de visionnage et de lecture|Am Schauen und Lesen|In visione e in lettura|Ser og leser|보는 중 및 읽는 중
 Widget & automation|Widget y automatización|Widget et automatisation|Widget & Automatisierung|Widget e automazione|Widget og automatisering|위젯 및 자동화
 Windows|Windows|Windows|Windows|Windows|Windows|Windows
 Winter|Invierno|Hiver|Winter|Inverno|Vinter|겨울
+With Google, Kuro makes calendars of its own in your account and keeps the one you choose up to date. It cannot see or change your other calendars.|Con Google, Kuro crea calendarios propios en tu cuenta y mantiene al día el que elijas. No puede ver ni cambiar tus otros calendarios.|Avec Google, Kuro crée ses propres agendas dans ton compte et tient à jour celui que tu choisis. Il ne peut ni voir ni modifier tes autres agendas.|Mit Google legt Kuro eigene Kalender in deinem Konto an und hält den gewählten aktuell. Deine anderen Kalender kann Kuro weder sehen noch ändern.|Con Google, Kuro crea calendari tutti suoi nel tuo account e tiene aggiornato quello che scegli. Non può vedere né modificare gli altri tuoi calendari.|Med Google lager Kuro egne kalendere i kontoen din og holder den du velger oppdatert. Den kan ikke se eller endre de andre kalenderne dine.|Google을 사용하면 Kuro가 계정에 전용 캘린더를 만들고 선택한 캘린더를 최신 상태로 유지합니다. 다른 캘린더는 보거나 바꿀 수 없습니다.
 Write dates as YYYY-MM-DD.|Escribe las fechas como AAAA-MM-DD.|Écris les dates au format AAAA-MM-JJ.|Schreibe Daten als JJJJ-MM-TT.|Scrivi le date come AAAA-MM-GG.|Skriv datoer som ÅÅÅÅ-MM-DD.|날짜를 YYYY-MM-DD 형식으로 입력하세요.
 YYYY-MM-DD|AAAA-MM-DD|AAAA-MM-JJ|JJJJ-MM-TT|AAAA-MM-GG|ÅÅÅÅ-MM-DD|YYYY-MM-DD
 Year|Año|Année|Jahr|Anno|År|연도
@@ -505,3 +519,10 @@ kioku.amazon.file|Watch history file|Archivo del historial|Fichier de l’histor
 kioku.amazon.how|How to save it|Cómo guardarlo|Comment l’enregistrer|So speicherst du ihn|Come salvarlo|Slik lagrer du den|저장하는 방법
 kioku.amazon.note|Prime Video gives no download of the history. A community script, not from Amazon, saves it from primevideo.com/settings/watch-history when run in the browser console; read it before running it. Then import that file here.|Prime Video no permite descargar el historial. Un script de la comunidad, que no es de Amazon, lo guarda desde primevideo.com/settings/watch-history al ejecutarlo en la consola del navegador; léelo antes de ejecutarlo. Después importa aquí ese archivo.|Prime Video ne permet pas de télécharger l’historique. Un script de la communauté, qui ne vient pas d’Amazon, l’enregistre depuis primevideo.com/settings/watch-history quand on l’exécute dans la console du navigateur ; lis-le avant de l’exécuter. Importe ensuite ce fichier ici.|Prime Video bietet keinen Download des Verlaufs. Ein Community-Skript, nicht von Amazon, speichert ihn auf primevideo.com/settings/watch-history, wenn es in der Browserkonsole läuft; lies es, bevor du es ausführst. Importiere die Datei dann hier.|Prime Video non consente di scaricare la cronologia. Uno script della community, non di Amazon, la salva da primevideo.com/settings/watch-history quando viene eseguito nella console del browser; leggilo prima di eseguirlo. Poi importa qui quel file.|Prime Video lar deg ikke laste ned historikken. Et skript fra fellesskapet, ikke fra Amazon, lagrer den fra primevideo.com/settings/watch-history når det kjøres i nettleserkonsollen; les det før du kjører det. Importer deretter filen her.|Prime Video는 기록 다운로드를 제공하지 않습니다. Amazon이 아닌 커뮤니티 스크립트를 브라우저 콘솔에서 실행하면 primevideo.com/settings/watch-history에서 기록을 저장합니다. 실행하기 전에 내용을 읽어 보세요. 그런 다음 그 파일을 여기서 가져오세요.
 kioku.unmatched.example|For example: {}|Por ejemplo: {}|Par exemple : {}|Zum Beispiel: {}|Per esempio: {}|For eksempel: {}|예: {}
+Calendar settings|Ajustes del calendario|Réglages du calendrier|Kalendereinstellungen|Impostazioni del calendario|Kalenderinnstillinger|캘린더 설정
+My Calendar|Mi calendario|Mon calendrier|Mein Kalender|Il mio calendario|Min kalender|내 캘린더
+Tomorrow|Mañana|Demain|Morgen|Domani|I morgen|내일
+Later|Más adelante|Plus tard|Später|Più avanti|Senere|나중에
+No episodes|Sin episodios|Aucun épisode|Keine Folgen|Nessun episodio|Ingen episoder|에피소드 없음
+No episodes coming|No hay episodios próximos|Aucun épisode à venir|Keine Folgen in Sicht|Nessun episodio in arrivo|Ingen kommende episoder|예정된 에피소드 없음
+Anime you watch or plan to watch show up here once their next episode has a date.|Los animes que ves o planeas ver aparecen aquí cuando su próximo episodio tiene fecha.|Les animes que tu regardes ou prévois de regarder apparaissent ici dès que leur prochain épisode a une date.|Anime, die du schaust oder schauen willst, erscheinen hier, sobald ihre nächste Folge ein Datum hat.|Gli anime che guardi o vuoi guardare appaiono qui quando il loro prossimo episodio ha una data.|Anime du ser på eller planlegger å se, vises her når neste episode har en dato.|보고 있거나 볼 예정인 애니는 다음 에피소드 날짜가 정해지면 여기에 표시됩니다.

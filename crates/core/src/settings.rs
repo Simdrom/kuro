@@ -250,6 +250,17 @@ impl Every {
     }
 }
 
+/// A calendar Kuro made in the Google account.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct GoogleCalendar {
+    pub id: String,
+    pub name: String,
+}
+
+/// The name of the first calendar Kuro makes.
+pub const GOOGLE_CALENDAR_NAME: &str = "Kuro";
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct BackupSettings {
@@ -327,6 +338,13 @@ pub struct Settings {
     pub watch_downloads: bool,
     /// An iCalendar file kept up to date with upcoming episodes; empty for none.
     pub calendar_file: String,
+    /// The Google account the episode calendar is kept in; empty for none.
+    pub google_account: String,
+    /// The calendar the episodes go to: one of `google_calendars`, or empty
+    /// until the first one is made.
+    pub google_calendar: String,
+    /// The calendars Kuro made in that account. It can only reach those.
+    pub google_calendars: Vec<GoogleCalendar>,
 }
 
 impl Default for Settings {
@@ -377,6 +395,9 @@ impl Default for Settings {
             kioku_check: Every::Off,
             watch_downloads: false,
             calendar_file: String::new(),
+            google_account: String::new(),
+            google_calendar: String::new(),
+            google_calendars: Vec::new(),
         }
     }
 }
@@ -398,10 +419,32 @@ impl Settings {
         self.refresh_hours = self.refresh_hours.min(24 * 7);
         self.widget.rows = self.widget.rows.clamp(1, 20);
         self.backup.keep = self.backup.keep.clamp(1, 100);
-        for path in [&mut self.backup.folder, &mut self.calendar_file] {
+        for path in [
+            &mut self.backup.folder,
+            &mut self.calendar_file,
+            &mut self.google_account,
+            &mut self.google_calendar,
+        ] {
             if path.len() > 1024 || path.chars().any(char::is_control) {
                 path.clear();
             }
+        }
+        self.google_calendars
+            .retain(|c| !c.id.is_empty() && c.id.len() <= 1024 && !c.id.contains(char::is_control));
+        self.google_calendars.truncate(50);
+        for c in &mut self.google_calendars {
+            c.name =
+                c.name.chars().filter(|c| !c.is_control()).take(100).collect::<String>().trim().to_owned();
+            if c.name.is_empty() {
+                c.name = GOOGLE_CALENDAR_NAME.into();
+            }
+        }
+        // The calendar made before Kuro could keep more than one.
+        if !self.google_calendar.is_empty()
+            && !self.google_calendars.iter().any(|c| c.id == self.google_calendar)
+        {
+            let id = self.google_calendar.clone();
+            self.google_calendars.push(GoogleCalendar { id, name: GOOGLE_CALENDAR_NAME.into() });
         }
         for id in [&mut self.mal_client_id, &mut self.anilist_client_id] {
             *id = id.trim().to_owned();
@@ -416,6 +459,21 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_first_google_calendar_joins_the_list() {
+        let s = Settings { google_calendar: "abc@group".into(), ..Settings::default() }.normalized();
+        assert_eq!(s.google_calendars, [GoogleCalendar { id: "abc@group".into(), name: "Kuro".into() }]);
+        assert_eq!(s.clone().normalized(), s, "stable");
+        let named = GoogleCalendar {
+            id: "x".into(),
+            name: " 
+Anime "
+                .into(),
+        };
+        let s = Settings { google_calendars: vec![named], ..Settings::default() }.normalized();
+        assert_eq!(s.google_calendars[0].name, "Anime");
+    }
 
     #[test]
     fn partial_json_uses_defaults() {

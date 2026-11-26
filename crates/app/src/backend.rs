@@ -108,6 +108,22 @@ pub enum Event {
     CalendarFile(String),
     /// The episode calendar was written, or why not.
     CalendarWritten(Result<(), String>),
+    /// Google Calendar: the page to sign in on.
+    GoogleUrl(Outcome<String>),
+    /// Google Calendar: signed in as this address, or why not.
+    GoogleConnected(Outcome<String>),
+    /// Google Calendar: the episodes were sent to the calendar `asked` for,
+    /// whose id is now the result: new when it had to be made again.
+    GoogleSynced {
+        asked: String,
+        name: String,
+        result: Outcome<String>,
+    },
+    /// Google Calendar: a calendar was made with this name.
+    GoogleCreated {
+        name: String,
+        result: Outcome<String>,
+    },
     /// Kioku: the sign-in window closed.
     KiokuConnected {
         platform: Platform,
@@ -706,6 +722,57 @@ impl Backend {
             let result = api.finish_login(service, login).await;
             let result = result.map(|(p, r)| (p, r.tokens, r.verified));
             reply.send(Event::Login { service, result });
+        });
+    }
+
+    // Google Calendar
+
+    pub fn google_connect(&mut self) {
+        self.cancel_login();
+        let (google, reply) = (self.api.google.clone(), self.reply());
+        self.login = self.spawn(async move {
+            let login = match google.begin_login().await {
+                Ok(l) => l,
+                Err(e) => return reply.send(Event::GoogleConnected(Err(e))),
+            };
+            reply.send(Event::GoogleUrl(login.authorize_url().map(String::from)));
+            reply.send(Event::GoogleConnected(google.finish_login(login).await));
+        });
+    }
+
+    pub fn google_sign_out(&self) {
+        let google = self.api.google.clone();
+        self.spawn(async move {
+            if let Err(e) = google.sign_out().await {
+                tracing::warn!("google sign-out: {e}");
+            }
+        });
+    }
+
+    /// Makes the Google calendar show `episodes`.
+    pub fn google_sync(&self, calendar: String, name: String, episodes: Vec<kuro_core::calendar::Episode>) {
+        let (google, reply) = (self.api.google.clone(), self.reply());
+        self.spawn(async move {
+            let result = google.sync(&calendar, &name, &episodes).await;
+            reply.send(Event::GoogleSynced { asked: calendar, name, result });
+        });
+    }
+
+    pub fn google_create(&self, name: String) {
+        let (google, reply) = (self.api.google.clone(), self.reply());
+        self.spawn(async move {
+            let result = google.create(&name).await;
+            reply.send(Event::GoogleCreated { name, result });
+        });
+    }
+
+    /// Takes the episodes still to come out of a calendar left behind.
+    pub fn google_clear(&self, calendar: String) {
+        let google = self.api.google.clone();
+        self.spawn(async move {
+            if let Err(e) = google.clear(&calendar).await {
+                tracing::warn!("google calendar left behind: {e}");
+            }
         });
     }
 

@@ -111,9 +111,13 @@ fn deep(url: &Url) -> Option<Link> {
         ("binge", [s, k, n]) => media_ref(service(s)?, k, n).map(Link::Binge),
         ("random", [k]) => kind(k).map(Link::Random),
         ("refresh", []) => Some(Link::Refresh),
-        ("tab", [name @ ("anime" | "manga" | "seasonal" | "ranking" | "search" | "settings" | "kioku")]) => {
-            Some(Link::Tab((*name).to_owned()))
-        }
+        (
+            "tab",
+            [
+                name @ ("anime" | "manga" | "calendar" | "seasonal" | "ranking" | "search" | "settings"
+                | "kioku"),
+            ],
+        ) => Some(Link::Tab((*name).to_owned())),
         _ => None,
     }
 }

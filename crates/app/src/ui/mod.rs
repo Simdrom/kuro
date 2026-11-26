@@ -5,6 +5,7 @@
 //!   beside it, or the whole width when both do not fit.
 
 pub mod browse;
+pub mod calendar;
 pub mod detail;
 pub mod dialogs;
 pub mod extra;
@@ -38,6 +39,7 @@ pub fn tab_label(tab: Tab) -> &'static str {
     match tab {
         Tab::Anime => t("My Anime"),
         Tab::Manga => t("My Manga"),
+        Tab::Calendar => t("My Calendar"),
         Tab::Seasonal => t("Seasonal"),
         Tab::Ranking => t("Ranking"),
         Tab::Search => t("Search"),
@@ -49,6 +51,7 @@ fn tab_icon(app: &App, tab: Tab) -> &'static str {
     match tab {
         Tab::Anime => icons::MONITOR_PLAY,
         Tab::Manga => icons::BOOK_OPEN,
+        Tab::Calendar => icons::CALENDAR_CHECK,
         Tab::Seasonal if app.s.season_icon => format::season_icon(SeasonYear::of_date(today()).season),
         Tab::Seasonal => icons::CALENDAR,
         Tab::Ranking => icons::STAR,
@@ -135,6 +138,7 @@ fn content(app: &mut App, ui: &mut Ui) {
     match app.tab {
         Tab::Anime => mylist::show(app, ui, MediaKind::Anime),
         Tab::Manga => mylist::show(app, ui, MediaKind::Manga),
+        Tab::Calendar => calendar::show(app, ui),
         Tab::Seasonal => browse::seasonal(app, ui),
         Tab::Ranking => browse::ranking(app, ui),
         Tab::Search => browse::search(app, ui),

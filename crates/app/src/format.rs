@@ -292,6 +292,21 @@ fn clock(z: &ZonedDateTime) -> String {
     format!("{:02}:{:02}", z.hour(), z.minute())
 }
 
+/// `17:26`, local time.
+pub fn time(at: i64) -> String {
+    local(at).map(|z| clock(&z)).unwrap_or_default()
+}
+
+/// `Thu 26 Nov`, without the year.
+pub fn weekday_date(d: jiff::civil::Date) -> String {
+    let l = current();
+    let (w, m) = (l.weekday(d.weekday()), l.month(d.month()));
+    match l.code {
+        "ko" => format!("{m} {}일 ({w})", d.day()),
+        _ => format!("{w} {} {m}", d.day()),
+    }
+}
+
 pub fn day(at: i64) -> String {
     local(at).map(|z| current().date(z.date(), true)).unwrap_or_default()
 }

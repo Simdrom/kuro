@@ -1,6 +1,7 @@
 //! Remote services behind one facade.
 
 pub mod anilist;
+pub mod google;
 pub mod http;
 pub mod images;
 pub mod kioku;
@@ -115,6 +116,8 @@ pub struct Api {
     pub music: music::Music,
     /// Kioku's only account source so far.
     pub crunchyroll: kioku::crunchyroll::Crunchyroll,
+    /// The episode calendar in Google Calendar.
+    pub google: google::Google,
     secrets: Arc<dyn SecretStore>,
     ids: Arc<RwLock<ClientIds>>,
     users: Arc<Mutex<HashMap<Service, u64>>>,
@@ -141,6 +144,7 @@ impl Api {
             mal: mal::Mal::new(http.clone()),
             music: music::Music::new(http.clone()),
             crunchyroll: kioku::crunchyroll::Crunchyroll::new(secrets.clone())?,
+            google: google::Google::new(http.clone(), secrets.clone()),
             http,
             secrets,
             ids: Arc::new(RwLock::new(ids)),
@@ -482,6 +486,7 @@ mod tests {
             mal: mal::Mal::with_endpoint(http.clone(), &format!("{uri}/mal")),
             music: music::Music::with_endpoints(http.clone(), uri, uri, uri, Duration::ZERO),
             crunchyroll: kioku::crunchyroll::Crunchyroll::new(secrets.clone()).unwrap(),
+            google: google::Google::new(http.clone(), secrets.clone()),
             http,
             secrets,
             ids: Arc::new(RwLock::new(ClientIds { anilist: "1".into(), mal: "cid".into() })),
