@@ -37,6 +37,9 @@ fn google_error(e: &ApiError) -> String {
         ApiError::Service(m) if m.contains("insufficient authentication scopes") => {
             t("Google did not give Kuro access to the calendar. Sign out, sign in again and tick the calendar box.").into()
         }
+        ApiError::Unauthorized => {
+            t("The Google session has expired. Reconnect to keep your calendar up to date.").into()
+        }
         e => format::error(e),
     }
 }
@@ -414,6 +417,8 @@ pub struct App {
     google_sent: Vec<kuro_core::calendar::Episode>,
     google_at: i64,
     pub google_error: Option<String>,
+    /// Google refused the session: only signing in again brings it back.
+    pub google_expired: bool,
     /// The name being typed for a new Google calendar.
     pub google_new: Option<String>,
     /// A new Google calendar is being made.
@@ -530,6 +535,7 @@ impl App {
             google_sent: Vec::new(),
             google_at: 0,
             google_error: None,
+            google_expired: false,
             google_new: None,
             google_creating: false,
             acts: Vec::new(),
@@ -1513,8 +1519,17 @@ impl App {
                 self.show_window(ctx);
                 match r {
                     Ok(email) => {
-                        self.s.google_account = if email.is_empty() { "Google".into() } else { email };
+                        let email = if email.is_empty() { "Google".to_owned() } else { email };
+                        if !self.s.google_account.is_empty() && self.s.google_account != email {
+                            // Reconnected with another account: the calendars were the old one's.
+                            self.s.google_calendar.clear();
+                            self.s.google_calendars.clear();
+                        }
+                        self.s.google_account = email;
                         self.google_error = None;
+                        self.google_expired = false;
+                        // Sent again at once, with the new session.
+                        self.google_sent.clear();
                     }
                     Err(e) => self.say_error(google_error(&e)),
                 }
@@ -1536,6 +1551,7 @@ impl App {
                     // Another calendar was chosen meanwhile: this one is left behind.
                     Ok(id) => self.bg.google_clear(id),
                     Err(e) => {
+                        self.google_expired = matches!(e, ApiError::Unauthorized);
                         let text = google_error(&e);
                         // Said once; the page keeps showing it.
                         if self.google_error.as_ref() != Some(&text) {
@@ -1558,6 +1574,7 @@ impl App {
                         self.s.google_calendar = id;
                     }
                     Err(e) => {
+                        self.google_expired = matches!(e, ApiError::Unauthorized);
                         self.say_error(tf("Google Calendar could not be updated: {}", &[&google_error(&e)]))
                     }
                 }
@@ -1735,6 +1752,7 @@ impl App {
     /// now and then anyway in case events were edited there.
     fn sync_google(&mut self) {
         if self.google_busy
+            || self.google_expired
             || self.s.google_account.is_empty()
             || !self.bg.online()
             || !self.bg.api.google.is_signed_in()
@@ -1775,6 +1793,7 @@ impl App {
         // They belong to that account.
         self.s.google_calendars.clear();
         (self.google_sent, self.google_error, self.google_new) = (Vec::new(), None, None);
+        self.google_expired = false;
     }
 
     /// Reads the Crunchyroll history once a day or week, without the user.
