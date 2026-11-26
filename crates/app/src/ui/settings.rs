@@ -4,7 +4,8 @@ use eframe::egui::{self, Align2, CornerRadius, RichText, Role, Sense, Ui, Widget
 use kuro_api::oauth;
 use kuro_core::backup;
 use kuro_core::settings::{
-    AppIcon, Every, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint,
+    AppIcon, Every, GOOGLE_CALENDAR_NAME, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme,
+    Tint,
 };
 use kuro_core::{ListStatus, MediaKind, Service, TitleLanguage, stats};
 
@@ -667,7 +668,7 @@ fn calendar_section(app: &mut App, ui: &mut Ui) {
         ui,
         &p,
         t(
-            "With Google, Kuro makes a calendar of its own called Kuro in your account and keeps it up to date. It cannot see or change your other calendars.",
+            "With Google, Kuro makes calendars of its own in your account and keeps the one you choose up to date. It cannot see or change your other calendars.",
         ),
     );
 }
@@ -678,6 +679,7 @@ fn google_row(app: &mut App, ui: &mut Ui) {
     let ready = google.is_configured();
     let account =
         (google.is_signed_in() && !app.s.google_account.is_empty()).then(|| app.s.google_account.clone());
+    let signed = account.is_some();
     widgets::wide_row(ui, &p, icons::CALENDAR_BLANK, t("Google Calendar"), |ui| {
         if let Some(account) = account {
             if widgets::button(ui, &p, icons::SIGN_OUT, t("Sign out"), false).clicked() {
@@ -699,6 +701,61 @@ fn google_row(app: &mut App, ui: &mut Ui) {
             widgets::dim(ui, &p, if ready { t("Off") } else { t("Not available in this build") });
         }
     });
+    if signed {
+        separator(ui, &p);
+        google_calendar_rows(app, ui);
+    }
+}
+
+/// Which of Kuro's calendars the episodes go to, or a new one.
+fn google_calendar_rows(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    let mut names: Vec<String> = app.s.google_calendars.iter().map(|c| c.name.clone()).collect();
+    if names.is_empty() {
+        // The first one is made with the first sync.
+        names.push(GOOGLE_CALENDAR_NAME.into());
+    }
+    let new = names.len();
+    let current = app.s.google_calendars.iter().position(|c| c.id == app.s.google_calendar).unwrap_or(0);
+    let mut chosen = if app.google_new.is_some() { new } else { current };
+    let options: Vec<usize> = (0..=new).collect();
+    let label = t("Episodes go to");
+    let changed = select_row(ui, &p, icons::CALENDAR, label, &mut chosen, &options, |i| {
+        names.get(i).cloned().unwrap_or_else(|| t("New calendar…").into())
+    });
+    if changed {
+        if chosen == new {
+            app.google_new.get_or_insert_with(String::new);
+        } else {
+            app.google_new = None;
+            if let Some(c) = app.s.google_calendars.get(chosen) {
+                app.s.google_calendar = c.id.clone();
+            }
+        }
+    }
+    let Some(mut name) = app.google_new.take() else { return };
+    separator(ui, &p);
+    let busy = app.google_creating;
+    let mut keep = true;
+    widgets::wide_row(ui, &p, icons::PLUS, t("Calendar name"), |ui| {
+        let ok = !name.trim().is_empty() && !busy;
+        let create =
+            ui.add_enabled_ui(ok, |ui| widgets::button(ui, &p, "", t("Create"), true).clicked()).inner;
+        if widgets::button(ui, &p, "", t("Cancel"), false).clicked() {
+            keep = false;
+        }
+        let w = (ui.available_width() - 12.0).clamp(80.0, 220.0);
+        let r =
+            ui.add(egui::TextEdit::singleline(&mut name).desired_width(w).char_limit(100).hint_text("Anime"));
+        r.widget_info(|| WidgetInfo::labeled(Role::TextInput, true, t("Calendar name")));
+        let enter = r.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
+        if (create || enter) && ok {
+            app.google_create(&name);
+        }
+    });
+    if keep {
+        app.google_new = Some(name);
+    }
 }
 
 fn backup_section(app: &mut App, ui: &mut Ui) {

@@ -248,14 +248,37 @@ impl Google {
                 }
             }
         }
-        for id in existing.keys().filter(|id| !wanted.contains(*id)) {
-            let req = self.authed(self.http.client().delete(self.url(&format!("{events}/{id}"))), &token);
+        self.remove(&token, &events, existing.keys().filter(|id| !wanted.contains(*id))).await?;
+        Ok(calendar)
+    }
+
+    /// Makes a calendar of Kuro's own called `name` and returns its id.
+    pub async fn create(&self, name: &str) -> Result<String> {
+        let token = self.token().await?;
+        self.create_calendar(&token, name).await
+    }
+
+    /// Removes the events that have not ended yet from `calendar`, when
+    /// Kuro moves to another one. A calendar already deleted is fine.
+    pub async fn clear(&self, calendar: &str) -> Result<()> {
+        let token = self.token().await?;
+        let events = format!("/calendars/{}/events", enc(calendar));
+        match self.upcoming(&token, &events).await {
+            Ok(existing) => self.remove(&token, &events, existing.keys()).await,
+            Err(ApiError::NotFound) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    async fn remove(&self, token: &str, events: &str, ids: impl Iterator<Item = &String>) -> Result<()> {
+        for id in ids {
+            let req = self.authed(self.http.client().delete(self.url(&format!("{events}/{id}"))), token);
             match self.send(req).await {
                 Ok(()) | Err(ApiError::NotFound | ApiError::Status(410)) => {}
                 Err(e) => return Err(e),
             }
         }
-        Ok(calendar)
+        Ok(())
     }
 
     async fn create_calendar(&self, token: &str, name: &str) -> Result<String> {
@@ -731,6 +754,36 @@ mod tests {
             matches!(&e, ApiError::Service(m) if m.contains("disabled") && m.ends_with("(403)")),
             "{e:?}"
         );
+    }
+
+    #[tokio::test]
+    async fn moving_away_clears_what_is_still_to_come() {
+        let s = MockServer::start().await;
+        let secrets: Arc<dyn SecretStore> = Arc::new(MemorySecrets::default());
+        let t =
+            Tokens { access: "A".into(), refresh: Some("R".into()), expires_at: 1_900_000_000, device: None };
+        secrets.save(SecretKey::Google, &t).unwrap();
+        let g = google(&s, secrets);
+        Mock::given(method("GET"))
+            .and(path("/calendars/old/events"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(json!({"items": [{"id": "e1"}, {"id": "e2"}]})),
+            )
+            .mount(&s)
+            .await;
+        Mock::given(method("DELETE"))
+            .and(path_regex("^/calendars/old/events/e[12]$"))
+            .respond_with(ResponseTemplate::new(204))
+            .expect(2)
+            .mount(&s)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/calendars/gone/events"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&s)
+            .await;
+        g.clear("old").await.unwrap();
+        g.clear("gone").await.unwrap();
     }
 
     #[test]
