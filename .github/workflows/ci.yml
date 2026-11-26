@@ -17,6 +17,10 @@ on:
         description: Also build setups of other versions, to test moving between them
         type: boolean
         default: false
+    # A called workflow sees no secrets unless the caller passes them.
+    secrets:
+      KURO_GOOGLE_CLIENT_SECRET:
+        required: false
 
 permissions:
   contents: read
