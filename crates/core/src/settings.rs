@@ -224,24 +224,36 @@ impl Default for WidgetSettings {
     }
 }
 
-/// How often a copy of the list is saved on its own.
+/// How often something runs on its own.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
-pub enum BackupEvery {
+pub enum Every {
     #[default]
     Off,
     Daily,
     Weekly,
 }
 
-impl BackupEvery {
+impl Every {
     pub const ALL: [Self; 3] = [Self::Off, Self::Daily, Self::Weekly];
+
+    /// The day or ISO week `d` falls in, which runs once; `None` when off.
+    pub fn period(self, d: jiff::civil::Date) -> Option<String> {
+        match self {
+            Self::Off => None,
+            Self::Daily => Some(d.to_string()),
+            Self::Weekly => {
+                let w = d.iso_week_date();
+                Some(format!("{}-W{:02}", w.year(), w.week()))
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct BackupSettings {
-    pub every: BackupEvery,
+    pub every: Every,
     /// Empty until a folder is chosen.
     pub folder: String,
     /// Automatic copies kept in the folder.
@@ -250,7 +262,7 @@ pub struct BackupSettings {
 
 impl Default for BackupSettings {
     fn default() -> Self {
-        Self { every: BackupEvery::Off, folder: String::new(), keep: 10 }
+        Self { every: Every::Off, folder: String::new(), keep: 10 }
     }
 }
 
@@ -309,6 +321,8 @@ pub struct Settings {
     pub backup: BackupSettings,
     /// Reads the list from the account again this often; 0 never does.
     pub refresh_hours: u32,
+    /// Kioku reads the Crunchyroll history on its own this often.
+    pub kioku_check: Every,
     /// An iCalendar file kept up to date with upcoming episodes; empty for none.
     pub calendar_file: String,
 }
@@ -358,6 +372,7 @@ impl Default for Settings {
             widget: WidgetSettings::default(),
             backup: BackupSettings::default(),
             refresh_hours: 0,
+            kioku_check: Every::Off,
             calendar_file: String::new(),
         }
     }
@@ -419,6 +434,15 @@ mod tests {
         s.refresh_hours = 3;
         assert!(!s.refresh_due(1_000_000, 1_000_000 + 3 * 3600 - 1));
         assert!(s.refresh_due(1_000_000, 1_000_000 + 3 * 3600));
+    }
+
+    #[test]
+    fn periods_run_once_a_day_or_a_week() {
+        let d = jiff::civil::date(2027, 1, 20);
+        assert_eq!(Every::Off.period(d), None);
+        assert_eq!(Every::Daily.period(d).as_deref(), Some("2027-01-20"));
+        assert_eq!(Every::Weekly.period(d).as_deref(), Some("2027-W03"));
+        assert_eq!(Every::Weekly.period(jiff::civil::date(2027, 1, 18)), Every::Weekly.period(d));
     }
 
     #[test]

@@ -13,7 +13,7 @@ use kuro_core::links::{self, Link};
 use kuro_core::list::{Filter, SortKey};
 use kuro_core::notify;
 use kuro_core::overview::Section;
-use kuro_core::settings::{BackupEvery, GestureAction, Settings};
+use kuro_core::settings::{Every, GestureAction, Settings};
 use kuro_core::{
     ListEntry, ListStatus, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, SeasonYear, Service, Theme,
     TitleLanguage, UserProfile, progress,
@@ -163,6 +163,10 @@ pub struct KiokuView {
     pub picker: Option<KiokuPicker>,
     /// Long lists of series not found start folded.
     pub show_unmatched: bool,
+    /// The running sync was started on its own, not by the user.
+    pub background: bool,
+    /// The period last looked at for the automatic check.
+    pub checked: String,
 }
 
 #[derive(Default)]
@@ -761,6 +765,9 @@ impl App {
                     _ => Tab::Settings,
                 };
                 self.act(Act::Go(tab));
+                if name == "kioku" {
+                    self.act(Act::Push(Route::Kioku));
+                }
                 true
             }
             Some(Link::Step { .. }) if !self.s.link_actions => {
@@ -1379,8 +1386,8 @@ impl App {
             },
             Event::BackupFolder(folder) => {
                 self.s.backup.folder = folder;
-                if self.s.backup.every == BackupEvery::Off {
-                    self.s.backup.every = BackupEvery::Daily;
+                if self.s.backup.every == Every::Off {
+                    self.s.backup.every = Every::Daily;
                 }
             }
             Event::AutoBackup(r) => match r {
@@ -1436,7 +1443,20 @@ impl App {
                     self.kioku.progress = Some(step);
                 }
             }
+            Event::KiokuReview(result)
+                if self.kioku.background && result.as_ref().is_ok_and(|r| r.changes.is_empty()) =>
+            {
+                // Nothing new: no review is left waiting.
+                self.kioku.background = false;
+                self.kioku.syncing = false;
+                self.kioku.progress = None;
+                self.kioku.started = None;
+            }
             Event::KiokuReview(result) => {
+                let background = std::mem::take(&mut self.kioku.background);
+                if background {
+                    self.kioku_checked(&result);
+                }
                 self.kioku.syncing = false;
                 self.kioku.progress = None;
                 self.kioku.took = self.kioku.started.take().map(|s| (ctx.input(|i| i.time) - s).max(0.0));
@@ -1512,6 +1532,7 @@ impl App {
             self.refresh_airing();
         }
         self.auto_backup();
+        self.kioku_check();
         self.write_calendar();
         if self.refreshing == 0
             && self.bg.online()
@@ -1540,10 +1561,42 @@ impl App {
         }
     }
 
+    /// Reads the Crunchyroll history once a day or week, without the user.
+    /// Nothing is written: the review waits for them, as after a manual sync.
+    fn kioku_check(&mut self) {
+        use kuro_api::kioku::HistorySource;
+        let Some(period) = self.s.kioku_check.period(today()) else { return };
+        let key = format!("kioku:crunchyroll:{period}");
+        if self.kioku.checked == key || self.kioku.syncing || self.kioku.review.is_some() || !self.bg.online()
+        {
+            return;
+        }
+        self.kioku.checked = key.clone();
+        if self.bg.store().was_notified(&key).unwrap_or(true) || !self.bg.api.crunchyroll.connected() {
+            return;
+        }
+        let _ = self.bg.store().mark_notified(&key, now());
+        self.apply(Act::KiokuSync(Platform::Crunchyroll));
+        self.kioku.background = true;
+    }
+
+    /// Says what an automatic Kioku check found.
+    fn kioku_checked(&mut self, result: &Result<KiokuReview, ApiError>) {
+        match result {
+            Ok(r) if !r.changes.is_empty() => {
+                let mut n = Notice::new("Kioku", tf("kioku.auto.ready", &[&r.changes.len()]));
+                n.link = Some("kuro://tab/kioku".into());
+                self.sys.notify(n);
+            }
+            Ok(_) => {}
+            Err(e) => tracing::warn!("kioku: automatic check failed: {e}"),
+        }
+    }
+
     /// Looks at the backup folder about once an hour.
     fn auto_backup(&mut self) {
         let b = &self.s.backup;
-        if b.every == BackupEvery::Off || b.folder.is_empty() || self.time < self.backup_at {
+        if b.every == Every::Off || b.folder.is_empty() || self.time < self.backup_at {
             return;
         }
         self.backup_at = self.time + 3600.0;

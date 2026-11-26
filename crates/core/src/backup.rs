@@ -2,7 +2,7 @@
 
 use jiff::civil::Date;
 
-use crate::settings::BackupEvery;
+use crate::settings::Every;
 
 const PREFIX: &str = "kuro-backup-";
 const SUFFIX: &str = ".json";
@@ -23,11 +23,11 @@ pub fn latest<'a>(names: impl IntoIterator<Item = &'a str>) -> Option<Date> {
 }
 
 /// Whether a new backup is due today.
-pub fn due<'a>(names: impl IntoIterator<Item = &'a str>, today: Date, every: BackupEvery) -> bool {
+pub fn due<'a>(names: impl IntoIterator<Item = &'a str>, today: Date, every: Every) -> bool {
     let days = match every {
-        BackupEvery::Off => return false,
-        BackupEvery::Daily => 1,
-        BackupEvery::Weekly => 7,
+        Every::Off => return false,
+        Every::Daily => 1,
+        Every::Weekly => 7,
     };
     latest(names).is_none_or(|last| last.until(today).is_ok_and(|s| s.get_days() >= days))
 }
@@ -63,13 +63,13 @@ mod tests {
         let today = date(2026, 11, 26);
         let yesterday = file_name(date(2026, 11, 25));
         let this_morning = file_name(today);
-        assert!(due([], today, BackupEvery::Daily));
-        assert!(!due([], today, BackupEvery::Off));
-        assert!(due([yesterday.as_str()], today, BackupEvery::Daily));
-        assert!(!due([this_morning.as_str(), yesterday.as_str()], today, BackupEvery::Daily));
-        assert!(!due([yesterday.as_str()], today, BackupEvery::Weekly));
+        assert!(due([], today, Every::Daily));
+        assert!(!due([], today, Every::Off));
+        assert!(due([yesterday.as_str()], today, Every::Daily));
+        assert!(!due([this_morning.as_str(), yesterday.as_str()], today, Every::Daily));
+        assert!(!due([yesterday.as_str()], today, Every::Weekly));
         let last_week = file_name(date(2026, 11, 19));
-        assert!(due([last_week.as_str(), "notes.json"], today, BackupEvery::Weekly));
+        assert!(due([last_week.as_str(), "notes.json"], today, Every::Weekly));
     }
 
     #[test]

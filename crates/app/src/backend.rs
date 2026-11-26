@@ -16,7 +16,7 @@ use kuro_api::{Api, ApiError, Page, RankingQuery, SeasonQuery, Tokens};
 use kuro_core::backup;
 use kuro_core::kioku::{self, Group, Platform, Proposal, WatchedItem};
 use kuro_core::overview::Section;
-use kuro_core::settings::BackupEvery;
+use kuro_core::settings::Every;
 use kuro_core::{
     ListEntry, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, Service, Store, Theme, UserProfile,
 };
@@ -857,7 +857,7 @@ impl Backend {
 
     /// Saves a dated copy of the list in `folder` when one is due, then
     /// removes automatic copies beyond `keep`. Other files are left alone.
-    pub fn auto_backup(&self, service: Service, folder: PathBuf, every: BackupEvery, keep: u32, today: Date) {
+    pub fn auto_backup(&self, service: Service, folder: PathBuf, every: Every, keep: u32, today: Date) {
         let (store, reply) = (self.store.clone(), self.reply());
         std::thread::spawn(move || {
             let r = run_backup(&store, service, &folder, every, keep, today).map_err(|e| e.to_string());
@@ -887,7 +887,7 @@ fn run_backup(
     store: &Mutex<Store>,
     service: Service,
     folder: &std::path::Path,
-    every: BackupEvery,
+    every: Every,
     keep: u32,
     today: Date,
 ) -> Result<Option<String>, Box<dyn std::error::Error>> {

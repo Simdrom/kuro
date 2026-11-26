@@ -4,7 +4,7 @@ use eframe::egui::{self, Align2, CornerRadius, RichText, Role, Sense, Ui, Widget
 use kuro_api::oauth;
 use kuro_core::backup;
 use kuro_core::settings::{
-    AppIcon, BackupEvery, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint,
+    AppIcon, Every, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint,
 };
 use kuro_core::{ListStatus, MediaKind, Service, TitleLanguage, stats};
 
@@ -587,6 +587,14 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
     );
     calendar_section(app, ui);
     reminders_section(app, ui);
+    section(ui, &p, super::kioku::NAME);
+    card(ui, &p, |ui| {
+        let label = t("kioku.auto");
+        select_row(ui, &p, icons::CLOCK_COUNTER_CLOCKWISE, label, &mut app.s.kioku_check, &Every::ALL, |v| {
+            format::every(v).into()
+        });
+    });
+    note(ui, &p, t("kioku.auto.note"));
     links_section(app, ui);
 }
 
@@ -653,8 +661,8 @@ fn backup_section(app: &mut App, ui: &mut Ui) {
     card(ui, &p, |ui| {
         let b = &mut app.s.backup;
         let label = t("Back up my list");
-        select_row(ui, &p, icons::ARROWS_CLOCKWISE, label, &mut b.every, &BackupEvery::ALL, |v| {
-            format::backup_every(v).into()
+        select_row(ui, &p, icons::ARROWS_CLOCKWISE, label, &mut b.every, &Every::ALL, |v| {
+            format::every(v).into()
         });
         separator(ui, &p);
         widgets::wide_row(ui, &p, icons::EXPORT, t("Folder"), |ui| {

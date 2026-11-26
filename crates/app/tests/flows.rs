@@ -714,7 +714,7 @@ fn automatic_backups_are_dated_and_old_ones_are_removed() {
     }
     let folder = dir.display().to_string();
     let mut h = harness_with(store(), [1240.0, 820.0], |s| {
-        s.backup.every = kuro_core::settings::BackupEvery::Daily;
+        s.backup.every = kuro_core::settings::Every::Daily;
         s.backup.folder = folder;
         s.backup.keep = 2;
     });
@@ -812,4 +812,28 @@ fn the_widget_shows_what_was_chosen_and_stays_open() {
         settle(&mut h);
     }
     assert!(h.state().bg.store().settings().unwrap().widget.open, "remembered for the next start");
+}
+
+#[test]
+fn an_automatic_kioku_check_waits_for_review_and_leaves_nothing_when_empty() {
+    let mut h = harness();
+    let ctx = h.ctx.clone();
+    let found = review(h.state(), &history());
+    assert!(!found.changes.is_empty());
+    h.state_mut().kioku.background = true;
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(found)));
+    settle(&mut h);
+    assert!(h.state().kioku.review.is_some(), "kept for the user to review");
+    assert_eq!(progress(&h, 1), 9, "nothing written");
+
+    let mut empty = review(h.state(), &FakeSource(Vec::new()));
+    empty.changes.clear();
+    h.state_mut().kioku.review = None;
+    h.state_mut().kioku.background = true;
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(empty)));
+    assert!(h.state().kioku.review.is_none() && !h.state().kioku.syncing);
+
+    assert!(h.state_mut().open_link("kuro://tab/kioku"));
+    settle(&mut h);
+    assert_eq!(h.state().routes.last(), Some(&Route::Kioku));
 }

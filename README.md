@@ -150,6 +150,9 @@ available yet.
   next episode), with a button to mark the next episode. Several at once
   come as one notification. A **weekly summary** on Monday counts what airs
   that week and the episodes you have left to catch up.
+- **Kioku** can read the Crunchyroll history on its own once a day or week.
+  As after **Sync history**, nothing is written: a notification says how
+  many changes wait for your review, and opens Kioku.
 - **Links** open titles, searches and tabs, and a few do things without
   bringing the window forward, so a desktop shortcut, a hotkey tool or a
   Stream Deck can use them:

@@ -6,7 +6,7 @@ use kuro_api::{ApiError, Ranking};
 use kuro_core::list::SortKey;
 use kuro_core::overview::Section;
 use kuro_core::settings::{
-    AppIcon, BackupEvery, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint,
+    AppIcon, Every, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint,
 };
 use kuro_core::{
     Format, FuzzyDate, ListStatus, Media, MediaKind, RelationKind, ReleaseStatus, Season, SeasonYear,
@@ -226,11 +226,11 @@ pub fn poster_progress(v: PosterProgress) -> &'static str {
     }
 }
 
-pub fn backup_every(v: BackupEvery) -> &'static str {
+pub fn every(v: Every) -> &'static str {
     match v {
-        BackupEvery::Off => t("Off"),
-        BackupEvery::Daily => t("Every day"),
-        BackupEvery::Weekly => t("Every week"),
+        Every::Off => t("Off"),
+        Every::Daily => t("Every day"),
+        Every::Weekly => t("Every week"),
     }
 }
 
