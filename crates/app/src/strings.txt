@@ -1,4 +1,5 @@
-A small window above the others with your progress and statistics.|Una ventana pequeña sobre las demás con tu progreso y tus estadísticas.|Une petite fenêtre au-dessus des autres avec ta progression et tes statistiques.|Ein kleines Fenster über den anderen mit deinem Fortschritt und deiner Statistik.|Una piccola finestra sopra le altre con i tuoi progressi e le tue statistiche.|Et lite vindu over de andre med fremdrift og statistikk.|진행 상황과 통계를 다른 창 위에 보여 주는 작은 창입니다.
+A small window above the others with your progress and statistics. It opens again with Kuro if you leave it open.|Una ventana pequeña sobre las demás con tu progreso y tus estadísticas. Se vuelve a abrir con Kuro si la dejas abierta.|Une petite fenêtre au-dessus des autres avec ta progression et tes statistiques. Elle se rouvre avec Kuro si tu la laisses ouverte.|Ein kleines Fenster über den anderen mit deinem Fortschritt und deiner Statistik. Es öffnet sich mit Kuro wieder, wenn du es offen lässt.|Una piccola finestra sopra le altre con i tuoi progressi e le tue statistiche. Si riapre con Kuro se la lasci aperta.|Et lite vindu over de andre med fremdrift og statistikk. Det åpnes igjen med Kuro hvis du lar det stå åpent.|진행 상황과 통계를 다른 창 위에 보여 주는 작은 창입니다. 열어 두면 Kuro와 함께 다시 열립니다.
+A summary of the week on Monday|Un resumen de la semana el lunes|Un résumé de la semaine le lundi|Eine Wochenübersicht am Montag|Un riepilogo della settimana il lunedì|Et sammendrag av uken på mandag|월요일에 한 주 요약
 About|Acerca de|À propos|Über|Informazioni|Om|정보
 Accounts|Cuentas|Comptes|Konten|Account|Kontoer|계정
 Adaptation|Adaptación|Adaptation|Adaption|Adattamento|Adaptasjon|각색
@@ -10,11 +11,13 @@ Add or remove one on the open title|Sumar o restar uno en el título abierto|Ajo
 Add to list|Añadir a la lista|Ajouter à la liste|Zur Liste hinzufügen|Aggiungi alla lista|Legg til i listen|목록에 추가
 Add to list…|Añadir a la lista…|Ajouter à la liste…|Zur Liste hinzufügen…|Aggiungi alla lista…|Legg til i listen…|목록에 추가…
 Add…|Añadir…|Ajouter…|Hinzufügen…|Aggiungi…|Legg til…|추가…
+After {} days|Tras {} días|Après {} jours|Nach {} Tagen|Dopo {} giorni|Etter {} dager|{}일 후
 Airing|En emisión|En diffusion|Läuft gerade|In onda|Sendes nå|방영 중
 All|Todos|Tous|Alle|Tutti|Alle|전체
 All formats|Todos los formatos|Tous les formats|Alle Formate|Tutti i formati|Alle formater|모든 형식
 All genres|Todos los géneros|Tous les genres|Alle Genres|Tutti i generi|Alle sjangre|모든 장르
 All years|Todos los años|Toutes les années|Alle Jahre|Tutti gli anni|Alle år|모든 연도
+Allow links that change my list|Permitir enlaces que cambian mi lista|Autoriser les liens qui modifient ma liste|Links erlauben, die meine Liste ändern|Consenti i link che modificano la mia lista|Tillat lenker som endrer listen min|내 목록을 바꾸는 링크 허용
 Alternative|Alternativa|Alternative|Alternative|Alternativa|Alternativ|다른 버전
 Alternative titles|Títulos alternativos|Titres alternatifs|Alternative Titel|Titoli alternativi|Alternative titler|다른 제목
 An independent, unofficial app. Not affiliated with ManGo, RocketScience IT, AniList or MyAnimeList.|Aplicación independiente y no oficial. Sin relación con ManGo, RocketScience IT, AniList ni MyAnimeList.|Application indépendante et non officielle. Sans lien avec ManGo, RocketScience IT, AniList ou MyAnimeList.|Eine unabhängige, inoffizielle App. Nicht verbunden mit ManGo, RocketScience IT, AniList oder MyAnimeList.|App indipendente e non ufficiale. Non affiliata a ManGo, RocketScience IT, AniList o MyAnimeList.|En uavhengig, uoffisiell app. Ikke tilknyttet ManGo, RocketScience IT, AniList eller MyAnimeList.|독립적인 비공식 앱입니다. ManGo, RocketScience IT, AniList, MyAnimeList와 관련이 없습니다.
@@ -24,9 +27,11 @@ App icon|Icono de la app|Icône de l’app|App-Symbol|Icona dell’app|Appikon|�
 Appearance|Apariencia|Apparence|Darstellung|Aspetto|Utseende|화면 스타일
 Ascending|Ascendente|Croissant|Aufsteigend|Crescente|Stigende|오름차순
 Ask before removing a title|Preguntar antes de quitar un título|Demander avant de retirer un titre|Vor dem Entfernen nachfragen|Chiedi prima di rimuovere un titolo|Spør før en tittel fjernes|작품을 제거하기 전에 확인
+Automatic backup|Copia de seguridad automática|Sauvegarde automatique|Automatische Sicherung|Backup automatico|Automatisk sikkerhetskopi|자동 백업
 Automation|Automatización|Automatisation|Automatisierung|Automazione|Automatisering|자동화
 Average score|Nota media|Note moyenne|Durchschnitt|Voto medio|Gjennomsnitt|평균 점수
 Back|Atrás|Retour|Zurück|Indietro|Tilbake|뒤로
+Back up my list|Copiar mi lista|Sauvegarder ma liste|Meine Liste sichern|Salva la mia lista|Sikkerhetskopier listen min|내 목록 백업
 Background|Contexto|Contexte|Hintergrund|Contesto|Bakgrunn|배경
 Backup|Copia de seguridad|Sauvegarde|Sicherung|Backup|Sikkerhetskopi|백업
 Backup saved|Copia guardada|Sauvegarde enregistrée|Sicherung gespeichert|Backup salvato|Sikkerhetskopi lagret|백업을 저장했습니다
@@ -36,8 +41,10 @@ Black|Negro|Noir|Schwarz|Nero|Svart|검정
 Blue|Azul|Bleu|Blau|Blu|Blå|파랑
 Both|Ambos|Les deux|Beide|Entrambi|Begge|둘 다
 Both services|Ambos servicios|Les deux services|Beide Dienste|Entrambi i servizi|Begge tjenester|두 서비스 모두
+Bring in changes made elsewhere|Traer los cambios hechos en otro sitio|Récupérer les changements faits ailleurs|Änderungen von anderswo übernehmen|Recupera le modifiche fatte altrove|Hent endringer gjort andre steder|다른 곳에서 한 변경 가져오기
 Broadcast|Emisión|Diffusion|Ausstrahlung|Trasmissione|Sending|방영 시간
 Caches|Cachés|Caches|Zwischenspeicher|Cache|Hurtiglager|캐시
+Calendar|Calendario|Calendrier|Kalender|Calendario|Kalender|캘린더
 Cancel|Cancelar|Annuler|Abbrechen|Annulla|Avbryt|취소
 Cancelled|Cancelado|Annulé|Abgebrochen|Annullato|Avlyst|취소됨
 Candy|Caramelo|Bonbon|Bonbon|Caramella|Sukkertøy|캔디
@@ -47,6 +54,8 @@ Chapters|Capítulos|Chapitres|Kapitel|Capitoli|Kapitler|챕터
 Characters & voice actors|Personajes y actores de voz|Personnages et doubleurs|Figuren & Synchronsprecher|Personaggi e doppiatori|Figurer og stemmeskuespillere|캐릭터 및 성우
 Choose a setting|Elige un ajuste|Choisis un réglage|Wähle eine Einstellung|Scegli un’impostazione|Velg en innstilling|설정을 선택하세요
 Choose a title|Elige un título|Choisis un titre|Wähle einen Titel|Scegli un titolo|Velg en tittel|작품을 선택하세요
+Choose what the widget shows in Settings › Widget & automation.|Elige qué muestra el widget en Ajustes › Widget y automatización.|Choisis ce que le widget affiche dans Réglages › Widget et automatisation.|Wähle unter Einstellungen › Widget & Automatisierung, was das Widget zeigt.|Scegli cosa mostra il widget in Impostazioni › Widget e automazione.|Velg hva widgeten viser i Innstillinger › Widget og automatisering.|설정 › 위젯 및 자동화에서 위젯에 표시할 항목을 고르세요.
+Choose…|Elegir…|Choisir…|Auswählen…|Scegli…|Velg…|선택…
 Clear|Borrar|Effacer|Leeren|Cancella|Tøm|지우기
 Clear filters|Quitar filtros|Effacer les filtres|Filter löschen|Cancella filtri|Fjern filtre|필터 지우기
 Client ID|ID de cliente|ID client|Client-ID|ID client|Klient-ID|클라이언트 ID
@@ -60,8 +69,10 @@ Contains|Contiene|Contient|Enthält|Contiene|Inneholder|포함
 Continue only if this is your account.|Continúa solo si esta es tu cuenta.|Continue seulement si c’est ton compte.|Fahre nur fort, wenn das dein Konto ist.|Continua solo se questo è il tuo account.|Fortsett bare hvis dette er kontoen din.|본인 계정인 경우에만 계속하세요.
 Continuing|Continúan|Suites|Fortlaufend|In corso|Fortsetter|계속 방영
 Copied links open when you return to this window. Other clipboard content is ignored.|Los enlaces copiados se abren al volver a esta ventana. El resto del portapapeles se ignora.|Les liens copiés s’ouvrent quand tu reviens à cette fenêtre. Le reste du presse-papiers est ignoré.|Kopierte Links öffnen sich, wenn du zu diesem Fenster zurückkehrst. Alles andere in der Zwischenablage wird ignoriert.|I link copiati si aprono quando torni a questa finestra. Il resto degli appunti viene ignorato.|Kopierte lenker åpnes når du går tilbake til vinduet. Annet innhold på utklippstavlen ignoreres.|이 창으로 돌아오면 복사한 링크가 열립니다. 다른 클립보드 내용은 무시합니다.
+Copies to keep|Copias que conservar|Copies à garder|Aufbewahrte Kopien|Copie da conservare|Kopier som beholdes|보관할 사본 수
 Copy|Copiar|Copier|Kopieren|Copia|Kopier|복사
 Copy a bookmarklet that opens the current page here|Copiar un marcador que abre aquí la página actual|Copier un favori qui ouvre ici la page actuelle|Bookmarklet kopieren, das die aktuelle Seite hier öffnet|Copia un bookmarklet che apre qui la pagina corrente|Kopier et bokmerke som åpner gjeldende side her|현재 페이지를 여기에서 여는 북마클릿 복사
+Copy a link that adds one|Copiar un enlace que suma uno|Copier un lien qui ajoute un|Link kopieren, der eins hinzufügt|Copia un link che aggiunge uno|Kopier en lenke som legger til én|하나 추가하는 링크 복사
 Copy link|Copiar enlace|Copier le lien|Link kopieren|Copia link|Kopier lenke|링크 복사
 Copy {} link|Copiar enlace de {}|Copier le lien {}|{}-Link kopieren|Copia link {}|Kopier {}-lenke|{} 링크 복사
 Create a client on AniList with this redirect URL, then paste its ID here. It is free.|Crea un cliente en AniList con esta URL de redirección y pega aquí su ID. Es gratis.|Crée un client sur AniList avec cette URL de redirection, puis colle son ID ici. C’est gratuit.|Erstelle auf AniList einen Client mit dieser Weiterleitungs-URL und füge die ID hier ein. Das ist kostenlos.|Crea un client su AniList con questo URL di reindirizzamento e incolla qui il suo ID. È gratuito.|Opprett en klient på AniList med denne omdirigerings-URL-en, og lim inn ID-en her. Det er gratis.|AniList에서 이 리디렉션 URL로 클라이언트를 만든 뒤 ID를 여기에 붙여 넣으세요. 무료입니다.
@@ -76,6 +87,22 @@ Descending|Descendente|Décroissant|Absteigend|Decrescente|Synkende|내림차순
 Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget desktop|Skrivebordswidget|데스크톱 위젯
 Display|Visualización|Affichage|Anzeige|Visualizzazione|Visning|표시
 Double-click|Doble clic|Double-clic|Doppelklick|Doppio clic|Dobbeltklikk|더블 클릭
+Each copy is named by its date. Older copies beyond the limit are deleted.|Cada copia lleva su fecha en el nombre. Las más antiguas por encima del límite se borran.|Chaque copie porte sa date dans son nom. Les plus anciennes au-delà de la limite sont supprimées.|Jede Kopie trägt ihr Datum im Namen. Ältere Kopien über dem Limit werden gelöscht.|Ogni copia ha la sua data nel nome. Le più vecchie oltre il limite vengono eliminate.|Hver kopi har datoen i navnet. Eldre kopier over grensen slettes.|각 사본의 이름에는 날짜가 들어갑니다. 한도를 넘는 오래된 사본은 삭제됩니다.
+Episode|Episodio|Épisode|Folge|Episodio|Episode|에피소드
+Episode calendar|Calendario de episodios|Calendrier des épisodes|Episodenkalender|Calendario degli episodi|Episodekalender|에피소드 캘린더
+Episode {} · {}|Episodio {} · {}|Épisode {} · {}|Folge {} · {}|Episodio {} · {}|Episode {} · {}|{}화 · {}
+Every day|Cada día|Chaque jour|Jeden Tag|Ogni giorno|Hver dag|매일
+Every hour|Cada hora|Toutes les heures|Jede Stunde|Ogni ora|Hver time|매시간
+Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
+Every {} hours|Cada {} horas|Toutes les {} heures|Alle {} Stunden|Ogni {} ore|Hver {}. time|{}시간마다
+Folder|Carpeta|Dossier|Ordner|Cartella|Mappe|폴더
+Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
+Links that change your list are off. Turn them on in Settings › Widget & automation.|Los enlaces que cambian tu lista están desactivados. Actívalos en Ajustes › Widget y automatización.|Les liens qui modifient ta liste sont désactivés. Active-les dans Réglages › Widget et automatisation.|Links, die deine Liste ändern, sind aus. Schalte sie unter Einstellungen › Widget & Automatisierung ein.|I link che modificano la tua lista sono disattivati. Attivali in Impostazioni › Widget e automazione.|Lenker som endrer listen din er av. Slå dem på i Innstillinger › Widget og automatisering.|목록을 바꾸는 링크가 꺼져 있습니다. 설정 › 위젯 및 자동화에서 켜세요.
+Next episodes|Próximos episodios|Prochains épisodes|Nächste Folgen|Prossimi episodi|Neste episoder|다음 에피소드
+No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewählt|Nessuna cartella scelta|Ingen mappe valgt|선택한 폴더 없음
+No progress for {} days|Sin avances desde hace {} días|Aucun progrès depuis {} jours|Seit {} Tagen kein Fortschritt|Nessun progresso da {} giorni|Ingen fremdrift på {} dager|{}일 동안 진행 없음
+Reminders|Recordatorios|Rappels|Erinnerungen|Promemoria|Påminnelser|리마인더
+Reminders are notifications: turn notifications on to get them.|Los recordatorios son notificaciones: activa las notificaciones para recibirlos.|Les rappels sont des notifications : active les notifications pour les recevoir.|Erinnerungen sind Benachrichtigungen: Schalte Benachrichtigungen ein, um sie zu erhalten.|I promemoria sono notifiche: attiva le notifiche per riceverli.|Påminnelser er varsler: slå på varsler for å få dem.|리마인더는 알림입니다. 받으려면 알림을 켜세요.
 Right-click always opens the full menu. Dragging a row sideways also works on touch screens.|El clic derecho siempre abre el menú completo. Arrastrar una fila de lado también funciona en pantallas táctiles.|Le clic droit ouvre toujours le menu complet. Faire glisser une ligne sur le côté marche aussi sur les écrans tactiles.|Rechtsklick öffnet immer das ganze Menü. Eine Zeile zur Seite ziehen geht auch auf Touchscreens.|Il clic destro apre sempre il menu completo. Trascinare una riga di lato funziona anche sugli schermi touch.|Høyreklikk åpner alltid hele menyen. Å dra en rad sidelengs fungerer også på berøringsskjermer.|오른쪽 클릭하면 항상 전체 메뉴가 열립니다. 행을 옆으로 드래그하는 것은 터치스크린에서도 됩니다.
 Drag left|Arrastrar a la izquierda|Glisser à gauche|Nach links ziehen|Trascina a sinistra|Dra til venstre|왼쪽으로 드래그
 Drag right|Arrastrar a la derecha|Glisser à droite|Nach rechts ziehen|Trascina a destra|Dra til høyre|오른쪽으로 드래그
@@ -136,6 +163,9 @@ Light|Claro|Clair|Hell|Chiaro|Lys|라이트
 Light novel|Novela ligera|Light novel|Light Novel|Light novel|Light novel|라이트 노벨
 Link copied|Enlace copiado|Lien copié|Link kopiert|Link copiato|Lenke kopiert|링크를 복사했습니다
 Links|Enlaces|Liens|Links|Link|Lenker|링크
+Statistics|Estadísticas|Statistiques|Statistik|Statistiche|Statistikk|통계
+Step, binge and refresh links work without bringing the window forward, so a shortcut, a hotkey tool or a Stream Deck can use them. Step links need the switch above; a title's menu copies one.|Los enlaces step, binge y refresh funcionan sin traer la ventana al frente, así que puedes usarlos desde un acceso directo, una herramienta de atajos o un Stream Deck. Los enlaces step necesitan el interruptor de arriba; el menú de un título copia uno.|Les liens step, binge et refresh marchent sans mettre la fenêtre au premier plan : un raccourci, un outil de touches ou un Stream Deck peut s’en servir. Les liens step demandent l’interrupteur ci-dessus ; le menu d’un titre en copie un.|Step-, Binge- und Refresh-Links funktionieren, ohne das Fenster nach vorne zu holen, also kann eine Verknüpfung, ein Hotkey-Tool oder ein Stream Deck sie nutzen. Step-Links brauchen den Schalter oben; das Menü eines Titels kopiert einen.|I link step, binge e refresh funzionano senza portare la finestra in primo piano, quindi può usarli un collegamento, uno strumento di scorciatoie o uno Stream Deck. I link step richiedono l’interruttore qui sopra; il menu di un titolo ne copia uno.|Step-, binge- og refresh-lenker virker uten å hente vinduet frem, så en snarvei, et hurtigtastverktøy eller en Stream Deck kan bruke dem. Step-lenker trenger bryteren over; menyen til en tittel kopierer en.|step, binge, refresh 링크는 창을 앞으로 가져오지 않고 작동하므로 바로 가기, 단축키 도구, Stream Deck에서 쓸 수 있습니다. step 링크는 위의 스위치가 필요하며, 작품 메뉴에서 복사할 수 있습니다.
+Stop|Detener|Arrêter|Beenden|Interrompi|Stopp|중지
 Streaming|Streaming|Streaming|Streaming|Streaming|Strømming|스트리밍
 List settings|Ajustes de la lista|Réglages de la liste|Listeneinstellungen|Impostazioni lista|Listeinnstillinger|목록 설정
 Lists|Listas|Listes|Listen|Liste|Lister|목록
@@ -319,12 +349,16 @@ Synopsis|Sinopsis|Synopsis|Handlung|Trama|Sammendrag|줄거리
 System|Sistema|Système|System|Sistema|System|시스템
 Tags|Etiquetas|Tags|Tags|Tag|Stikkord|태그
 Teal|Turquesa|Turquoise|Türkis|Turchese|Blågrønn|청록
+The automatic backup failed: {}|La copia automática ha fallado: {}|La sauvegarde automatique a échoué : {}|Die automatische Sicherung ist fehlgeschlagen: {}|Il backup automatico non è riuscito: {}|Den automatiske sikkerhetskopien mislyktes: {}|자동 백업에 실패했습니다: {}
+The calendar could not be saved: {}|No se ha podido guardar el calendario: {}|Le calendrier n’a pas pu être enregistré : {}|Der Kalender konnte nicht gespeichert werden: {}|Impossibile salvare il calendario: {}|Kalenderen kunne ikke lagres: {}|캘린더를 저장하지 못했습니다: {}
 The first episode is out|Ya está el primer episodio|Le premier épisode est sorti|Die erste Folge ist da|È uscito il primo episodio|Første episode er ute|첫 에피소드가 나왔습니다
 The last episode is out|Ya está el último episodio|Le dernier épisode est sorti|Die letzte Folge ist da|È uscito l’ultimo episodio|Siste episode er ute|마지막 에피소드가 나왔습니다
+The next episode of everything you watch or plan to watch is written to this .ics file and kept up to date. Import it into your calendar, or subscribe to it where your calendar app allows.|El próximo episodio de todo lo que ves o piensas ver se escribe en este archivo .ics y se mantiene al día. Impórtalo en tu calendario o suscríbete a él si tu app de calendario lo permite.|Le prochain épisode de tout ce que tu regardes ou prévois de regarder est écrit dans ce fichier .ics et tenu à jour. Importe-le dans ton calendrier, ou abonne-toi si ton app de calendrier le permet.|Die nächste Folge von allem, was du schaust oder schauen willst, wird in diese .ics-Datei geschrieben und aktuell gehalten. Importiere sie in deinen Kalender oder abonniere sie, wo deine Kalender-App es erlaubt.|Il prossimo episodio di tutto ciò che guardi o vuoi guardare viene scritto in questo file .ics e tenuto aggiornato. Importalo nel tuo calendario o iscriviti dove la tua app di calendario lo consente.|Neste episode av alt du ser eller planlegger å se skrives til denne .ics-filen og holdes oppdatert. Importer den i kalenderen din, eller abonner på den der kalenderappen tillater det.|보고 있거나 볼 예정인 모든 작품의 다음 에피소드가 이 .ics 파일에 기록되고 최신 상태로 유지됩니다. 캘린더로 가져오거나, 캘린더 앱이 허용하면 구독하세요.
 The service is not available right now ({}).|El servicio no está disponible ahora ({}).|Le service est indisponible pour le moment ({}).|Der Dienst ist gerade nicht verfügbar ({}).|Il servizio non è disponibile al momento ({}).|Tjenesten er ikke tilgjengelig akkurat nå ({}).|지금은 서비스를 사용할 수 없습니다({}).
 The {} list will be removed from this computer. Your online list is kept.|La lista de {} se borrará de este equipo. Tu lista en línea se conserva.|La liste {} sera supprimée de cet ordinateur. Ta liste en ligne est conservée.|Die {}-Liste wird von diesem Computer entfernt. Deine Online-Liste bleibt erhalten.|La lista di {} verrà rimossa da questo computer. La lista online resta.|{}-listen fjernes fra denne datamaskinen. Nettlisten din beholdes.|{} 목록이 이 컴퓨터에서 제거됩니다. 온라인 목록은 유지됩니다.
 Theme|Tema|Thème|Design|Tema|Tema|테마
 This backup could not be read: {}|No se pudo leer esta copia: {}|Cette sauvegarde est illisible : {}|Diese Sicherung konnte nicht gelesen werden: {}|Impossibile leggere questo backup: {}|Sikkerhetskopien kunne ikke leses: {}|이 백업을 읽을 수 없습니다: {}
+This title is not in your list.|Este título no está en tu lista.|Ce titre n’est pas dans ta liste.|Dieser Titel ist nicht in deiner Liste.|Questo titolo non è nella tua lista.|Denne tittelen er ikke i listen din.|이 작품은 목록에 없습니다.
 Time|Hora|Heure|Zeit|Ora|Tid|시간
 Times reread|Veces releído|Nombre de relectures|Erneut gelesen|Volte riletto|Ganger lest på nytt|다시 읽은 횟수
 Times rewatched|Veces vuelto a ver|Nombre de revisionnages|Erneut gesehen|Volte rivisto|Ganger sett på nytt|다시 본 횟수
@@ -332,8 +366,10 @@ Tint|Color de acento|Couleur d’accent|Akzentfarbe|Colore d’accento|Aksentfar
 Title|Título|Titre|Titel|Titolo|Tittel|제목
 Title language|Idioma de los títulos|Langue des titres|Sprache der Titel|Lingua dei titoli|Språk på titler|제목 언어
 Title, or an AniList or MyAnimeList link|Título, o un enlace de AniList o MyAnimeList|Titre, ou lien AniList ou MyAnimeList|Titel oder AniList-/MyAnimeList-Link|Titolo, o link AniList o MyAnimeList|Tittel, eller lenke til AniList eller MyAnimeList|제목 또는 AniList, MyAnimeList 링크
+Titles I stopped watching or reading|Títulos que dejé de ver o leer|Titres que j’ai arrêté de regarder ou lire|Titel, die ich nicht weiterschaue oder -lese|Titoli che ho smesso di guardare o leggere|Titler jeg sluttet å se eller lese|보거나 읽다가 멈춘 작품
 Titles and rankings|Títulos y rankings|Titres et classements|Titel und Ranglisten|Titoli e classifiche|Titler og rangeringer|작품 및 순위
 Titles in the backup replace the ones in your list.|Los títulos de la copia sustituyen a los de tu lista.|Les titres de la sauvegarde remplacent ceux de ta liste.|Titel aus der Sicherung ersetzen die in deiner Liste.|I titoli del backup sostituiscono quelli della tua lista.|Titler i sikkerhetskopien erstatter dem i listen din.|백업의 작품이 목록의 작품을 대체합니다.
+Titles per group|Títulos por grupo|Titres par groupe|Titel pro Gruppe|Titoli per gruppo|Titler per gruppe|그룹당 작품 수
 Today|Hoy|Aujourd’hui|Heute|Oggi|I dag|오늘
 Too many requests. Wait a minute and try again.|Demasiadas peticiones. Espera un minuto e inténtalo de nuevo.|Trop de requêtes. Attends une minute et réessaie.|Zu viele Anfragen. Warte eine Minute und versuche es erneut.|Troppe richieste. Aspetta un minuto e riprova.|For mange forespørsler. Vent et minutt og prøv igjen.|요청이 너무 많습니다. 잠시 후 다시 시도하세요.
 Top rated|Mejor valorados|Les mieux notés|Bestbewertet|Più votati|Høyest rangert|평점순
@@ -348,6 +384,7 @@ Updating…|Actualizando…|Mise à jour…|Wird aktualisiert…|Aggiornamento�
 Version|Versión|Version|Version|Versione|Versjon|버전
 Volumes|Tomos|Tomes|Bände|Volumi|Bind|권
 Watching|Viendo|En cours|Schaue ich|In visione|Ser på|보는 중
+Watching and reading|Viendo y leyendo|En cours de visionnage et de lecture|Am Schauen und Lesen|In visione e in lettura|Ser og leser|보는 중 및 읽는 중
 Widget & automation|Widget y automatización|Widget et automatisation|Widget & Automatisierung|Widget e automazione|Widget og automatisering|위젯 및 자동화
 Windows|Windows|Windows|Windows|Windows|Windows|Windows
 Winter|Invierno|Hiver|Winter|Inverno|Vinter|겨울
@@ -355,9 +392,19 @@ Write dates as YYYY-MM-DD.|Escribe las fechas como AAAA-MM-DD.|Écris les dates 
 YYYY-MM-DD|AAAA-MM-DD|AAAA-MM-JJ|JJJJ-MM-TT|AAAA-MM-GG|ÅÅÅÅ-MM-DD|YYYY-MM-DD
 Year|Año|Année|Jahr|Anno|År|연도
 Your change could not be saved.|No se pudo guardar el cambio.|Le changement n’a pas pu être enregistré.|Deine Änderung konnte nicht gespeichert werden.|Impossibile salvare la modifica.|Endringen kunne ikke lagres.|변경 사항을 저장할 수 없습니다.
+Your list is read again from your account, so changes made on the website or another device show up without refreshing. Your own changes are always sent right away.|Tu lista se vuelve a leer desde tu cuenta, así que los cambios hechos en la web o en otro dispositivo aparecen sin actualizar. Tus propios cambios siempre se envían al momento.|Ta liste est relue depuis ton compte : les changements faits sur le site ou sur un autre appareil apparaissent sans actualiser. Tes propres changements sont toujours envoyés tout de suite.|Deine Liste wird erneut aus deinem Konto gelesen, damit Änderungen auf der Website oder einem anderen Gerät ohne Aktualisieren erscheinen. Deine eigenen Änderungen werden immer sofort gesendet.|La tua lista viene riletta dal tuo account, così le modifiche fatte sul sito o su un altro dispositivo compaiono senza aggiornare. Le tue modifiche vengono sempre inviate subito.|Listen din leses på nytt fra kontoen, så endringer gjort på nettstedet eller en annen enhet vises uten å oppdatere. Dine egne endringer sendes alltid med en gang.|목록을 계정에서 다시 읽어 와서 웹사이트나 다른 기기에서 한 변경이 새로 고침 없이 나타납니다. 내 변경 사항은 항상 바로 전송됩니다.
 Your list stays on this computer until you sign in. Nothing is shared with anyone else.|Tu lista se queda en este equipo hasta que inicies sesión. No se comparte nada con nadie más.|Ta liste reste sur cet ordinateur jusqu’à ce que tu te connectes. Rien n’est partagé avec d’autres.|Deine Liste bleibt auf diesem Computer, bis du dich anmeldest. Nichts wird mit anderen geteilt.|La tua lista resta su questo computer finché non accedi. Nulla viene condiviso con altri.|Listen blir på denne datamaskinen til du logger på. Ingenting deles med andre.|로그인하기 전까지 목록은 이 컴퓨터에만 있습니다. 다른 누구와도 공유하지 않습니다.
 Your progress, score and notes for “{}” will be deleted.|Se borrarán tu progreso, nota y comentarios de «{}».|Ta progression, ta note et tes commentaires pour « {} » seront supprimés.|Dein Fortschritt, deine Wertung und deine Notizen zu „{}“ werden gelöscht.|Progressi, voto e note di “{}” verranno eliminati.|Fremdrift, score og notater for «{}» slettes.|“{}”의 진행, 점수, 메모가 삭제됩니다.
 Your session has expired. Sign in again.|Tu sesión ha caducado. Vuelve a iniciar sesión.|Ta session a expiré. Reconnecte-toi.|Deine Sitzung ist abgelaufen. Melde dich erneut an.|La sessione è scaduta. Accedi di nuovo.|Økten er utløpt. Logg på igjen.|세션이 만료되었습니다. 다시 로그인하세요.
+Your week|Tu semana|Ta semaine|Deine Woche|La tua settimana|Uken din|이번 주
+kioku.found.forget|Not this file|Este archivo no|Pas ce fichier|Diese Datei nicht|Non questo file|Ikke denne filen|이 파일 제외
+kioku.found.review|Review|Revisar|Vérifier|Prüfen|Controlla|Gå gjennom|검토
+kioku.found.title|In your Downloads|En tus Descargas|Dans tes Téléchargements|In deinen Downloads|Nei tuoi Download|I Nedlastinger|다운로드 폴더에 있음
+kioku.found|{} history found: {}|Historial de {} encontrado: {}|Historique {} trouvé : {}|{}-Verlauf gefunden: {}|Cronologia di {} trovata: {}|{}-historikk funnet: {}|{} 기록을 찾았습니다: {}
+kioku.downloads|Look for Netflix and Prime Video history in Downloads|Buscar el historial de Netflix y Prime Video en Descargas|Chercher l’historique Netflix et Prime Video dans Téléchargements|Netflix- und Prime-Video-Verlauf in Downloads suchen|Cerca la cronologia di Netflix e Prime Video in Download|Se etter Netflix- og Prime Video-historikk i Nedlastinger|다운로드 폴더에서 Netflix 및 Prime Video 기록 찾기
+kioku.auto.ready|{} changes from Crunchyroll are ready to review|{} cambios de Crunchyroll listos para revisar|{} changements de Crunchyroll à vérifier|{} Änderungen von Crunchyroll warten auf deine Prüfung|{} modifiche da Crunchyroll pronte da controllare|{} endringer fra Crunchyroll er klare til gjennomgang|검토할 Crunchyroll 변경 사항 {}개
+kioku.auto.note|Kioku reads the history on its own and tells you when there are changes to review. Nothing is written to your list until you confirm them. Connect Crunchyroll in Kioku first.|Kioku lee el historial por su cuenta y te avisa cuando hay cambios que revisar. No se escribe nada en tu lista hasta que los confirmas. Conecta antes Crunchyroll en Kioku.|Kioku lit l’historique tout seul et te prévient quand il y a des changements à vérifier. Rien n’est écrit dans ta liste avant que tu les confirmes. Connecte d’abord Crunchyroll dans Kioku.|Kioku liest den Verlauf selbstständig und sagt dir, wenn es Änderungen zu prüfen gibt. Nichts wird in deine Liste geschrieben, bevor du sie bestätigst. Verbinde zuerst Crunchyroll in Kioku.|Kioku legge la cronologia da solo e ti avvisa quando ci sono modifiche da controllare. Nulla viene scritto nella tua lista finché non le confermi. Collega prima Crunchyroll in Kioku.|Kioku leser historikken selv og sier fra når det er endringer å se gjennom. Ingenting skrives til listen før du bekrefter dem. Koble til Crunchyroll i Kioku først.|Kioku가 직접 기록을 읽고 검토할 변경 사항이 있으면 알려 줍니다. 확인하기 전에는 목록에 아무것도 기록되지 않습니다. 먼저 Kioku에서 Crunchyroll을 연결하세요.
+kioku.auto|Read the Crunchyroll history|Leer el historial de Crunchyroll|Lire l’historique Crunchyroll|Crunchyroll-Verlauf lesen|Leggi la cronologia di Crunchyroll|Les Crunchyroll-historikken|Crunchyroll 기록 읽기
 {} changes waiting to sync|{} cambios pendientes de sincronizar|{} changements à synchroniser|{} Änderungen warten auf Synchronisierung|{} modifiche da sincronizzare|{} endringer venter på synkronisering|변경 사항 {}개 동기화 대기 중
 {} connected|{} conectado|{} connecté|{} verbunden|{} connesso|{} tilkoblet|{} 연결됨
 {} d {} h|{} d {} h|{} j {} h|{} T {} Std|{} g {} h|{} d {} t|{}일 {}시간
@@ -370,7 +417,9 @@ Your session has expired. Sign in again.|Tu sesión ha caducado. Vuelve a inicia
 {} ratings|{} votos|{} votes|{} Wertungen|{} voti|{} vurderinger|평가 {}개
 {} statistics|Estadísticas de {}|Statistiques {}|{}-Statistik|Statistiche {}|{}-statistikk|{} 통계
 {} titles|{} títulos|{} titres|{} Titel|{} titoli|{} titler|작품 {}개
+{} titles air this week · {} episodes to catch up|{} títulos se emiten esta semana · {} episodios por ponerte al día|{} titres sont diffusés cette semaine · {} épisodes à rattraper|{} Titel laufen diese Woche · {} Folgen zum Aufholen|{} titoli in onda questa settimana · {} episodi da recuperare|{} titler sendes denne uken · {} episoder å ta igjen|이번 주 방영 작품 {}개 · 따라잡을 에피소드 {}개
 {} titles imported|{} títulos importados|{} titres importés|{} Titel importiert|{} titoli importati|{} titler importert|작품 {}개를 가져왔습니다
+{} titles with no progress for {} days|{} títulos sin avances desde hace {} días|{} titres sans progrès depuis {} jours|{} Titel seit {} Tagen ohne Fortschritt|{} titoli senza progressi da {} giorni|{} titler uten fremdrift på {} dager|작품 {}개가 {}일 동안 진행 없음
 {} unsent changes will be lost.|Se perderán {} cambios sin enviar.|{} changements non envoyés seront perdus.|{} nicht gesendete Änderungen gehen verloren.|{} modifiche non inviate andranno perse.|{} usendte endringer går tapt.|보내지 않은 변경 사항 {}개가 사라집니다.
 {} vol, {} ch|{} tomos, {} caps.|{} tomes, {} ch.|{} Bde., {} Kap.|{} vol., {} cap.|{} bind, {} kap.|{}권, {}화
 Add|Añadir|Ajouter|Hinzufügen|Aggiungi|Legg til|추가

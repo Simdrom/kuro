@@ -182,6 +182,10 @@ pub struct NotificationSettings {
     /// Hour used when only the date is known.
     pub date_hour: u32,
     pub muted: Vec<MediaRef>,
+    /// Days without progress before a title being watched is mentioned; 0 never.
+    pub stale_days: u32,
+    /// A summary of the week on Monday.
+    pub weekly: bool,
 }
 
 impl Default for NotificationSettings {
@@ -195,7 +199,70 @@ impl Default for NotificationSettings {
             delay_minutes: 0,
             date_hour: 10,
             muted: Vec::new(),
+            stale_days: 0,
+            weekly: false,
         }
+    }
+}
+
+/// What the desktop widget shows. It stays open across restarts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct WidgetSettings {
+    pub open: bool,
+    /// The next episodes to air, with a countdown.
+    pub up_next: bool,
+    pub watching: bool,
+    pub stats: bool,
+    /// Titles shown in each group.
+    pub rows: u32,
+}
+
+impl Default for WidgetSettings {
+    fn default() -> Self {
+        Self { open: false, up_next: true, watching: true, stats: true, rows: 5 }
+    }
+}
+
+/// How often something runs on its own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum Every {
+    #[default]
+    Off,
+    Daily,
+    Weekly,
+}
+
+impl Every {
+    pub const ALL: [Self; 3] = [Self::Off, Self::Daily, Self::Weekly];
+
+    /// The day or ISO week `d` falls in, which runs once; `None` when off.
+    pub fn period(self, d: jiff::civil::Date) -> Option<String> {
+        match self {
+            Self::Off => None,
+            Self::Daily => Some(d.to_string()),
+            Self::Weekly => {
+                let w = d.iso_week_date();
+                Some(format!("{}-W{:02}", w.year(), w.week()))
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct BackupSettings {
+    pub every: Every,
+    /// Empty until a folder is chosen.
+    pub folder: String,
+    /// Automatic copies kept in the folder.
+    pub keep: u32,
+}
+
+impl Default for BackupSettings {
+    fn default() -> Self {
+        Self { every: Every::Off, folder: String::new(), keep: 10 }
     }
 }
 
@@ -245,8 +312,21 @@ pub struct Settings {
     pub autostart: bool,
     /// Handle `kuro://` links.
     pub handle_links: bool,
+    /// Links may change the list, such as `kuro://step/…`.
+    pub link_actions: bool,
     pub gestures: Gestures,
     pub notifications: NotificationSettings,
+    // Automation
+    pub widget: WidgetSettings,
+    pub backup: BackupSettings,
+    /// Reads the list from the account again this often; 0 never does.
+    pub refresh_hours: u32,
+    /// Kioku reads the Crunchyroll history on its own this often.
+    pub kioku_check: Every,
+    /// Kioku looks for streaming history files in the Downloads folder.
+    pub watch_downloads: bool,
+    /// An iCalendar file kept up to date with upcoming episodes; empty for none.
+    pub calendar_file: String,
 }
 
 impl Default for Settings {
@@ -288,13 +368,25 @@ impl Default for Settings {
             close_to_tray: false,
             autostart: false,
             handle_links: false,
+            link_actions: false,
             gestures: Gestures::default(),
             notifications: NotificationSettings::default(),
+            widget: WidgetSettings::default(),
+            backup: BackupSettings::default(),
+            refresh_hours: 0,
+            kioku_check: Every::Off,
+            watch_downloads: false,
+            calendar_file: String::new(),
         }
     }
 }
 
 impl Settings {
+    /// Whether the list should be read from the account again, last read at `last`.
+    pub fn refresh_due(&self, last: i64, now: i64) -> bool {
+        self.refresh_hours > 0 && now - last >= i64::from(self.refresh_hours) * 3600
+    }
+
     /// Clamps values that could come from a damaged or edited file.
     pub fn normalized(mut self) -> Self {
         let fin = |v: f32, d: f32| if v.is_finite() { v } else { d };
@@ -302,6 +394,15 @@ impl Settings {
         self.zoom = fin(self.zoom, 1.0).clamp(0.75, 1.75);
         self.notifications.date_hour = self.notifications.date_hour.min(23);
         self.notifications.delay_minutes = self.notifications.delay_minutes.min(24 * 60);
+        self.notifications.stale_days = self.notifications.stale_days.min(365);
+        self.refresh_hours = self.refresh_hours.min(24 * 7);
+        self.widget.rows = self.widget.rows.clamp(1, 20);
+        self.backup.keep = self.backup.keep.clamp(1, 100);
+        for path in [&mut self.backup.folder, &mut self.calendar_file] {
+            if path.len() > 1024 || path.chars().any(char::is_control) {
+                path.clear();
+            }
+        }
         for id in [&mut self.mal_client_id, &mut self.anilist_client_id] {
             *id = id.trim().to_owned();
             if id.len() > 128 || !id.chars().all(|c| c.is_ascii_alphanumeric()) {
@@ -327,6 +428,24 @@ mod tests {
     fn settings_saved_under_the_old_name_still_load() {
         let s: Settings = serde_json::from_str(r#"{"tint":"mango","icon":"sunrise","zoom":1.25}"#).unwrap();
         assert_eq!((s.tint, s.icon, s.zoom), (Tint::Amber, AppIcon::Ink, 1.25));
+    }
+
+    #[test]
+    fn the_list_is_read_again_only_when_asked_and_due() {
+        let mut s = Settings::default();
+        assert!(!s.refresh_due(0, 1_000_000));
+        s.refresh_hours = 3;
+        assert!(!s.refresh_due(1_000_000, 1_000_000 + 3 * 3600 - 1));
+        assert!(s.refresh_due(1_000_000, 1_000_000 + 3 * 3600));
+    }
+
+    #[test]
+    fn periods_run_once_a_day_or_a_week() {
+        let d = jiff::civil::date(2027, 1, 20);
+        assert_eq!(Every::Off.period(d), None);
+        assert_eq!(Every::Daily.period(d).as_deref(), Some("2027-01-20"));
+        assert_eq!(Every::Weekly.period(d).as_deref(), Some("2027-W03"));
+        assert_eq!(Every::Weekly.period(jiff::civil::date(2027, 1, 18)), Every::Weekly.period(d));
     }
 
     #[test]

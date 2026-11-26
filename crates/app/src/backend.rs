@@ -8,12 +8,15 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use eframe::egui;
+use jiff::civil::Date;
 use kuro_api::images::ImageCache;
 use kuro_api::kioku::HistorySource;
 use kuro_api::music::Track;
 use kuro_api::{Api, ApiError, Page, RankingQuery, SeasonQuery, Tokens};
+use kuro_core::backup;
 use kuro_core::kioku::{self, Group, Platform, Proposal, WatchedItem};
 use kuro_core::overview::Section;
+use kuro_core::settings::Every;
 use kuro_core::{
     ListEntry, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, Service, Store, Theme, UserProfile,
 };
@@ -97,6 +100,14 @@ pub enum Event {
     /// Text chosen in a file dialog.
     ImportText(Result<String, String>),
     Exported(Result<(), String>),
+    /// A folder chosen for automatic backups.
+    BackupFolder(String),
+    /// An automatic backup ran: the newest copy in the folder afterwards.
+    AutoBackup(Result<Option<String>, String>),
+    /// A file chosen for the episode calendar.
+    CalendarFile(String),
+    /// The episode calendar was written, or why not.
+    CalendarWritten(Result<(), String>),
     /// Kioku: the sign-in window closed.
     KiokuConnected {
         platform: Platform,
@@ -113,6 +124,13 @@ pub enum Event {
     },
     /// Kioku: history read and matched, waiting for the user.
     KiokuReview(Outcome<KiokuReview>),
+    /// Kioku: a streaming history file in the Downloads folder.
+    KiokuFileFound {
+        platform: Platform,
+        path: PathBuf,
+        /// Unix seconds of its last change.
+        modified: i64,
+    },
     /// A link passed by another process or the tray.
     OpenLink(String),
     /// A notification's button: this episode was watched.
@@ -713,28 +731,70 @@ impl Backend {
 
     /// Asks for an exported history file and reviews it like a sync.
     pub fn kioku_import(&self, platform: Platform, service: Service) {
-        use kuro_api::kioku::amazon::Amazon;
-        use kuro_api::kioku::netflix::{MAX_FILE, Netflix};
-        let Some(rt) = self.rt.as_ref().map(|rt| rt.handle().clone()) else { return };
-        let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
+        let reply = self.reply();
+        let import = self.kioku_reader(platform, service);
         std::thread::spawn(move || {
             let Some(path) = rfd::FileDialog::new().add_filter("CSV / JSON", &["csv", "json"]).pick_file()
             else {
                 return reply.send(Event::KiokuCancelled);
             };
-            let read = match std::fs::metadata(&path) {
-                Ok(m) if m.len() > MAX_FILE as u64 => Err(ApiError::TooLarge),
-                Ok(_) => std::fs::read(&path).map_err(|e| ApiError::Service(e.to_string())),
-                Err(e) => Err(ApiError::Service(e.to_string())),
-            };
-            let source: &dyn HistorySource = match platform {
-                Platform::Netflix => &Netflix,
-                Platform::Amazon => &Amazon,
-                _ => return reply.send(Event::KiokuReview(Err(ApiError::Unavailable))),
-            };
-            match read.and_then(|bytes| source.parse(&bytes)) {
-                Ok(items) => drop(rt.spawn(kioku_task(api, store, platform, service, reply, Some(items)))),
-                Err(e) => reply.send(Event::KiokuReview(Err(e))),
+            if let Some(import) = import {
+                import(path);
+            }
+        });
+    }
+
+    /// Reviews a history file already found, like [`Self::kioku_import`].
+    pub fn kioku_import_file(&self, platform: Platform, service: Service, path: PathBuf) {
+        if let Some(import) = self.kioku_reader(platform, service) {
+            std::thread::spawn(move || import(path));
+        }
+    }
+
+    /// Reads, parses and reviews a history file, off the interface thread.
+    fn kioku_reader(
+        &self,
+        platform: Platform,
+        service: Service,
+    ) -> Option<impl FnOnce(PathBuf) + Send + 'static> {
+        let rt = self.rt.as_ref().map(|rt| rt.handle().clone())?;
+        let (api, store, reply) = (self.api.clone(), self.store.clone(), self.reply());
+        Some(move |path: PathBuf| match read_history(platform, &path) {
+            Ok(items) => drop(rt.spawn(kioku_task(api, store, platform, service, reply, Some(items)))),
+            Err(e) => reply.send(Event::KiokuReview(Err(e))),
+        })
+    }
+
+    /// Looks in `dir` for streaming history files changed since `since`, and
+    /// reports the newest one of each platform that reads as its history.
+    pub fn scan_downloads(&self, dir: PathBuf, since: i64) {
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            let Ok(list) = std::fs::read_dir(&dir) else { return };
+            let mut newest: std::collections::HashMap<Platform, (i64, PathBuf)> = Default::default();
+            for e in list.flatten() {
+                let Some(platform) = e.file_name().to_str().and_then(kioku::export_platform) else {
+                    continue;
+                };
+                let Ok(meta) = e.metadata() else { continue };
+                let modified = meta
+                    .modified()
+                    .ok()
+                    .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                    .and_then(|d| i64::try_from(d.as_secs()).ok())
+                    .unwrap_or(0);
+                // Only a file that reads as a history counts, so another one
+                // with a similar name never hides it.
+                if meta.is_file()
+                    && modified >= since
+                    && newest.get(&platform).is_none_or(|(m, _)| modified > *m)
+                    && read_history(platform, &e.path()).is_ok_and(|items| !items.is_empty())
+                {
+                    newest.insert(platform, (modified, e.path()));
+                }
+            }
+            for (platform, (modified, path)) in newest {
+                reply.send(Event::KiokuFileFound { platform, path, modified });
             }
         });
     }
@@ -812,6 +872,51 @@ impl Backend {
         });
     }
 
+    pub fn pick_folder(&self) {
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                reply.send(Event::BackupFolder(path.display().to_string()));
+            }
+        });
+    }
+
+    pub fn pick_calendar_file(&self) {
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            let path = rfd::FileDialog::new()
+                .add_filter("iCalendar", &["ics"])
+                .set_file_name("kuro-episodes.ics")
+                .save_file();
+            if let Some(path) = path {
+                reply.send(Event::CalendarFile(path.display().to_string()));
+            }
+        });
+    }
+
+    /// Replaces the calendar file with `text`, never leaving half a file.
+    pub fn write_calendar(&self, path: PathBuf, text: String) {
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            let part = path.with_extension("ics.part");
+            let r = std::fs::write(&part, text).and_then(|()| std::fs::rename(&part, &path));
+            reply.send(Event::CalendarWritten(r.map_err(|e| e.to_string())));
+        });
+    }
+
+    /// Saves a dated copy of the list in `folder` when one is due, then
+    /// removes automatic copies beyond `keep`. Other files are left alone.
+    pub fn auto_backup(&self, service: Service, folder: PathBuf, every: Every, keep: u32, today: Date) {
+        let (store, reply) = (self.store.clone(), self.reply());
+        std::thread::spawn(move || {
+            let r = run_backup(&store, service, &folder, every, keep, today).map_err(|e| e.to_string());
+            if let Err(e) = &r {
+                tracing::warn!("automatic backup failed: {e}");
+            }
+            reply.send(Event::AutoBackup(r));
+        });
+    }
+
     pub fn import(&self) {
         const MAX: u64 = 64 * 1024 * 1024;
         let reply = self.reply();
@@ -825,6 +930,54 @@ impl Backend {
             reply.send(Event::ImportText(r));
         });
     }
+}
+
+/// A history file saved from `platform`, read within its size limit.
+fn read_history(platform: Platform, path: &std::path::Path) -> Outcome<Vec<WatchedItem>> {
+    use kuro_api::kioku::amazon::Amazon;
+    use kuro_api::kioku::netflix::{MAX_FILE, Netflix};
+    let source: &dyn HistorySource = match platform {
+        Platform::Netflix => &Netflix,
+        Platform::Amazon => &Amazon,
+        _ => return Err(ApiError::Unavailable),
+    };
+    let bytes = match std::fs::metadata(path) {
+        Ok(m) if m.len() > MAX_FILE as u64 => Err(ApiError::TooLarge),
+        Ok(_) => std::fs::read(path).map_err(|e| ApiError::Service(e.to_string())),
+        Err(e) => Err(ApiError::Service(e.to_string())),
+    }?;
+    source.parse(&bytes)
+}
+
+fn run_backup(
+    store: &Mutex<Store>,
+    service: Service,
+    folder: &std::path::Path,
+    every: Every,
+    keep: u32,
+    today: Date,
+) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    let names = |folder: &std::path::Path| -> std::io::Result<Vec<String>> {
+        Ok(std::fs::read_dir(folder)?
+            .flatten()
+            .filter(|e| e.file_type().is_ok_and(|t| t.is_file()))
+            .filter_map(|e| e.file_name().into_string().ok())
+            .collect())
+    };
+    let before = names(folder)?;
+    if backup::due(before.iter().map(String::as_str), today, every) {
+        let text = lock(store).export(service)?;
+        let path = folder.join(backup::file_name(today));
+        // Written aside first, so a failed write never leaves half a backup.
+        let part = path.with_extension("json.part");
+        std::fs::write(&part, text)?;
+        std::fs::rename(&part, &path)?;
+    }
+    let after = names(folder)?;
+    for old in backup::surplus(after.iter().map(String::as_str), keep) {
+        std::fs::remove_file(folder.join(&old))?;
+    }
+    Ok(backup::latest(after.iter().map(String::as_str)).map(backup::file_name))
 }
 
 #[cfg(windows)]

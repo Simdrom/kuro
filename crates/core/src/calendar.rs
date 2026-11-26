@@ -1,0 +1,129 @@
+//! An iCalendar file (RFC 5545) with the next episode of every airing title.
+
+use std::fmt::Write;
+
+use crate::model::{ListEntry, ListStatus, MediaKind, TitleLanguage};
+
+/// Minutes an episode lasts when the service does not say.
+const DEFAULT_MINUTES: u32 = 24;
+
+/// The calendar for `entries`. The same list always gives the same text, so
+/// the file is only rewritten when something changed.
+pub fn ics(entries: &[ListEntry], lang: TitleLanguage, episode_word: &str) -> String {
+    let mut due: Vec<&ListEntry> = entries
+        .iter()
+        .filter(|e| e.media.kind == MediaKind::Anime)
+        .filter(|e| matches!(e.status, ListStatus::Current | ListStatus::Planning))
+        .filter(|e| e.media.next_airing.is_some())
+        .collect();
+    due.sort_by_key(|e| (e.media.next_airing.map(|a| a.at), e.media.id));
+    let mut out = String::new();
+    for line in ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Kuro//Episodes//EN", "CALSCALE:GREGORIAN"] {
+        push(&mut out, line);
+    }
+    push(&mut out, "X-WR-CALNAME:Kuro");
+    for e in due {
+        let (m, Some(a)) = (&e.media, e.media.next_airing) else { continue };
+        let minutes = m.duration.filter(|d| *d > 0).unwrap_or(DEFAULT_MINUTES);
+        let title = format!("{} · {episode_word} {}", m.display_title(lang), a.episode);
+        push(&mut out, "BEGIN:VEVENT");
+        push(&mut out, &format!("UID:kuro-{}-{}-{}@kuro", m.service.key(), m.id, a.episode));
+        // Stamped with the airing time, not the time of writing, to keep the text stable.
+        push(&mut out, &format!("DTSTAMP:{}", utc(a.at)));
+        push(&mut out, &format!("DTSTART:{}", utc(a.at)));
+        push(&mut out, &format!("DURATION:PT{minutes}M"));
+        push(&mut out, &format!("SUMMARY:{}", escape(&title)));
+        if let Some(u) = m.web_url(m.service) {
+            push(&mut out, &format!("URL:{}", escape(&u)));
+        }
+        push(&mut out, "TRANSP:TRANSPARENT");
+        push(&mut out, "END:VEVENT");
+    }
+    push(&mut out, "END:VCALENDAR");
+    out
+}
+
+/// `20261126T153000Z`
+fn utc(at: i64) -> String {
+    jiff::Timestamp::from_second(at)
+        .map_or_else(|_| "19700101T000000Z".into(), |t| t.strftime("%Y%m%dT%H%M%SZ").to_string())
+}
+
+fn escape(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for c in text.chars() {
+        match c {
+            '\\' | ';' | ',' => {
+                out.push('\\');
+                out.push(c);
+            }
+            '\n' => out.push_str("\\n"),
+            c if c.is_control() => {}
+            c => out.push(c),
+        }
+    }
+    out
+}
+
+/// Adds a content line, folded at 75 octets without splitting a character.
+fn push(out: &mut String, line: &str) {
+    let mut used = 0;
+    for c in line.chars() {
+        if used + c.len_utf8() > 75 {
+            out.push_str("\r\n ");
+            used = 1;
+        }
+        out.push(c);
+        used += c.len_utf8();
+    }
+    let _ = out.write_str("\r\n");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::{Airing, Media};
+
+    fn airing(id: u64, title: &str, status: ListStatus, ep: u32, at: i64) -> ListEntry {
+        let mut e =
+            ListEntry::new(Media { id, kind: MediaKind::Anime, title: title.into(), ..Media::default() });
+        e.status = status;
+        e.media.next_airing = Some(Airing { episode: ep, at });
+        e
+    }
+
+    #[test]
+    fn lists_the_next_episode_of_what_is_watched_or_planned() {
+        let mut done = airing(3, "Done", ListStatus::Completed, 5, 1_800_000_000);
+        done.media.next_airing = Some(Airing { episode: 5, at: 1_800_000_000 });
+        let list = [
+            airing(2, "Later", ListStatus::Planning, 1, 1_800_090_000),
+            airing(1, "Soon, really; now", ListStatus::Current, 10, 1_800_000_000),
+            done,
+            ListEntry::new(Media {
+                id: 4,
+                kind: MediaKind::Anime,
+                title: "No date".into(),
+                ..Media::default()
+            }),
+        ];
+        let text = ics(&list, TitleLanguage::Romaji, "Ep.");
+        assert!(text.starts_with("BEGIN:VCALENDAR\r\n") && text.ends_with("END:VCALENDAR\r\n"));
+        assert_eq!(text.matches("BEGIN:VEVENT").count(), 2);
+        assert!(text.contains("SUMMARY:Soon\\, really\\; now · Ep. 10\r\n"));
+        assert!(text.contains("DTSTART:20270115T080000Z\r\n"));
+        assert!(text.contains("DURATION:PT24M"));
+        assert!(text.find("Soon").unwrap() < text.find("Later").unwrap(), "sorted by airing time");
+        assert_eq!(text, ics(&list, TitleLanguage::Romaji, "Ep."), "stable");
+    }
+
+    #[test]
+    fn long_lines_fold_between_characters() {
+        let mut out = String::new();
+        push(&mut out, &format!("SUMMARY:{}", "黒".repeat(40)));
+        for line in out.split("\r\n") {
+            assert!(line.len() <= 75, "{line}");
+        }
+        assert_eq!(out.replace("\r\n ", ""), format!("SUMMARY:{}\r\n", "黒".repeat(40)));
+    }
+}

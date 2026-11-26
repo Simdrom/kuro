@@ -344,6 +344,10 @@ pub fn menu(app: &mut App, ui: &mut Ui, item: &Item) {
         entry(app, ui, t("Open in browser"), Act::Url(u.clone()));
         entry(app, ui, t("Copy link"), Act::Copy(u));
     }
+    if let Some(e) = item.entry.as_ref().filter(|_| app.s.link_actions) {
+        let link = kuro_core::links::step_link(e.media.media_ref(), 1);
+        entry(app, ui, t("Copy a link that adds one"), Act::Copy(link));
+    }
     if item.entry.is_some() {
         ui.separator();
         entry(app, ui, t("Remove from list…"), Act::AskDelete(m));

@@ -26,7 +26,7 @@ fits:
 | Installed | Button | What it does |
 | --- | --- | --- |
 | None | **Install** | Installs, with a Start menu shortcut and, if you want, a desktop one |
-| Older | **Update to X** | Closes Kuro and replaces it |
+| Older | **Update to X** | Lists what is new since the installed version, then closes Kuro and replaces it |
 | The same | **Reinstall** | Writes the program again, which repairs it |
 | Newer | **Go back to X** | Installs this older version, if it can still read your lists; if a newer Kuro changed them, it says so and changes nothing |
 
@@ -127,6 +127,53 @@ choose the right title.
 Disney+ is planned as an import of the file Disney hands out, and is not
 available yet.
 
+## Automation
+
+**Settings › Widget & automation** gathers what Kuro does on its own.
+
+- The **desktop widget** shows the next episodes to air with a countdown,
+  what you are watching and reading with a +1 button, and your statistics;
+  each can be turned off. Left open, it opens again with Kuro.
+- **Automatic backup** saves a copy of your list every day or week in a
+  folder you choose, as `kuro-backup-<date>.json`, and deletes the oldest
+  copies beyond the number you keep. Other files in the folder are never
+  touched. A copy restores with **Settings › Data › Import…**.
+- **Sync** can read your list from your account again every few hours, so
+  changes made on the website or another device show up on their own. Your
+  own changes are always sent at once, and retried while offline.
+- **Calendar** writes the next episode of everything you watch or plan to
+  watch to an `.ics` file you choose, and rewrites it when the list or the
+  schedule changes. Import it into a calendar, or subscribe to it where the
+  calendar app allows a file.
+- **Reminders** mention a title you are watching or reading that has not
+  moved for one, two or four weeks (not one that is only waiting for its
+  next episode), with a button to mark the next episode. Several at once
+  come as one notification. A **weekly summary** on Monday counts what airs
+  that week and the episodes you have left to catch up.
+- **Kioku** can read the Crunchyroll history on its own once a day or week.
+  As after **Sync history**, nothing is written: a notification says how
+  many changes wait for your review, and opens Kioku.
+  It can also look in your Downloads folder, about once an hour, for a
+  Netflix or Prime Video history saved in the last two weeks: files with
+  "netflix", "prime" or "amazon" in their name that read as that history.
+  Kioku then offers to review the file; nothing is read beyond that folder,
+  and a file you set aside is not offered again.
+- **Links** open titles, searches and tabs, and a few do things without
+  bringing the window forward, so a desktop shortcut, a hotkey tool or a
+  Stream Deck can use them:
+
+  | Link | Does |
+  | --- | --- |
+  | `kuro://step/anilist/anime/<id>?by=1` | Adds 1 to 10 episodes or chapters (negative removes them) |
+  | `kuro://binge/anilist/anime/<id>` | Opens the binge session |
+  | `kuro://random/anime` | Opens a random title |
+  | `kuro://refresh` | Reads the list from the account again |
+
+  Step links change your list, so they do nothing until **Allow links that
+  change my list** is on; then a title's menu copies one. They only touch
+  titles already in the list, never move a finished title and answer with a
+  notification when the window is not in front.
+
 ## What changes from a phone app
 
 | On a phone | Here |
@@ -193,6 +240,14 @@ the executable and moves `develop` to the next minor version. Nothing is
 pushed until everything has been built. It needs a write deploy key in the
 `RELEASE_DEPLOY_KEY` secret; the client IDs come from the repository variables
 `KURO_ANILIST_CLIENT_ID` and `KURO_MAL_CLIENT_ID`.
+
+`crates/setup/whats-new.txt` is the changelog users read. Its first section is
+always the version in `Cargo.toml`, and a change users will notice adds a short
+line there, in every language, in the same commit. The setup lists these lines
+when it updates an older Kuro, and the GitHub release starts with their English,
+followed by the commits (`git cliff`). Tests check the file; CI warns when
+`feat` or `fix` commits leave it untouched; the release refuses an empty
+section and starts the next version's.
 
 After cloning, turn on the local guard for `main`, `develop` and version tags:
 

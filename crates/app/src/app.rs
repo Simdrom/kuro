@@ -13,7 +13,7 @@ use kuro_core::links::{self, Link};
 use kuro_core::list::{Filter, SortKey};
 use kuro_core::notify;
 use kuro_core::overview::Section;
-use kuro_core::settings::{GestureAction, Settings};
+use kuro_core::settings::{Every, GestureAction, Settings};
 use kuro_core::{
     ListEntry, ListStatus, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, SeasonYear, Service, Theme,
     TitleLanguage, UserProfile, progress,
@@ -121,6 +121,10 @@ pub enum Act {
     KiokuDismissAll,
     /// Reviews a history file exported from the platform.
     KiokuImport(Platform),
+    /// Reviews the history file found in Downloads.
+    KiokuImportFound,
+    /// Forgets the history file found in Downloads.
+    KiokuForgetFound,
     /// Opens the title picker for a series of the review.
     KiokuPick(PickFrom),
     /// Searches with the picker's text.
@@ -163,6 +167,27 @@ pub struct KiokuView {
     pub picker: Option<KiokuPicker>,
     /// Long lists of series not found start folded.
     pub show_unmatched: bool,
+    /// The running sync was started on its own, not by the user.
+    pub background: bool,
+    /// The period last looked at for the automatic check.
+    pub checked: String,
+    /// A history file in Downloads not reviewed yet, and its key.
+    pub found: Option<FoundFile>,
+}
+
+/// A streaming history file found in the Downloads folder.
+#[derive(Clone)]
+pub struct FoundFile {
+    pub platform: Platform,
+    pub path: std::path::PathBuf,
+    /// Remembered once the file is reviewed or forgotten.
+    pub key: String,
+}
+
+impl FoundFile {
+    pub fn name(&self) -> String {
+        self.path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
+    }
 }
 
 #[derive(Default)]
@@ -333,7 +358,6 @@ pub struct App {
     pub confetti: Confetti,
     pub command: Option<String>,
     pub binge: Option<MediaRef>,
-    pub widget: bool,
     /// An open title uses the whole window.
     pub detail_full: bool,
     /// Content and an open title fit side by side.
@@ -347,12 +371,26 @@ pub struct App {
     pub image_bytes: Option<u64>,
     pub cache_bytes: Option<u64>,
     pub kioku: KiokuView,
+    /// Newest automatic backup in the chosen folder, once known.
+    pub last_backup: Option<String>,
+    pub backup_error: Option<String>,
+    /// When the backup folder is looked at next.
+    backup_at: f64,
+    /// When the list was last read from the account.
+    library_at: i64,
+    /// When Downloads is looked at next.
+    downloads_at: f64,
+    /// The calendar text last sent to the file.
+    calendar_text: String,
+    pub calendar_error: Option<String>,
     acts: Vec<Act>,
     next_tick: f64,
     airing_at: i64,
     clipboard_seen: String,
     really_quit: bool,
     hidden: bool,
+    /// The main window has the keyboard focus.
+    focused: bool,
     /// Frames left in which a hidden start is enforced.
     start_hidden: u8,
     applied: Option<(Palette, bool, f32)>,
@@ -434,7 +472,6 @@ impl App {
             confetti: Confetti::default(),
             command: None,
             binge: None,
-            widget: false,
             detail_full: false,
             can_split: true,
             profiles: HashMap::new(),
@@ -446,12 +483,20 @@ impl App {
             image_bytes: None,
             cache_bytes: None,
             kioku: KiokuView::default(),
+            last_backup: None,
+            backup_error: None,
+            backup_at: 0.0,
+            library_at: now(),
+            downloads_at: 0.0,
+            calendar_text: String::new(),
+            calendar_error: None,
             acts: Vec::new(),
             next_tick: 0.0,
             airing_at: 0,
             clipboard_seen: String::new(),
             really_quit: false,
             hidden,
+            focused: false,
             start_hidden: if hidden { 3 } else { 0 },
             applied: None,
             icon_applied: None,
@@ -744,9 +789,62 @@ impl App {
                     _ => Tab::Settings,
                 };
                 self.act(Act::Go(tab));
+                if name == "kioku" {
+                    self.act(Act::Push(Route::Kioku));
+                }
+                true
+            }
+            Some(Link::Step { .. }) if !self.s.link_actions => {
+                let off =
+                    t("Links that change your list are off. Turn them on in Settings › Widget & automation.");
+                self.report("Kuro", off);
+                true
+            }
+            Some(Link::Step { media, by }) => {
+                self.step_from_link(media, by);
+                true
+            }
+            Some(Link::Binge(r)) => {
+                match self.entry_at(r) {
+                    Some(_) => self.act(Act::Binge(Some(r))),
+                    None => self.report("Kuro", t("This title is not in your list.")),
+                }
+                true
+            }
+            Some(Link::Random(k)) => {
+                self.act(Act::Random(k));
+                true
+            }
+            Some(Link::Refresh) => {
+                self.act(Act::Refresh);
                 true
             }
             None => false,
+        }
+    }
+
+    /// Adds or removes episodes as a link asks, and says where the title is now.
+    fn step_from_link(&mut self, r: MediaRef, by: i32) {
+        let Some(e) = self.entry_at(r) else {
+            return self.report("Kuro", t("This title is not in your list."));
+        };
+        let title = e.media.display_title(self.s.title_language).to_owned();
+        if by > 0 && e.status == ListStatus::Completed && !e.repeating {
+            return self.report(&title, format::status(e.status, e.media.kind));
+        }
+        let next = progress::step(&e, by, today());
+        self.save(&next);
+        let total = next.media.total().map_or_else(|| "?".to_owned(), |n| n.to_string());
+        let body = format!("{} · {}/{total}", format::status(next.status, next.media.kind), next.progress);
+        self.report(&title, &body);
+    }
+
+    /// Says something in the window when it has the focus, or as a notification.
+    fn report(&mut self, title: &str, body: &str) {
+        if self.focused && !self.hidden {
+            self.say(if title == "Kuro" { body.to_owned() } else { format!("{title}: {body}") });
+        } else {
+            self.sys.notify(Notice::new(title, body));
         }
     }
 
@@ -989,6 +1087,25 @@ impl App {
                 self.kioku.review = None;
                 self.bg.kioku_import(p, self.s.primary);
             }
+            Act::KiokuImportFound => {
+                let Some(f) = self.kioku.found.take() else { return };
+                let _ = self.bg.store().mark_notified(&f.key, now());
+                if !self.bg.online() {
+                    return;
+                }
+                self.kioku.syncing = true;
+                self.kioku.progress = None;
+                self.kioku.started = Some(self.time);
+                self.kioku.took = None;
+                self.kioku.error = None;
+                self.kioku.review = None;
+                self.bg.kioku_import_file(f.platform, self.s.primary, f.path);
+            }
+            Act::KiokuForgetFound => {
+                if let Some(f) = self.kioku.found.take() {
+                    let _ = self.bg.store().mark_notified(&f.key, now());
+                }
+            }
             Act::KiokuDismissAll => {
                 if let Some(r) = self.kioku.review.as_mut() {
                     for g in std::mem::take(&mut r.unmatched) {
@@ -1166,6 +1283,7 @@ impl App {
                 match result {
                     Ok(()) => {
                         if service == self.s.primary {
+                            self.library_at = now();
                             self.reload();
                         }
                         self.airing_at = now();
@@ -1309,6 +1427,36 @@ impl App {
                 Ok(()) => self.say(t("Backup saved")),
                 Err(e) => self.say_error(tf("Something went wrong: {}", &[&e])),
             },
+            Event::BackupFolder(folder) => {
+                self.s.backup.folder = folder;
+                if self.s.backup.every == Every::Off {
+                    self.s.backup.every = Every::Daily;
+                }
+            }
+            Event::AutoBackup(r) => match r {
+                Ok(latest) => {
+                    self.last_backup = latest;
+                    self.backup_error = None;
+                }
+                Err(e) => {
+                    // Said once; the page keeps showing it.
+                    if self.backup_error.as_ref() != Some(&e) {
+                        self.say_error(tf("The automatic backup failed: {}", &[&e]));
+                    }
+                    self.backup_error = Some(e);
+                }
+            },
+            Event::CalendarFile(path) => self.s.calendar_file = path,
+            Event::CalendarWritten(r) => {
+                if let Err(e) = &r
+                    && self.calendar_error.as_ref() != Some(e)
+                {
+                    self.say_error(tf("The calendar could not be saved: {}", &[e]));
+                    // Tried again with the next change.
+                    self.calendar_text.clear();
+                }
+                self.calendar_error = r.err();
+            }
             Event::KiokuConnected { platform, result } => {
                 self.kioku.connecting = false;
                 self.show_window(ctx);
@@ -1338,7 +1486,20 @@ impl App {
                     self.kioku.progress = Some(step);
                 }
             }
+            Event::KiokuReview(result)
+                if self.kioku.background && result.as_ref().is_ok_and(|r| r.changes.is_empty()) =>
+            {
+                // Nothing new: no review is left waiting.
+                self.kioku.background = false;
+                self.kioku.syncing = false;
+                self.kioku.progress = None;
+                self.kioku.started = None;
+            }
             Event::KiokuReview(result) => {
+                let background = std::mem::take(&mut self.kioku.background);
+                if background {
+                    self.kioku_checked(&result);
+                }
                 self.kioku.syncing = false;
                 self.kioku.progress = None;
                 self.kioku.took = self.kioku.started.take().map(|s| (ctx.input(|i| i.time) - s).max(0.0));
@@ -1351,6 +1512,26 @@ impl App {
                         self.kioku.error = Some(e);
                     }
                 }
+            }
+            Event::KiokuFileFound { platform, path, modified } => {
+                let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                let key = format!("kioku-file:{}:{name}:{modified}", platform.key());
+                let store = self.bg.store();
+                let (handled, told) = (store.was_notified(&key).unwrap_or(true), format!("{key}:told"));
+                let new = !handled && !store.was_notified(&told).unwrap_or(true);
+                if new {
+                    let _ = store.mark_notified(&told, now());
+                }
+                drop(store);
+                if handled || self.kioku.found.as_ref().is_some_and(|f| f.key == key) {
+                    return;
+                }
+                if new {
+                    let mut n = Notice::new("Kioku", tf("kioku.found", &[&platform.name(), &name]));
+                    n.link = Some("kuro://tab/kioku".into());
+                    self.sys.notify(n);
+                }
+                self.kioku.found = Some(FoundFile { platform, path, key });
             }
             Event::OpenLink(l) => {
                 self.open_link(&l);
@@ -1405,6 +1586,7 @@ impl App {
         }
         self.next_tick = self.time + 20.0;
         self.send_notifications();
+        self.send_reminders();
         let passed = self.lib[0].iter().any(|e| {
             e.status == ListStatus::Current && e.media.next_airing.is_some_and(|a| a.at + 120 < now())
         });
@@ -1412,9 +1594,90 @@ impl App {
         if age > 6 * 3600 || (passed && age > 600) {
             self.refresh_airing();
         }
+        self.auto_backup();
+        self.kioku_check();
+        self.scan_downloads();
+        self.write_calendar();
+        if self.refreshing == 0
+            && self.bg.online()
+            && self.bg.api.is_signed_in(self.s.primary)
+            && self.s.refresh_due(self.library_at, now())
+        {
+            // Not again for a while, even if this one fails.
+            self.library_at = now();
+            self.refresh();
+        }
         if self.unsynced > 0 && self.sync_error.as_ref().is_none_or(|(_, e)| e.is_transient()) {
             self.bg.sync();
         }
+    }
+
+    /// Rewrites the calendar file when its episodes changed.
+    fn write_calendar(&mut self) {
+        if self.s.calendar_file.is_empty() {
+            return;
+        }
+        let all: Vec<ListEntry> = self.lib[0].iter().map(|e| (**e).clone()).collect();
+        let text = kuro_core::calendar::ics(&all, self.s.title_language, t("Episode"));
+        if text != self.calendar_text {
+            self.calendar_text = text.clone();
+            self.bg.write_calendar(self.s.calendar_file.clone().into(), text);
+        }
+    }
+
+    /// Reads the Crunchyroll history once a day or week, without the user.
+    /// Nothing is written: the review waits for them, as after a manual sync.
+    fn kioku_check(&mut self) {
+        use kuro_api::kioku::HistorySource;
+        let Some(period) = self.s.kioku_check.period(today()) else { return };
+        let key = format!("kioku:crunchyroll:{period}");
+        if self.kioku.checked == key || self.kioku.syncing || self.kioku.review.is_some() || !self.bg.online()
+        {
+            return;
+        }
+        self.kioku.checked = key.clone();
+        if self.bg.store().was_notified(&key).unwrap_or(true) || !self.bg.api.crunchyroll.connected() {
+            return;
+        }
+        let _ = self.bg.store().mark_notified(&key, now());
+        self.apply(Act::KiokuSync(Platform::Crunchyroll));
+        self.kioku.background = true;
+    }
+
+    /// Looks in Downloads for streaming history files about once an hour.
+    fn scan_downloads(&mut self) {
+        if !self.s.watch_downloads || !self.bg.online() || self.time < self.downloads_at {
+            return;
+        }
+        self.downloads_at = self.time + 3600.0;
+        if let Some(dir) =
+            directories::UserDirs::new().and_then(|d| d.download_dir().map(|p| p.to_path_buf()))
+        {
+            self.bg.scan_downloads(dir, now() - 14 * 86_400);
+        }
+    }
+
+    /// Says what an automatic Kioku check found.
+    fn kioku_checked(&mut self, result: &Result<KiokuReview, ApiError>) {
+        match result {
+            Ok(r) if !r.changes.is_empty() => {
+                let mut n = Notice::new("Kioku", tf("kioku.auto.ready", &[&r.changes.len()]));
+                n.link = Some("kuro://tab/kioku".into());
+                self.sys.notify(n);
+            }
+            Ok(_) => {}
+            Err(e) => tracing::warn!("kioku: automatic check failed: {e}"),
+        }
+    }
+
+    /// Looks at the backup folder about once an hour.
+    fn auto_backup(&mut self) {
+        let b = &self.s.backup;
+        if b.every == Every::Off || b.folder.is_empty() || self.time < self.backup_at {
+            return;
+        }
+        self.backup_at = self.time + 3600.0;
+        self.bg.auto_backup(self.s.primary, b.folder.clone().into(), b.every, b.keep, today());
     }
 
     fn send_notifications(&mut self) {
@@ -1429,6 +1692,62 @@ impl App {
         for d in due {
             let notice = self.notice(&d);
             self.sys.notify(notice);
+        }
+    }
+
+    /// Titles left behind, and the summary of the week.
+    fn send_reminders(&mut self) {
+        use kuro_core::reminders;
+        let n = &self.s.notifications;
+        if !n.enabled {
+            return;
+        }
+        let (days, weekly, hour) = (n.stale_days, n.weekly, n.date_hour);
+        let all: Vec<ListEntry> = self.lib.iter().flatten().map(|e| (**e).clone()).collect();
+        let store = self.bg.store();
+        let due: Vec<&ListEntry> = reminders::stale(&all, now(), days, &n.muted)
+            .into_iter()
+            .filter(|e| !store.was_notified(&reminders::stale_key(e)).unwrap_or(true))
+            .collect();
+        for e in &due {
+            let _ = store.mark_notified(&reminders::stale_key(e), now());
+        }
+        let week = weekly
+            .then(|| reminders::week_key(now(), hour, &TimeZone::system()))
+            .flatten()
+            .filter(|k| !store.was_notified(k).unwrap_or(true));
+        if let Some(k) = &week {
+            let _ = store.mark_notified(k, now());
+        }
+        drop(store);
+        let lang = self.s.title_language;
+        match due.as_slice() {
+            [] => {}
+            [e] => {
+                let m = &e.media;
+                let mut notice = Notice::new(m.display_title(lang), tf("No progress for {} days", &[&days]));
+                notice.detail = Some(format!("{} · {}", format::status(e.status, m.kind), e.progress));
+                notice.image = m.cover.as_deref().and_then(|u| self.bg.images.cached(u));
+                notice.link = Some(links::to_link(m.media_ref()));
+                notice.mark = reminders::next_unit(e)
+                    .filter(|_| m.kind == MediaKind::Anime)
+                    .map(|ep| (m.media_ref(), ep));
+                self.sys.notify(notice);
+            }
+            many => {
+                let names: Vec<&str> = many.iter().take(3).map(|e| e.media.display_title(lang)).collect();
+                let title = tf("{} titles with no progress for {} days", &[&many.len(), &days]);
+                self.sys.notify(Notice::new(title, names.join(" · ")));
+            }
+        }
+        if week.is_some() {
+            let w = reminders::week(&self.lib[0].iter().map(|e| (**e).clone()).collect::<Vec<_>>(), now());
+            if w.airing > 0 || w.behind > 0 {
+                let body = tf("{} titles air this week · {} episodes to catch up", &[&w.airing, &w.behind]);
+                let mut notice = Notice::new(t("Your week"), body);
+                notice.link = Some("kuro://tab/anime".into());
+                self.sys.notify(notice);
+            }
         }
     }
 
@@ -1546,6 +1865,16 @@ impl App {
                     &self.s.mal_client_id,
                 ));
             }
+            if old.calendar_file != self.s.calendar_file || old.title_language != self.s.title_language {
+                self.calendar_text.clear();
+                self.calendar_error = None;
+                self.next_tick = 0.0;
+            }
+            if old.backup != self.s.backup {
+                // Look at the new folder now rather than within the hour.
+                (self.backup_at, self.next_tick) = (0.0, 0.0);
+                (self.last_backup, self.backup_error) = (None, None);
+            }
             if old.autostart != self.s.autostart
                 && let Err(e) = self.sys.set_autostart(self.s.autostart)
             {
@@ -1610,6 +1939,7 @@ impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.screen = ctx.content_rect();
+        self.focused = ctx.input(|i| i.focused);
         self.tex.begin_frame();
         // The window is shown after its first frame whatever was asked for.
         if self.start_hidden > 0 {

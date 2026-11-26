@@ -703,3 +703,198 @@ fn kioku_prime_video_series_without_a_name_show_an_episode() {
     assert!(h.query_by_label("For example: Sin nombre").is_some());
     assert!(h.query_by_label("For example: Otro").is_some());
 }
+
+#[test]
+fn automatic_backups_are_dated_and_old_ones_are_removed() {
+    let dir = std::env::temp_dir().join(format!("kuro-backups-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    for old in ["kuro-backup-2020-01-01.json", "kuro-backup-2020-01-02.json", "notes.json"] {
+        std::fs::write(dir.join(old), "{}").unwrap();
+    }
+    let folder = dir.display().to_string();
+    let mut h = harness_with(store(), [1240.0, 820.0], |s| {
+        s.backup.every = kuro_core::settings::Every::Daily;
+        s.backup.folder = folder;
+        s.backup.keep = 2;
+    });
+    for _ in 0..100 {
+        if h.state().last_backup.is_some() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        settle(&mut h);
+    }
+    let today = kuro_core::backup::file_name(kuro_app::app::today());
+    assert_eq!(h.state().last_backup.as_deref(), Some(today.as_str()));
+    let mut names: Vec<_> =
+        std::fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name().into_string().unwrap()).collect();
+    names.sort();
+    assert_eq!(names, ["kuro-backup-2020-01-02.json", today.as_str(), "notes.json"]);
+    let text = std::fs::read_to_string(dir.join(&today)).unwrap();
+    assert!(text.contains("Lanterns Over Saltmarsh"));
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn action_links_change_the_list_only_when_allowed() {
+    let mut h = harness();
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/1?by=2"));
+    settle(&mut h);
+    assert_eq!(progress(&h, 1), 9, "off by default");
+
+    h.state_mut().s.link_actions = true;
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/1?by=2"));
+    settle(&mut h);
+    assert_eq!(progress(&h, 1), 11);
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/1?by=-1"));
+    settle(&mut h);
+    assert_eq!(progress(&h, 1), 10);
+
+    // A finished title stays finished, and titles outside the list are left alone.
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/3"));
+    assert!(h.state_mut().open_link("kuro://step/anilist/anime/999"));
+    settle(&mut h);
+    assert_eq!(progress(&h, 3), 24);
+    assert!(h.state().entry_at(r(999, MediaKind::Anime)).is_none());
+
+    assert!(h.state_mut().open_link("kuro://binge/anilist/anime/2"));
+    settle(&mut h);
+    assert_eq!(h.state().binge, Some(r(2, MediaKind::Anime)));
+}
+
+#[test]
+fn the_episode_calendar_is_written() {
+    let path = std::env::temp_dir().join(format!("kuro-calendar-{}.ics", std::process::id()));
+    let _ = std::fs::remove_file(&path);
+    let file = path.display().to_string();
+    let mut h = harness_with(store(), [1240.0, 820.0], |s| s.calendar_file = file);
+    let read = |h: &mut H| {
+        for _ in 0..100 {
+            if let Ok(t) = std::fs::read_to_string(&path)
+                && h.state().calendar_error.is_none()
+            {
+                return t;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+            settle(h);
+        }
+        panic!("the calendar was not written");
+    };
+    let text = read(&mut h);
+    assert!(text.contains("SUMMARY:Lanterns Over Saltmarsh · Episode 10"), "{text}");
+    assert_eq!(text.matches("BEGIN:VEVENT").count(), 1);
+    assert!(h.state().calendar_error.is_none());
+    let _ = std::fs::remove_file(&path);
+}
+
+#[test]
+fn titles_left_behind_are_mentioned_once() {
+    let s = store();
+    let mut old = entry(7, MediaKind::Anime, "Quiet Harbor", ListStatus::Current, 4);
+    old.updated_at = kuro_app::backend::now() - 30 * 86_400;
+    s.put_entry(&old).unwrap();
+    let key = kuro_core::reminders::stale_key(&old);
+    let mut h = harness_with(s, [1240.0, 820.0], |s| s.notifications.stale_days = 14);
+    settle(&mut h);
+    assert!(h.state().bg.store().was_notified(&key).unwrap());
+    let fresh = kuro_core::reminders::stale_key(&h.state().entry_at(r(1, MediaKind::Anime)).unwrap());
+    assert!(!h.state().bg.store().was_notified(&fresh).unwrap(), "recent titles are left alone");
+}
+
+#[test]
+fn the_widget_shows_what_was_chosen_and_stays_open() {
+    let mut h = harness();
+    h.state_mut().s.widget.open = true;
+    for (up_next, watching, stats) in [(true, true, true), (false, false, false), (true, false, false)] {
+        let w = &mut h.state_mut().s.widget;
+        (w.up_next, w.watching, w.stats, w.rows) = (up_next, watching, stats, 3);
+        settle(&mut h);
+    }
+    assert!(h.state().bg.store().settings().unwrap().widget.open, "remembered for the next start");
+}
+
+#[test]
+fn an_automatic_kioku_check_waits_for_review_and_leaves_nothing_when_empty() {
+    let mut h = harness();
+    let ctx = h.ctx.clone();
+    let found = review(h.state(), &history());
+    assert!(!found.changes.is_empty());
+    h.state_mut().kioku.background = true;
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(found)));
+    settle(&mut h);
+    assert!(h.state().kioku.review.is_some(), "kept for the user to review");
+    assert_eq!(progress(&h, 1), 9, "nothing written");
+
+    let mut empty = review(h.state(), &FakeSource(Vec::new()));
+    empty.changes.clear();
+    h.state_mut().kioku.review = None;
+    h.state_mut().kioku.background = true;
+    h.state_mut().handle(&ctx, Event::KiokuReview(Ok(empty)));
+    assert!(h.state().kioku.review.is_none() && !h.state().kioku.syncing);
+
+    assert!(h.state_mut().open_link("kuro://tab/kioku"));
+    settle(&mut h);
+    assert_eq!(h.state().routes.last(), Some(&Route::Kioku));
+}
+
+#[test]
+fn history_files_in_downloads_are_offered_until_handled() {
+    let dir = std::env::temp_dir().join(format!("kuro-downloads-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let csv = "Title,Date\n\"Lanterns Over Saltmarsh: Season 1: Ten\",\"11/20/26\"\n";
+    std::fs::write(dir.join("NetflixViewingHistory.csv"), csv).unwrap();
+    std::fs::write(dir.join("netflix-notes.csv"), "not a history").unwrap();
+    let mut h = harness();
+    let wait = |h: &mut H| {
+        for _ in 0..100 {
+            if h.state().kioku.found.is_some() {
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+            settle(h);
+        }
+    };
+    h.state().bg.scan_downloads(dir.clone(), 0);
+    wait(&mut h);
+    let found = h.state().kioku.found.clone().expect("found");
+    assert_eq!(
+        (found.platform, found.name().as_str()),
+        (kuro_core::kioku::Platform::Netflix, "NetflixViewingHistory.csv")
+    );
+
+    act(&mut h, Act::Push(Route::Kioku));
+    assert!(h.query_by_label_contains("NetflixViewingHistory.csv").is_some());
+    click(&mut h, "Not this file");
+    assert!(h.state().kioku.found.is_none());
+
+    // Forgotten files are not offered again.
+    h.state().bg.scan_downloads(dir.clone(), 0);
+    wait(&mut h);
+    assert!(h.state().kioku.found.is_none());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn toasts_use_their_id_once_and_close_on_click() {
+    let mut h = harness();
+    let clash = |h: &H| {
+        h.output()
+            .shapes
+            .iter()
+            .any(|s| matches!(&s.shape, egui::Shape::Text(t) if t.galley.text().contains("use of widget ID")))
+    };
+    for error in [false, true] {
+        let text = "Something long enough to wrap onto a second line of the toast, surely.";
+        if error {
+            h.state_mut().say_error(text);
+        } else {
+            h.state_mut().say(text);
+        }
+        settle(&mut h);
+        assert!(!clash(&h), "error: {error}");
+        click(&mut h, text);
+        assert!(h.state().toast.is_none(), "a click closes it (error: {error})");
+    }
+}

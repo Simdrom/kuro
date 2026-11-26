@@ -63,6 +63,30 @@ jobs:
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked --no-fail-fast
 
+  whats-new:
+    name: What's new
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # A reminder, not a failure: not every feat or fix is something users notice.
+      - name: Changes for users are in whats-new.txt
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          git cat-file -e "$BASE^{commit}" 2>/dev/null || exit 0
+          commits=$(git log --format=%s "$BASE..$HEAD" | grep -E '^(feat|fix)(\(.+\))?!?:' || true)
+          [ -n "$commits" ] || exit 0
+          if git diff --quiet "$BASE...$HEAD" -- crates/setup/whats-new.txt; then
+            echo "::warning file=crates/setup/whats-new.txt::New features or fixes, but no line in whats-new.txt. If users will notice them, add one under the first [version]."
+            echo "$commits"
+          fi
+
   msrv:
     name: Minimum Rust version
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -160,6 +184,9 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@81891abc19297b21343b15ef67dc61e4aea74fda # v2.1.4
         with:
           command: check
+          # Its image's rustup no longer installs what rust-toolchain.toml asks for, and
+          # fails before checking anything; this installs that toolchain first.
+          rust-version: stable
 
   workflows:
     name: Workflow lint

@@ -7,12 +7,39 @@ use crate::model::{MediaKind, MediaRef, Service};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Link {
     Media(MediaRef),
-    Search { kind: MediaKind, query: String },
+    Search {
+        kind: MediaKind,
+        query: String,
+    },
     Tab(String),
+    /// Adds episodes or chapters (or removes them, when negative) to a title in the list.
+    Step {
+        media: MediaRef,
+        by: i32,
+    },
+    /// Opens the binge session of a title in the list.
+    Binge(MediaRef),
+    Random(MediaKind),
+    /// Reads the list from the account again.
+    Refresh,
+}
+
+impl Link {
+    /// Changes the list, so it only works when the user allowed it.
+    pub fn changes_list(&self) -> bool {
+        matches!(self, Self::Step { .. })
+    }
+
+    /// Done without bringing the window forward.
+    pub fn quiet(&self) -> bool {
+        matches!(self, Self::Step { .. } | Self::Refresh | Self::Binge(_))
+    }
 }
 
 const MAX_LEN: usize = 2048;
 const MAX_QUERY: usize = 200;
+/// The most a single link may add or remove.
+const MAX_STEP: i32 = 10;
 
 fn kind(s: &str) -> Option<MediaKind> {
     match s {
@@ -26,8 +53,16 @@ fn id(s: &str) -> Option<u64> {
     s.parse().ok().filter(|n| (1..=u64::from(u32::MAX)).contains(n))
 }
 
+fn media_ref(service: Service, k: &str, n: &str) -> Option<MediaRef> {
+    Some(MediaRef { service, kind: kind(k)?, id: id(n)? })
+}
+
 fn media(service: Service, k: &str, n: &str) -> Option<Link> {
-    Some(Link::Media(MediaRef { service, kind: kind(k)?, id: id(n)? }))
+    media_ref(service, k, n).map(Link::Media)
+}
+
+fn service(s: &str) -> Option<Service> {
+    Service::ALL.into_iter().find(|v| v.key() == s)
 }
 
 /// Parses an untrusted link. Anything unexpected yields `None`.
@@ -66,7 +101,17 @@ fn deep(url: &Url) -> Option<Link> {
         }
         // Only web links may be nested, so this cannot recurse.
         ("open", []) => web(&Url::parse(&param("url")?).ok().filter(|u| u.scheme().starts_with("http"))?),
-        ("tab", [name @ ("anime" | "manga" | "seasonal" | "ranking" | "search" | "settings")]) => {
+        ("step", [s, k, n]) => {
+            let by = match param("by") {
+                Some(b) => b.parse().ok().filter(|b: &i32| *b != 0 && b.abs() <= MAX_STEP)?,
+                None => 1,
+            };
+            Some(Link::Step { media: media_ref(service(s)?, k, n)?, by })
+        }
+        ("binge", [s, k, n]) => media_ref(service(s)?, k, n).map(Link::Binge),
+        ("random", [k]) => kind(k).map(Link::Random),
+        ("refresh", []) => Some(Link::Refresh),
+        ("tab", [name @ ("anime" | "manga" | "seasonal" | "ranking" | "search" | "settings" | "kioku")]) => {
             Some(Link::Tab((*name).to_owned()))
         }
         _ => None,
@@ -75,6 +120,12 @@ fn deep(url: &Url) -> Option<Link> {
 
 pub fn to_link(r: MediaRef) -> String {
     format!("kuro://{}/{}/{}", r.service.key(), r.kind.key(), r.id)
+}
+
+/// A link that adds `by` episodes or chapters to `r`.
+pub fn step_link(r: MediaRef, by: i32) -> String {
+    let base = format!("kuro://step/{}/{}/{}", r.service.key(), r.kind.key(), r.id);
+    if by == 1 { base } else { format!("{base}?by={by}") }
 }
 
 #[cfg(test)]
@@ -125,6 +176,33 @@ mod tests {
             assert_eq!(parse(bad), None, "{bad}");
         }
         assert_eq!(parse(&format!("https://anilist.co/anime/1?{}", "a".repeat(4000))), None);
+    }
+
+    #[test]
+    fn action_links() {
+        let a = MediaRef { service: Service::AniList, kind: MediaKind::Anime, id: 9 };
+        assert_eq!(parse("kuro://step/anilist/anime/9"), Some(Link::Step { media: a, by: 1 }));
+        assert_eq!(parse("kuro://step/anilist/anime/9?by=-2"), Some(Link::Step { media: a, by: -2 }));
+        assert_eq!(parse("kuro://binge/anilist/anime/9"), Some(Link::Binge(a)));
+        assert_eq!(parse("kuro://random/manga"), Some(Link::Random(MediaKind::Manga)));
+        assert_eq!(parse("kuro://refresh"), Some(Link::Refresh));
+        for bad in [
+            "kuro://step/anilist/anime/9?by=0",
+            "kuro://step/anilist/anime/9?by=11",
+            "kuro://step/anilist/anime/9?by=x",
+            "kuro://step/kitsu/anime/9",
+            "kuro://step/anime/9",
+            "kuro://random/novel",
+            "kuro://refresh/now",
+        ] {
+            assert_eq!(parse(bad), None, "{bad}");
+        }
+        for by in [1, 3, -1] {
+            assert_eq!(parse(&step_link(a, by)), Some(Link::Step { media: a, by }));
+        }
+        assert!(Link::Step { media: a, by: 1 }.changes_list());
+        assert!(!Link::Binge(a).changes_list() && Link::Binge(a).quiet());
+        assert!(!Link::Media(a).quiet());
     }
 
     #[test]

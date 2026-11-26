@@ -84,9 +84,10 @@ fn binge(app: &mut App, ctx: &Context) {
 
 /// Current titles and counts, pinned over other windows.
 fn widget(app: &mut App, ctx: &Context) {
-    if !app.widget {
+    if !app.s.widget.open {
         return;
     }
+    let w = app.s.widget;
     let p = app.p;
     let builder = window(t("Desktop widget"), vec2(300.0, 460.0));
     let mut close = false;
@@ -95,21 +96,68 @@ fn widget(app: &mut App, ctx: &Context) {
         CentralPanel::no_frame().frame(Frame::new().fill(p.bg).inner_margin(10)).show(ui, |ui| {
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 ui.set_max_width(ui.available_width() - 8.0);
-                for k in MediaKind::ALL {
-                    progress_group(app, ui, k);
+                let rows = w.rows as usize;
+                if w.up_next {
+                    up_next(app, ui, rows);
                 }
-                for k in MediaKind::ALL {
+                for k in MediaKind::ALL.into_iter().filter(|_| w.watching) {
+                    progress_group(app, ui, k, rows);
+                }
+                for k in MediaKind::ALL.into_iter().filter(|_| w.stats) {
                     count_group(app, ui, k);
+                }
+                if !(w.up_next || w.watching || w.stats) {
+                    widgets::dim(
+                        ui,
+                        &p,
+                        t("Choose what the widget shows in Settings › Widget & automation."),
+                    );
                 }
             });
         });
     });
     if close {
-        app.widget = false;
+        app.s.widget.open = false;
     }
 }
 
-fn progress_group(app: &mut App, ui: &mut Ui, k: MediaKind) {
+/// The next episodes to air among titles being watched or planned.
+fn up_next(app: &mut App, ui: &mut Ui, rows: usize) {
+    let p = app.p;
+    let now = crate::backend::now();
+    let mut list: Vec<_> = app
+        .library(MediaKind::Anime)
+        .iter()
+        .filter(|e| matches!(e.status, ListStatus::Current | ListStatus::Planning))
+        .filter(|e| e.media.next_airing.is_some_and(|a| a.at >= now))
+        .cloned()
+        .collect();
+    list.sort_by_key(|e| e.media.next_airing.map(|a| a.at));
+    if list.is_empty() {
+        return;
+    }
+    widgets::section(ui, &p, t("Next episodes"));
+    widgets::card(ui, &p, |ui| {
+        for (i, e) in list.iter().take(rows).enumerate() {
+            let Some(a) = e.media.next_airing else { continue };
+            if i > 0 {
+                widgets::separator(ui, &p);
+            }
+            ui.horizontal(|ui| {
+                let (rect, _) = ui.allocate_exact_size(vec2(34.0, 48.0), Sense::hover());
+                app.tex.paint(ui, &p, &app.bg, e.media.cover.as_deref(), rect, 5);
+                ui.vertical(|ui| {
+                    let name = e.media.display_title(app.s.title_language);
+                    ui.add(egui::Label::new(RichText::new(name).font(theme::semibold(12.5))).truncate());
+                    widgets::dim(ui, &p, tf("Episode {} · {}", &[&a.episode, &format::countdown(a.at, now)]))
+                        .on_hover_text(format::airing_time(a.at, now));
+                });
+            });
+        }
+    });
+}
+
+fn progress_group(app: &mut App, ui: &mut Ui, k: MediaKind, rows: usize) {
     let p = app.p;
     let mut list: Vec<_> =
         app.library(k).iter().filter(|e| e.status == ListStatus::Current).cloned().collect();
@@ -119,7 +167,7 @@ fn progress_group(app: &mut App, ui: &mut Ui, k: MediaKind) {
     }
     widgets::section(ui, &p, format::kind(k));
     widgets::card(ui, &p, |ui| {
-        for (i, e) in list.iter().take(5).enumerate() {
+        for (i, e) in list.iter().take(rows).enumerate() {
             if i > 0 {
                 widgets::separator(ui, &p);
             }

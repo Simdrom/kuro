@@ -10,6 +10,7 @@ use eframe::egui::{
 
 use crate::Opts;
 use crate::engine::{self, Choices, Log, Plan, State, version};
+use crate::notes::{self, Release};
 use crate::text::{t, tf};
 
 pub const TOO_NEW: &str = "Kuro {0} has changed your lists in a way that Kuro {1} cannot read, so going back is not possible. Nothing has been changed.";
@@ -24,6 +25,8 @@ enum Page {
 struct Setup {
     st: State,
     plan: Plan,
+    /// What changed since the installed version, when updating.
+    news: Vec<Release>,
     page: Page,
     desktop: bool,
     launch: bool,
@@ -38,6 +41,12 @@ struct Setup {
 pub fn run(o: &Opts) -> i32 {
     let st = engine::read_state();
     let plan = engine::plan(&st);
+    let news = match &plan {
+        Plan::Update(from) => notes::between(from, version()),
+        _ => Vec::new(),
+    };
+    // Room for the list of changes, which scrolls when it is longer.
+    let height = if news.is_empty() { 380.0 } else { 600.0 };
     let failed = Arc::new(AtomicBool::new(false));
     let setup = Setup {
         desktop: o.desktop.unwrap_or(st.desktop),
@@ -46,6 +55,7 @@ pub fn run(o: &Opts) -> i32 {
         page: if o.uninstall && st.installed.is_some() { Page::Uninstall } else { Page::Home },
         st,
         plan,
+        news,
         purge: false,
         details: false,
         log: Arc::default(),
@@ -56,7 +66,7 @@ pub fn run(o: &Opts) -> i32 {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title(t("Kuro Setup"))
-            .with_inner_size([560.0, 380.0])
+            .with_inner_size([560.0, height])
             .with_resizable(false)
             .with_maximize_button(false)
             .with_icon(icon()),
@@ -151,9 +161,37 @@ impl Setup {
         if matches!(self.plan, Plan::TooNew(_)) {
             return;
         }
+        self.news(ui);
         ui.add_space(12.0);
         ui.checkbox(&mut self.desktop, t("Desktop shortcut"));
         ui.checkbox(&mut self.launch, t("Open Kuro when done"));
+    }
+
+    /// The changes since the installed version, by version when there are several.
+    fn news(&self, ui: &mut egui::Ui) {
+        if self.news.is_empty() {
+            return;
+        }
+        ui.add_space(12.0);
+        ui.label(RichText::new(t("What's new")).strong());
+        ui.add_space(4.0);
+        let several = self.news.len() > 1;
+        // The checkboxes below keep their place.
+        let height = (ui.available_height() - 64.0).max(60.0);
+        ScrollArea::vertical().max_height(height).auto_shrink([false, true]).show(ui, |ui| {
+            for (v, lines) in &self.news {
+                if several {
+                    ui.add_space(4.0);
+                    ui.label(RichText::new(tf("Version {0}", &[v])).weak());
+                }
+                for line in lines {
+                    ui.horizontal_top(|ui| {
+                        ui.label("•");
+                        ui.add(egui::Label::new(*line).wrap());
+                    });
+                }
+            }
+        });
     }
 
     fn uninstall(&mut self, ui: &mut egui::Ui) {

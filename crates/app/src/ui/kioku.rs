@@ -28,6 +28,7 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         note(ui, &p, t("kioku.intro"));
         ui.add_space(8.0);
         warning(app, ui);
+        found(app, ui);
         crunchyroll(app, ui);
         file_source(app, ui, Platform::Netflix, t("kioku.netflix.file"), t("kioku.netflix.note"), None);
         file_source(
@@ -154,6 +155,27 @@ fn crunchyroll(app: &mut App, ui: &mut Ui) {
         }
     });
     note(ui, &p, t("kioku.signin.note"));
+}
+
+/// A history file waiting in Downloads.
+fn found(app: &mut App, ui: &mut Ui) {
+    let Some(f) = app.kioku.found.clone() else { return };
+    let p = app.p;
+    section(ui, &p, t("kioku.found.title"));
+    card(ui, &p, |ui| {
+        let label = tf("kioku.found", &[&f.platform.name(), &f.name()]);
+        row(ui, &p, icons::TRAY_ARROW_DOWN, &label, |ui| {
+            if widgets::icon_button(ui, &p, icons::X, t("kioku.found.forget")).clicked() {
+                app.act(Act::KiokuForgetFound);
+            }
+            let ready = app.bg.online() && !app.kioku.syncing;
+            ui.add_enabled_ui(ready, |ui| {
+                if widgets::button(ui, &p, "", t("kioku.found.review"), true).clicked() && ready {
+                    app.act(Act::KiokuImportFound);
+                }
+            });
+        });
+    });
 }
 
 /// A platform whose history comes in a file the user saves.

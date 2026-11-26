@@ -2,7 +2,10 @@
 
 use eframe::egui::{self, Align2, CornerRadius, RichText, Role, Sense, Ui, WidgetInfo, vec2};
 use kuro_api::oauth;
-use kuro_core::settings::{AppIcon, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint};
+use kuro_core::backup;
+use kuro_core::settings::{
+    AppIcon, Every, GestureAction, MusicSearch, PosterProgress, ScoreDisplay, Theme, Tint,
+};
 use kuro_core::{ListStatus, MediaKind, Service, TitleLanguage, stats};
 
 use crate::app::{Act, App, Route, SettingsPage};
@@ -193,29 +196,6 @@ fn general(app: &mut App, ui: &mut Ui) {
         separator(ui, &p);
         toggle_row(ui, &p, icons::PLAY, t("Start with Windows"), &mut s.autostart);
     });
-    section(ui, &p, t("Links"));
-    card(ui, &p, |ui| {
-        toggle_row(ui, &p, icons::LINK, t("Open kuro:// links in this app"), &mut s.handle_links);
-        separator(ui, &p);
-        toggle_row(
-            ui,
-            &p,
-            icons::COPY,
-            t("Open copied AniList and MyAnimeList links"),
-            &mut s.watch_clipboard,
-        );
-    });
-    note(ui, &p, t("Copied links open when you return to this window. Other clipboard content is ignored."));
-    if app.s.handle_links {
-        ui.add_space(4.0);
-        ui.horizontal(|ui| {
-            ui.add_space(12.0);
-            if ui.link(t("Copy a bookmarklet that opens the current page here")).clicked() {
-                let code = "javascript:location.href='kuro://open?url='+encodeURIComponent(location.href)";
-                app.act(Act::Copy(code.into()));
-            }
-        });
-    }
 }
 
 fn lists(app: &mut App, ui: &mut Ui) {
@@ -568,9 +548,172 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
     let p = app.p;
     section(ui, &p, t("Desktop widget"));
     card(ui, &p, |ui| {
-        toggle_row(ui, &p, icons::PUSH_PIN, t("Show the desktop widget"), &mut app.widget);
+        let w = &mut app.s.widget;
+        toggle_row(ui, &p, icons::PUSH_PIN, t("Show the desktop widget"), &mut w.open);
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::CALENDAR_BLANK, t("Next episodes"), &mut w.up_next);
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::PLAY, t("Watching and reading"), &mut w.watching);
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::CHART_BAR, t("Statistics"), &mut w.stats);
+        separator(ui, &p);
+        let rows = [3, 5, 8, 10];
+        select_row(ui, &p, icons::LIST_BULLETS, t("Titles per group"), &mut w.rows, &rows, |n| n.to_string());
     });
-    note(ui, &p, t("A small window above the others with your progress and statistics."));
+    note(
+        ui,
+        &p,
+        t(
+            "A small window above the others with your progress and statistics. It opens again with Kuro if you leave it open.",
+        ),
+    );
+    backup_section(app, ui);
+    section(ui, &p, t("Sync"));
+    card(ui, &p, |ui| {
+        let hours = [0, 1, 3, 6, 12, 24];
+        let label = t("Bring in changes made elsewhere");
+        select_row(ui, &p, icons::CLOUD_ARROW_UP, label, &mut app.s.refresh_hours, &hours, |h| match h {
+            0 => t("Off").to_owned(),
+            1 => t("Every hour").to_owned(),
+            h => tf("Every {} hours", &[&h]),
+        });
+    });
+    note(
+        ui,
+        &p,
+        t(
+            "Your list is read again from your account, so changes made on the website or another device show up without refreshing. Your own changes are always sent right away.",
+        ),
+    );
+    calendar_section(app, ui);
+    reminders_section(app, ui);
+    section(ui, &p, super::kioku::NAME);
+    card(ui, &p, |ui| {
+        let label = t("kioku.auto");
+        select_row(ui, &p, icons::CLOCK_COUNTER_CLOCKWISE, label, &mut app.s.kioku_check, &Every::ALL, |v| {
+            format::every(v).into()
+        });
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::TRAY_ARROW_DOWN, t("kioku.downloads"), &mut app.s.watch_downloads);
+    });
+    note(ui, &p, t("kioku.auto.note"));
+    links_section(app, ui);
+}
+
+fn reminders_section(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    let n = &mut app.s.notifications;
+    section(ui, &p, t("Reminders"));
+    card(ui, &p, |ui| {
+        ui.add_enabled_ui(n.enabled, |ui| {
+            let days = [0, 7, 14, 30];
+            let label = t("Titles I stopped watching or reading");
+            select_row(
+                ui,
+                &p,
+                icons::CLOCK_COUNTER_CLOCKWISE,
+                label,
+                &mut n.stale_days,
+                &days,
+                |d| match d {
+                    0 => t("Off").to_owned(),
+                    d => tf("After {} days", &[&d]),
+                },
+            );
+            separator(ui, &p);
+            toggle_row(ui, &p, icons::CALENDAR, t("A summary of the week on Monday"), &mut n.weekly);
+        });
+    });
+    if !n.enabled {
+        note(ui, &p, t("Reminders are notifications: turn notifications on to get them."));
+    }
+}
+
+fn calendar_section(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    section(ui, &p, t("Calendar"));
+    card(ui, &p, |ui| {
+        widgets::wide_row(ui, &p, icons::CALENDAR, t("Episode calendar"), |ui| {
+            let file = app.s.calendar_file.clone();
+            if !file.is_empty() && widgets::button(ui, &p, "", t("Stop"), false).clicked() {
+                app.s.calendar_file.clear();
+            }
+            if widgets::button(ui, &p, "", t("Choose…"), false).clicked() {
+                app.bg.pick_calendar_file();
+            }
+            let shown = if file.is_empty() { t("Off") } else { file.as_str() };
+            widgets::dim(ui, &p, shown).on_hover_text(shown);
+        });
+    });
+    if let Some(e) = &app.calendar_error {
+        note(ui, &p, &tf("The calendar could not be saved: {}", &[e]));
+    }
+    note(
+        ui,
+        &p,
+        t(
+            "The next episode of everything you watch or plan to watch is written to this .ics file and kept up to date. Import it into your calendar, or subscribe to it where your calendar app allows.",
+        ),
+    );
+}
+
+fn backup_section(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    section(ui, &p, t("Automatic backup"));
+    card(ui, &p, |ui| {
+        let b = &mut app.s.backup;
+        let label = t("Back up my list");
+        select_row(ui, &p, icons::ARROWS_CLOCKWISE, label, &mut b.every, &Every::ALL, |v| {
+            format::every(v).into()
+        });
+        separator(ui, &p);
+        widgets::wide_row(ui, &p, icons::EXPORT, t("Folder"), |ui| {
+            if widgets::button(ui, &p, "", t("Choose…"), false).clicked() {
+                app.bg.pick_folder();
+            }
+            let folder = if b.folder.is_empty() { t("No folder chosen") } else { b.folder.as_str() };
+            widgets::dim(ui, &p, folder).on_hover_text(folder);
+        });
+        separator(ui, &p);
+        let keep = [3, 5, 10, 30];
+        select_row(ui, &p, icons::STACK, t("Copies to keep"), &mut b.keep, &keep, |n| n.to_string());
+    });
+    if let Some(e) = &app.backup_error {
+        note(ui, &p, &tf("The automatic backup failed: {}", &[e]));
+    } else if let Some(d) = app.last_backup.as_deref().and_then(backup::date_of) {
+        note(ui, &p, &tf("Last backup: {}", &[&crate::i18n::current().date(d, true)]));
+    }
+    note(ui, &p, t("Each copy is named by its date. Older copies beyond the limit are deleted."));
+}
+
+fn links_section(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    let s = &mut app.s;
+    section(ui, &p, t("Links"));
+    card(ui, &p, |ui| {
+        toggle_row(ui, &p, icons::LINK, t("Open kuro:// links in this app"), &mut s.handle_links);
+        separator(ui, &p);
+        toggle_row(
+            ui,
+            &p,
+            icons::COPY,
+            t("Open copied AniList and MyAnimeList links"),
+            &mut s.watch_clipboard,
+        );
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::LIGHTNING, t("Allow links that change my list"), &mut s.link_actions);
+    });
+    note(ui, &p, t("Copied links open when you return to this window. Other clipboard content is ignored."));
+    if app.s.handle_links {
+        ui.add_space(4.0);
+        ui.horizontal(|ui| {
+            ui.add_space(12.0);
+            if ui.link(t("Copy a bookmarklet that opens the current page here")).clicked() {
+                let code = "javascript:location.href='kuro://open?url='+encodeURIComponent(location.href)";
+                app.act(Act::Copy(code.into()));
+            }
+        });
+    }
     section(ui, &p, t("Automation"));
     card(ui, &p, |ui| {
         for (i, link) in [
@@ -578,6 +721,10 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
             "kuro://mal/manga/<id>",
             "kuro://search/anime?q=<text>",
             "kuro://tab/seasonal",
+            "kuro://random/anime",
+            "kuro://refresh",
+            "kuro://binge/anilist/anime/<id>",
+            "kuro://step/anilist/anime/<id>?by=1",
         ]
         .into_iter()
         .enumerate()
@@ -592,6 +739,13 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
         ui,
         &p,
         t("Pass one of these links to the program, or open it from anywhere once link handling is on."),
+    );
+    note(
+        ui,
+        &p,
+        t(
+            "Step, binge and refresh links work without bringing the window forward, so a shortcut, a hotkey tool or a Stream Deck can use them. Step links need the switch above; a title's menu copies one.",
+        ),
     );
 }
 
