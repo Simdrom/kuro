@@ -569,7 +569,36 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
             "Your list is read again from your account, so changes made on the website or another device show up without refreshing. Your own changes are always sent right away.",
         ),
     );
+    calendar_section(app, ui);
     links_section(app, ui);
+}
+
+fn calendar_section(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    section(ui, &p, t("Calendar"));
+    card(ui, &p, |ui| {
+        widgets::wide_row(ui, &p, icons::CALENDAR, t("Episode calendar"), |ui| {
+            let file = app.s.calendar_file.clone();
+            if !file.is_empty() && widgets::button(ui, &p, "", t("Stop"), false).clicked() {
+                app.s.calendar_file.clear();
+            }
+            if widgets::button(ui, &p, "", t("Choose…"), false).clicked() {
+                app.bg.pick_calendar_file();
+            }
+            let shown = if file.is_empty() { t("Off") } else { file.as_str() };
+            widgets::dim(ui, &p, shown).on_hover_text(shown);
+        });
+    });
+    if let Some(e) = &app.calendar_error {
+        note(ui, &p, &tf("The calendar could not be saved: {}", &[e]));
+    }
+    note(
+        ui,
+        &p,
+        t(
+            "The next episode of everything you watch or plan to watch is written to this .ics file and kept up to date. Import it into your calendar, or subscribe to it where your calendar app allows.",
+        ),
+    );
 }
 
 fn backup_section(app: &mut App, ui: &mut Ui) {

@@ -42,6 +42,7 @@ Both services|Ambos servicios|Les deux services|Beide Dienste|Entrambi i servizi
 Bring in changes made elsewhere|Traer los cambios hechos en otro sitio|Récupérer les changements faits ailleurs|Änderungen von anderswo übernehmen|Recupera le modifiche fatte altrove|Hent endringer gjort andre steder|다른 곳에서 한 변경 가져오기
 Broadcast|Emisión|Diffusion|Ausstrahlung|Trasmissione|Sending|방영 시간
 Caches|Cachés|Caches|Zwischenspeicher|Cache|Hurtiglager|캐시
+Calendar|Calendario|Calendrier|Kalender|Calendario|Kalender|캘린더
 Cancel|Cancelar|Annuler|Abbrechen|Annulla|Avbryt|취소
 Cancelled|Cancelado|Annulé|Abgebrochen|Annullato|Avlyst|취소됨
 Candy|Caramelo|Bonbon|Bonbon|Caramella|Sukkertøy|캔디
@@ -84,6 +85,8 @@ Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget deskt
 Display|Visualización|Affichage|Anzeige|Visualizzazione|Visning|표시
 Double-click|Doble clic|Double-clic|Doppelklick|Doppio clic|Dobbeltklikk|더블 클릭
 Each copy is named by its date. Older copies beyond the limit are deleted.|Cada copia lleva su fecha en el nombre. Las más antiguas por encima del límite se borran.|Chaque copie porte sa date dans son nom. Les plus anciennes au-delà de la limite sont supprimées.|Jede Kopie trägt ihr Datum im Namen. Ältere Kopien über dem Limit werden gelöscht.|Ogni copia ha la sua data nel nome. Le più vecchie oltre il limite vengono eliminate.|Hver kopi har datoen i navnet. Eldre kopier over grensen slettes.|각 사본의 이름에는 날짜가 들어갑니다. 한도를 넘는 오래된 사본은 삭제됩니다.
+Episode|Episodio|Épisode|Folge|Episodio|Episode|에피소드
+Episode calendar|Calendario de episodios|Calendrier des épisodes|Episodenkalender|Calendario degli episodi|Episodekalender|에피소드 캘린더
 Every day|Cada día|Chaque jour|Jeden Tag|Ogni giorno|Hver dag|매일
 Every hour|Cada hora|Toutes les heures|Jede Stunde|Ogni ora|Hver time|매시간
 Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
@@ -153,6 +156,7 @@ Light novel|Novela ligera|Light novel|Light Novel|Light novel|Light novel|라이
 Link copied|Enlace copiado|Lien copié|Link kopiert|Link copiato|Lenke kopiert|링크를 복사했습니다
 Links|Enlaces|Liens|Links|Link|Lenker|링크
 Step, binge and refresh links work without bringing the window forward, so a shortcut, a hotkey tool or a Stream Deck can use them. Step links need the switch above; a title's menu copies one.|Los enlaces step, binge y refresh funcionan sin traer la ventana al frente, así que puedes usarlos desde un acceso directo, una herramienta de atajos o un Stream Deck. Los enlaces step necesitan el interruptor de arriba; el menú de un título copia uno.|Les liens step, binge et refresh marchent sans mettre la fenêtre au premier plan : un raccourci, un outil de touches ou un Stream Deck peut s’en servir. Les liens step demandent l’interrupteur ci-dessus ; le menu d’un titre en copie un.|Step-, Binge- und Refresh-Links funktionieren, ohne das Fenster nach vorne zu holen, also kann eine Verknüpfung, ein Hotkey-Tool oder ein Stream Deck sie nutzen. Step-Links brauchen den Schalter oben; das Menü eines Titels kopiert einen.|I link step, binge e refresh funzionano senza portare la finestra in primo piano, quindi può usarli un collegamento, uno strumento di scorciatoie o uno Stream Deck. I link step richiedono l’interruttore qui sopra; il menu di un titolo ne copia uno.|Step-, binge- og refresh-lenker virker uten å hente vinduet frem, så en snarvei, et hurtigtastverktøy eller en Stream Deck kan bruke dem. Step-lenker trenger bryteren over; menyen til en tittel kopierer en.|step, binge, refresh 링크는 창을 앞으로 가져오지 않고 작동하므로 바로 가기, 단축키 도구, Stream Deck에서 쓸 수 있습니다. step 링크는 위의 스위치가 필요하며, 작품 메뉴에서 복사할 수 있습니다.
+Stop|Detener|Arrêter|Beenden|Interrompi|Stopp|중지
 Streaming|Streaming|Streaming|Streaming|Streaming|Strømming|스트리밍
 List settings|Ajustes de la lista|Réglages de la liste|Listeneinstellungen|Impostazioni lista|Listeinnstillinger|목록 설정
 Lists|Listas|Listes|Listen|Liste|Lister|목록
@@ -337,8 +341,10 @@ System|Sistema|Système|System|Sistema|System|시스템
 Tags|Etiquetas|Tags|Tags|Tag|Stikkord|태그
 Teal|Turquesa|Turquoise|Türkis|Turchese|Blågrønn|청록
 The automatic backup failed: {}|La copia automática ha fallado: {}|La sauvegarde automatique a échoué : {}|Die automatische Sicherung ist fehlgeschlagen: {}|Il backup automatico non è riuscito: {}|Den automatiske sikkerhetskopien mislyktes: {}|자동 백업에 실패했습니다: {}
+The calendar could not be saved: {}|No se ha podido guardar el calendario: {}|Le calendrier n’a pas pu être enregistré : {}|Der Kalender konnte nicht gespeichert werden: {}|Impossibile salvare il calendario: {}|Kalenderen kunne ikke lagres: {}|캘린더를 저장하지 못했습니다: {}
 The first episode is out|Ya está el primer episodio|Le premier épisode est sorti|Die erste Folge ist da|È uscito il primo episodio|Første episode er ute|첫 에피소드가 나왔습니다
 The last episode is out|Ya está el último episodio|Le dernier épisode est sorti|Die letzte Folge ist da|È uscito l’ultimo episodio|Siste episode er ute|마지막 에피소드가 나왔습니다
+The next episode of everything you watch or plan to watch is written to this .ics file and kept up to date. Import it into your calendar, or subscribe to it where your calendar app allows.|El próximo episodio de todo lo que ves o piensas ver se escribe en este archivo .ics y se mantiene al día. Impórtalo en tu calendario o suscríbete a él si tu app de calendario lo permite.|Le prochain épisode de tout ce que tu regardes ou prévois de regarder est écrit dans ce fichier .ics et tenu à jour. Importe-le dans ton calendrier, ou abonne-toi si ton app de calendrier le permet.|Die nächste Folge von allem, was du schaust oder schauen willst, wird in diese .ics-Datei geschrieben und aktuell gehalten. Importiere sie in deinen Kalender oder abonniere sie, wo deine Kalender-App es erlaubt.|Il prossimo episodio di tutto ciò che guardi o vuoi guardare viene scritto in questo file .ics e tenuto aggiornato. Importalo nel tuo calendario o iscriviti dove la tua app di calendario lo consente.|Neste episode av alt du ser eller planlegger å se skrives til denne .ics-filen og holdes oppdatert. Importer den i kalenderen din, eller abonner på den der kalenderappen tillater det.|보고 있거나 볼 예정인 모든 작품의 다음 에피소드가 이 .ics 파일에 기록되고 최신 상태로 유지됩니다. 캘린더로 가져오거나, 캘린더 앱이 허용하면 구독하세요.
 The service is not available right now ({}).|El servicio no está disponible ahora ({}).|Le service est indisponible pour le moment ({}).|Der Dienst ist gerade nicht verfügbar ({}).|Il servizio non è disponibile al momento ({}).|Tjenesten er ikke tilgjengelig akkurat nå ({}).|지금은 서비스를 사용할 수 없습니다({}).
 The {} list will be removed from this computer. Your online list is kept.|La lista de {} se borrará de este equipo. Tu lista en línea se conserva.|La liste {} sera supprimée de cet ordinateur. Ta liste en ligne est conservée.|Die {}-Liste wird von diesem Computer entfernt. Deine Online-Liste bleibt erhalten.|La lista di {} verrà rimossa da questo computer. La lista online resta.|{}-listen fjernes fra denne datamaskinen. Nettlisten din beholdes.|{} 목록이 이 컴퓨터에서 제거됩니다. 온라인 목록은 유지됩니다.
 Theme|Tema|Thème|Design|Tema|Tema|테마

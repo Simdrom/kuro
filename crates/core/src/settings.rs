@@ -283,6 +283,8 @@ pub struct Settings {
     pub backup: BackupSettings,
     /// Reads the list from the account again this often; 0 never does.
     pub refresh_hours: u32,
+    /// An iCalendar file kept up to date with upcoming episodes; empty for none.
+    pub calendar_file: String,
 }
 
 impl Default for Settings {
@@ -329,6 +331,7 @@ impl Default for Settings {
             notifications: NotificationSettings::default(),
             backup: BackupSettings::default(),
             refresh_hours: 0,
+            calendar_file: String::new(),
         }
     }
 }
@@ -348,8 +351,10 @@ impl Settings {
         self.notifications.delay_minutes = self.notifications.delay_minutes.min(24 * 60);
         self.refresh_hours = self.refresh_hours.min(24 * 7);
         self.backup.keep = self.backup.keep.clamp(1, 100);
-        if self.backup.folder.len() > 1024 || self.backup.folder.chars().any(char::is_control) {
-            self.backup.folder.clear();
+        for path in [&mut self.backup.folder, &mut self.calendar_file] {
+            if path.len() > 1024 || path.chars().any(char::is_control) {
+                path.clear();
+            }
         }
         for id in [&mut self.mal_client_id, &mut self.anilist_client_id] {
             *id = id.trim().to_owned();

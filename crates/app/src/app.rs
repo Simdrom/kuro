@@ -354,6 +354,9 @@ pub struct App {
     backup_at: f64,
     /// When the list was last read from the account.
     library_at: i64,
+    /// The calendar text last sent to the file.
+    calendar_text: String,
+    pub calendar_error: Option<String>,
     acts: Vec<Act>,
     next_tick: f64,
     airing_at: i64,
@@ -459,6 +462,8 @@ impl App {
             backup_error: None,
             backup_at: 0.0,
             library_at: now(),
+            calendar_text: String::new(),
+            calendar_error: None,
             acts: Vec::new(),
             next_tick: 0.0,
             airing_at: 0,
@@ -1393,6 +1398,17 @@ impl App {
                     self.backup_error = Some(e);
                 }
             },
+            Event::CalendarFile(path) => self.s.calendar_file = path,
+            Event::CalendarWritten(r) => {
+                if let Err(e) = &r
+                    && self.calendar_error.as_ref() != Some(e)
+                {
+                    self.say_error(tf("The calendar could not be saved: {}", &[e]));
+                    // Tried again with the next change.
+                    self.calendar_text.clear();
+                }
+                self.calendar_error = r.err();
+            }
             Event::KiokuConnected { platform, result } => {
                 self.kioku.connecting = false;
                 self.show_window(ctx);
@@ -1497,6 +1513,7 @@ impl App {
             self.refresh_airing();
         }
         self.auto_backup();
+        self.write_calendar();
         if self.refreshing == 0
             && self.bg.online()
             && self.bg.api.is_signed_in(self.s.primary)
@@ -1508,6 +1525,19 @@ impl App {
         }
         if self.unsynced > 0 && self.sync_error.as_ref().is_none_or(|(_, e)| e.is_transient()) {
             self.bg.sync();
+        }
+    }
+
+    /// Rewrites the calendar file when its episodes changed.
+    fn write_calendar(&mut self) {
+        if self.s.calendar_file.is_empty() {
+            return;
+        }
+        let all: Vec<ListEntry> = self.lib[0].iter().map(|e| (**e).clone()).collect();
+        let text = kuro_core::calendar::ics(&all, self.s.title_language, t("Episode"));
+        if text != self.calendar_text {
+            self.calendar_text = text.clone();
+            self.bg.write_calendar(self.s.calendar_file.clone().into(), text);
         }
     }
 
@@ -1649,6 +1679,11 @@ impl App {
                     &self.s.anilist_client_id,
                     &self.s.mal_client_id,
                 ));
+            }
+            if old.calendar_file != self.s.calendar_file || old.title_language != self.s.title_language {
+                self.calendar_text.clear();
+                self.calendar_error = None;
+                self.next_tick = 0.0;
             }
             if old.backup != self.s.backup {
                 // Look at the new folder now rather than within the hour.

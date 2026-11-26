@@ -762,3 +762,28 @@ fn action_links_change_the_list_only_when_allowed() {
     settle(&mut h);
     assert_eq!(h.state().binge, Some(r(2, MediaKind::Anime)));
 }
+
+#[test]
+fn the_episode_calendar_is_written() {
+    let path = std::env::temp_dir().join(format!("kuro-calendar-{}.ics", std::process::id()));
+    let _ = std::fs::remove_file(&path);
+    let file = path.display().to_string();
+    let mut h = harness_with(store(), [1240.0, 820.0], |s| s.calendar_file = file);
+    let read = |h: &mut H| {
+        for _ in 0..100 {
+            if let Ok(t) = std::fs::read_to_string(&path)
+                && h.state().calendar_error.is_none()
+            {
+                return t;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+            settle(h);
+        }
+        panic!("the calendar was not written");
+    };
+    let text = read(&mut h);
+    assert!(text.contains("SUMMARY:Lanterns Over Saltmarsh · Episode 10"), "{text}");
+    assert_eq!(text.matches("BEGIN:VEVENT").count(), 1);
+    assert!(h.state().calendar_error.is_none());
+    let _ = std::fs::remove_file(&path);
+}

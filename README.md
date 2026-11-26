@@ -138,6 +138,10 @@ available yet.
 - **Sync** can read your list from your account again every few hours, so
   changes made on the website or another device show up on their own. Your
   own changes are always sent at once, and retried while offline.
+- **Calendar** writes the next episode of everything you watch or plan to
+  watch to an `.ics` file you choose, and rewrites it when the list or the
+  schedule changes. Import it into a calendar, or subscribe to it where the
+  calendar app allows a file.
 - **Links** open titles, searches and tabs, and a few do things without
   bringing the window forward, so a desktop shortcut, a hotkey tool or a
   Stream Deck can use them:

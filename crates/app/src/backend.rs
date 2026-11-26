@@ -104,6 +104,10 @@ pub enum Event {
     BackupFolder(String),
     /// An automatic backup ran: the newest copy in the folder afterwards.
     AutoBackup(Result<Option<String>, String>),
+    /// A file chosen for the episode calendar.
+    CalendarFile(String),
+    /// The episode calendar was written, or why not.
+    CalendarWritten(Result<(), String>),
     /// Kioku: the sign-in window closed.
     KiokuConnected {
         platform: Platform,
@@ -825,6 +829,29 @@ impl Backend {
             if let Some(path) = rfd::FileDialog::new().pick_folder() {
                 reply.send(Event::BackupFolder(path.display().to_string()));
             }
+        });
+    }
+
+    pub fn pick_calendar_file(&self) {
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            let path = rfd::FileDialog::new()
+                .add_filter("iCalendar", &["ics"])
+                .set_file_name("kuro-episodes.ics")
+                .save_file();
+            if let Some(path) = path {
+                reply.send(Event::CalendarFile(path.display().to_string()));
+            }
+        });
+    }
+
+    /// Replaces the calendar file with `text`, never leaving half a file.
+    pub fn write_calendar(&self, path: PathBuf, text: String) {
+        let reply = self.reply();
+        std::thread::spawn(move || {
+            let part = path.with_extension("ics.part");
+            let r = std::fs::write(&part, text).and_then(|()| std::fs::rename(&part, &path));
+            reply.send(Event::CalendarWritten(r.map_err(|e| e.to_string())));
         });
     }
 
