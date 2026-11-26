@@ -193,29 +193,6 @@ fn general(app: &mut App, ui: &mut Ui) {
         separator(ui, &p);
         toggle_row(ui, &p, icons::PLAY, t("Start with Windows"), &mut s.autostart);
     });
-    section(ui, &p, t("Links"));
-    card(ui, &p, |ui| {
-        toggle_row(ui, &p, icons::LINK, t("Open kuro:// links in this app"), &mut s.handle_links);
-        separator(ui, &p);
-        toggle_row(
-            ui,
-            &p,
-            icons::COPY,
-            t("Open copied AniList and MyAnimeList links"),
-            &mut s.watch_clipboard,
-        );
-    });
-    note(ui, &p, t("Copied links open when you return to this window. Other clipboard content is ignored."));
-    if app.s.handle_links {
-        ui.add_space(4.0);
-        ui.horizontal(|ui| {
-            ui.add_space(12.0);
-            if ui.link(t("Copy a bookmarklet that opens the current page here")).clicked() {
-                let code = "javascript:location.href='kuro://open?url='+encodeURIComponent(location.href)";
-                app.act(Act::Copy(code.into()));
-            }
-        });
-    }
 }
 
 fn lists(app: &mut App, ui: &mut Ui) {
@@ -571,6 +548,35 @@ fn widgets_page(app: &mut App, ui: &mut Ui) {
         toggle_row(ui, &p, icons::PUSH_PIN, t("Show the desktop widget"), &mut app.widget);
     });
     note(ui, &p, t("A small window above the others with your progress and statistics."));
+    links_section(app, ui);
+}
+
+fn links_section(app: &mut App, ui: &mut Ui) {
+    let p = app.p;
+    let s = &mut app.s;
+    section(ui, &p, t("Links"));
+    card(ui, &p, |ui| {
+        toggle_row(ui, &p, icons::LINK, t("Open kuro:// links in this app"), &mut s.handle_links);
+        separator(ui, &p);
+        toggle_row(
+            ui,
+            &p,
+            icons::COPY,
+            t("Open copied AniList and MyAnimeList links"),
+            &mut s.watch_clipboard,
+        );
+    });
+    note(ui, &p, t("Copied links open when you return to this window. Other clipboard content is ignored."));
+    if app.s.handle_links {
+        ui.add_space(4.0);
+        ui.horizontal(|ui| {
+            ui.add_space(12.0);
+            if ui.link(t("Copy a bookmarklet that opens the current page here")).clicked() {
+                let code = "javascript:location.href='kuro://open?url='+encodeURIComponent(location.href)";
+                app.act(Act::Copy(code.into()));
+            }
+        });
+    }
     section(ui, &p, t("Automation"));
     card(ui, &p, |ui| {
         for (i, link) in [
