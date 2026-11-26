@@ -220,6 +220,17 @@ fn command_palette_opens_titles() {
 }
 
 #[test]
+fn only_the_title_on_screen_is_marked_open() {
+    let mut h = harness();
+    let (a, b) = (r(1, MediaKind::Anime), r(5, MediaKind::Anime));
+    h.state_mut().routes = vec![Route::Media(a), Route::Media(b)];
+    assert!(kuro_app::ui::is_open(h.state(), b));
+    assert!(!kuro_app::ui::is_open(h.state(), a), "titles further back are not open");
+    h.state_mut().routes.push(Route::Review(b, 9));
+    assert!(kuro_app::ui::is_open(h.state(), b), "a review keeps its title marked");
+}
+
+#[test]
 fn settings_survive_a_restart() {
     let mut h = harness();
     h.state_mut().s.theme = Theme::Light;

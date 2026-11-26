@@ -439,6 +439,8 @@ pub fn scroll<R>(
         .inner
 }
 
+/// Whether `r` is the title shown in the detail pane, or the one a page on top of it came from.
+/// Titles further back in the history do not count.
 pub fn is_open(app: &App, r: kuro_core::MediaRef) -> bool {
-    app.routes.contains(&Route::Media(r))
+    app.routes.iter().rev().find_map(|x| if let Route::Media(m) = x { Some(*m) } else { None }) == Some(r)
 }
