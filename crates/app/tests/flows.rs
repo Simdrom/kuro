@@ -220,6 +220,28 @@ fn command_palette_opens_titles() {
 }
 
 #[test]
+fn episode_notices_offer_to_mark_the_new_episode() {
+    let mut h = harness();
+    let one = r(1, MediaKind::Anime);
+    let e = (*h.state().entry_at(one).unwrap()).clone();
+    let ep = e.progress + 1;
+    let due = |event| kuro_core::notify::Due { key: "k".into(), at: 0, event, entry: e.clone() };
+    let n = h.state().notice(&due(kuro_core::notify::Event::Episode(ep)));
+    assert_eq!(n.mark, Some((one, ep)));
+    assert!(n.detail.as_deref().is_some_and(|d| d.contains(&format!("{}/", e.progress))));
+    assert!(n.link.is_some());
+    // An episode already in the list is not offered.
+    let old = h.state().notice(&due(kuro_core::notify::Event::Episode(e.progress)));
+    assert_eq!(old.mark, None);
+
+    h.state_mut().mark_episode(one, ep);
+    settle(&mut h);
+    assert_eq!(progress(&h, 1), ep);
+    h.state_mut().mark_episode(one, ep - 1);
+    assert_eq!(progress(&h, 1), ep, "never moves back");
+}
+
+#[test]
 fn only_the_title_on_screen_is_marked_open() {
     let mut h = harness();
     let (a, b) = (r(1, MediaKind::Anime), r(5, MediaKind::Anime));

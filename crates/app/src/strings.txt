@@ -90,6 +90,7 @@ English|Inglés|Anglais|Englisch|Inglese|Engelsk|영어
 Ep {} · {}|Ep. {} · {}|Ép. {} · {}|Folge {} · {}|Ep. {} · {}|Ep. {} · {}|{}화 · {}
 Episode {} in {}|Episodio {} en {}|Épisode {} dans {}|Folge {} in {}|Episodio {} tra {}|Episode {} om {}|{}화까지 {}
 Episode {} is out|Ya está el episodio {}|L’épisode {} est sorti|Folge {} ist da|È uscito l’episodio {}|Episode {} er ute|{}화가 나왔습니다
+Mark episode {}|Marcar ep. {}|Marquer l’ép. {}|Folge {} markieren|Segna ep. {}|Merk ep. {}|{}화 표시
 Episodes|Episodios|Épisodes|Folgen|Episodi|Episoder|에피소드
 Every change is saved to AniList and MyAnimeList.|Cada cambio se guarda en AniList y MyAnimeList.|Chaque changement est enregistré sur AniList et MyAnimeList.|Jede Änderung wird auf AniList und MyAnimeList gespeichert.|Ogni modifica viene salvata su AniList e MyAnimeList.|Hver endring lagres på AniList og MyAnimeList.|모든 변경 사항을 AniList와 MyAnimeList에 저장합니다.
 Every new episode|Cada episodio nuevo|Chaque nouvel épisode|Jede neue Folge|Ogni nuovo episodio|Hver nye episode|새 에피소드마다

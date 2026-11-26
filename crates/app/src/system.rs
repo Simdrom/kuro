@@ -92,8 +92,31 @@ fn listen_on(name: &str, reply: Reply) {
     });
 }
 
+/// A Windows notification.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Notice {
+    pub title: String,
+    pub body: String,
+    /// A quieter last line.
+    pub detail: Option<String>,
+    /// A picture already on disk, shown beside the text.
+    pub image: Option<std::path::PathBuf>,
+    /// Opened when the notification or its Open button is clicked.
+    pub link: Option<String>,
+    /// Offers a button that marks this episode as watched.
+    pub mark: Option<(kuro_core::MediaRef, u32)>,
+}
+
+impl Notice {
+    pub fn new(title: impl Into<String>, body: impl Into<String>) -> Self {
+        Self { title: title.into(), body: body.into(), ..Default::default() }
+    }
+}
+
 pub trait System {
-    fn notify(&self, title: &str, body: &str, link: Option<String>);
+    fn notify(&self, n: Notice);
+    /// The picture notifications carry as the app's.
+    fn set_notice_icon(&mut self, _icon: &eframe::egui::IconData) {}
     fn set_autostart(&self, on: bool) -> Result<(), String>;
     fn set_link_handler(&self, on: bool) -> Result<(), String>;
     /// Shows or hides the tray icon.
@@ -113,7 +136,7 @@ pub fn is_web_url(url: &str) -> bool {
 pub struct NoSystem;
 
 impl System for NoSystem {
-    fn notify(&self, _: &str, _: &str, _: Option<String>) {}
+    fn notify(&self, _: Notice) {}
     fn set_autostart(&self, _: bool) -> Result<(), String> {
         Ok(())
     }
@@ -135,10 +158,12 @@ pub use windows::WindowsSystem;
 
 #[cfg(windows)]
 mod windows {
+    use std::path::{Path, PathBuf};
+
     use super::*;
-    use crate::i18n::t;
+    use crate::i18n::{t, tf};
     use eframe::egui::IconData;
-    use tauri_winrt_notification::{Duration as ToastDuration, Toast};
+    use tauri_winrt_notification::{Duration as ToastDuration, IconCrop, Toast};
     use tray_icon::menu::{Menu, MenuEvent, MenuItem};
     use tray_icon::{MouseButton, TrayIcon, TrayIconBuilder, TrayIconEvent};
     use windows_registry::CURRENT_USER;
@@ -146,10 +171,46 @@ mod windows {
     const RUN: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
     const RUN_VALUE: &str = "Kuro";
     const PROTOCOL: &str = r"Software\Classes\kuro";
+    /// Toast button actions.
+    const MARK: &str = "mark";
+    const OPEN: &str = "open";
+
+    fn toast_key() -> String {
+        format!(r"Software\Classes\AppUserModelId\{APP_ID}")
+    }
 
     pub struct WindowsSystem {
         reply: Reply,
         tray: Option<TrayIcon>,
+        /// Pictures for notifications, which Windows reads from disk.
+        dir: PathBuf,
+    }
+
+    const COVERS_KEPT: usize = 30;
+
+    /// The file extension Windows needs to read an image, from its first bytes.
+    pub(super) fn image_ext(b: &[u8]) -> Option<&'static str> {
+        if b.starts_with(b"\x89PNG\r\n\x1a\n") {
+            Some("png")
+        } else if b.starts_with(&[0xFF, 0xD8, 0xFF]) {
+            Some("jpg")
+        } else if b.starts_with(b"GIF8") {
+            Some("gif")
+        } else {
+            None
+        }
+    }
+
+    /// Files in `dir` starting with `prefix`, newest first.
+    fn files_with(dir: &Path, prefix: &str) -> Vec<PathBuf> {
+        let Ok(read) = std::fs::read_dir(dir) else { return Vec::new() };
+        let mut all: Vec<_> = read
+            .flatten()
+            .filter(|e| e.file_name().to_string_lossy().starts_with(prefix))
+            .map(|e| (e.metadata().and_then(|m| m.modified()).ok(), e.path()))
+            .collect();
+        all.sort_by_key(|f| std::cmp::Reverse(f.0));
+        all.into_iter().map(|(_, p)| p).collect()
     }
 
     fn exe() -> Result<String, String> {
@@ -162,13 +223,28 @@ mod windows {
     }
 
     impl WindowsSystem {
-        pub fn new(reply: Reply) -> Self {
+        pub fn new(reply: Reply, dir: PathBuf) -> Self {
             // Gives toasts the right name.
-            let id = CURRENT_USER.create(format!(r"Software\Classes\AppUserModelId\{APP_ID}"));
-            if let Ok(k) = id {
+            if let Ok(k) = CURRENT_USER.create(toast_key()) {
                 let _ = k.set_string("DisplayName", "Kuro");
             }
-            Self { reply, tray: None }
+            Self { reply, tray: None, dir }
+        }
+
+        /// A copy of a cached cover that Windows can read: it needs the file extension.
+        fn stage_cover(&self, src: &Path) -> Option<PathBuf> {
+            let bytes = std::fs::read(src).ok()?;
+            let ext = image_ext(&bytes)?;
+            let name = src.file_name()?.to_str()?;
+            let dest = self.dir.join(format!("cover-{name}.{ext}"));
+            if !dest.is_file() {
+                std::fs::create_dir_all(&self.dir).ok()?;
+                std::fs::write(&dest, &bytes).ok()?;
+            }
+            for old in files_with(&self.dir, "cover-").into_iter().skip(COVERS_KEPT) {
+                let _ = std::fs::remove_file(old);
+            }
+            Some(dest)
         }
 
         /// Moves registrations made before the app was renamed.
@@ -193,20 +269,59 @@ mod windows {
     }
 
     impl System for WindowsSystem {
-        fn notify(&self, title: &str, body: &str, link: Option<String>) {
+        fn notify(&self, n: Notice) {
+            let mut toast = Toast::new(APP_ID).title(&n.title).text1(&n.body).duration(ToastDuration::Short);
+            if let Some(d) = &n.detail {
+                toast = toast.text2(d);
+            }
+            if let Some(p) = n.image.as_deref().and_then(|p| self.stage_cover(p)) {
+                toast = toast.icon(&p, IconCrop::Square, &n.title);
+            }
+            if let Some((_, ep)) = n.mark {
+                toast = toast.add_button(&tf("Mark episode {}", &[&ep]), MARK);
+            }
+            if n.link.is_some() {
+                toast = toast.add_button(t("Open"), OPEN);
+            }
             let reply = self.reply.clone();
-            let toast =
-                Toast::new(APP_ID).title(title).text1(body).duration(ToastDuration::Short).on_activated(
-                    move |_| {
+            let (link, mark) = (n.link, n.mark);
+            let toast = toast.on_activated(move |action| {
+                match (action.as_deref(), mark) {
+                    // Marking happens in the background, without bringing the window up.
+                    (Some(MARK), Some((r, ep))) => reply.send(Event::MarkEpisode(r, ep)),
+                    _ => {
                         reply.send(Event::ShowWindow);
                         if let Some(l) = &link {
                             reply.send(Event::OpenLink(l.clone()));
                         }
-                        Ok(())
-                    },
-                );
+                    }
+                }
+                Ok(())
+            });
             if let Err(e) = toast.show() {
                 tracing::warn!("toast failed: {e}");
+            }
+        }
+
+        fn set_notice_icon(&mut self, icon: &IconData) {
+            // A new name per drawing, as Windows keeps showing a file it has read once.
+            use std::hash::{Hash, Hasher};
+            let mut h = std::hash::DefaultHasher::new();
+            icon.rgba.hash(&mut h);
+            let path = self.dir.join(format!("icon-{:x}.png", h.finish()));
+            let written = path.is_file()
+                || (std::fs::create_dir_all(&self.dir).is_ok()
+                    && image::RgbaImage::from_raw(icon.width, icon.height, icon.rgba.clone())
+                        .is_some_and(|img| img.save_with_format(&path, image::ImageFormat::Png).is_ok()));
+            if !written {
+                tracing::warn!("the notification icon could not be written");
+                return;
+            }
+            for old in files_with(&self.dir, "icon-").into_iter().filter(|p| *p != path) {
+                let _ = std::fs::remove_file(old);
+            }
+            if let Ok(k) = CURRENT_USER.create(toast_key()) {
+                let _ = k.set_string("IconUri", path.display().to_string());
             }
         }
 
@@ -314,8 +429,43 @@ mod tests {
         let api = Api::new(Arc::new(MemorySecrets::default()), ClientIds::default()).unwrap();
         let ctx = eframe::egui::Context::default();
         let bg = Backend::new(api, Store::in_memory().unwrap(), std::env::temp_dir(), ctx, false);
-        let _sys = WindowsSystem::new(bg.reply());
-        tauri_winrt_notification::Toast::new(APP_ID).title("Kuro").text1("Test").show().unwrap();
+        let dir = std::env::temp_dir().join("kuro-toast-test");
+        let mut sys = WindowsSystem::new(bg.reply(), dir.clone());
+        sys.set_notice_icon(&crate::icon::render(Default::default(), 64));
+        // Any picture stands in for a cover.
+        let i = crate::icon::render(kuro_core::settings::AppIcon::Night, 96);
+        let cover = dir.join("cached-cover");
+        image::RgbaImage::from_raw(96, 96, i.rgba)
+            .unwrap()
+            .save_with_format(&cover, image::ImageFormat::Png)
+            .unwrap();
+        let r = kuro_core::MediaRef {
+            service: kuro_core::Service::AniList,
+            kind: kuro_core::MediaKind::Anime,
+            id: 1,
+        };
+        sys.notify(Notice {
+            title: "Black Clover 2nd Season".into(),
+            body: "Episode 9 is out".into(),
+            detail: Some("Watching · 8/?".into()),
+            image: Some(cover),
+            link: Some("https://anilist.co/anime/1".into()),
+            mark: Some((r, 9)),
+        });
+        assert!(
+            std::fs::read_dir(&dir)
+                .unwrap()
+                .flatten()
+                .any(|e| e.path().extension().is_some_and(|x| x == "png"))
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn toast_pictures_get_the_extension_windows_needs() {
+        assert_eq!(windows::image_ext(b"\x89PNG\r\n\x1a\nrest"), Some("png"));
+        assert_eq!(windows::image_ext(&[0xFF, 0xD8, 0xFF, 0xE0]), Some("jpg"));
+        assert_eq!(windows::image_ext(b"<html>"), None);
     }
 
     #[test]

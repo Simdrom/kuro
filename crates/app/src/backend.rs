@@ -115,6 +115,8 @@ pub enum Event {
     KiokuReview(Outcome<KiokuReview>),
     /// A link passed by another process or the tray.
     OpenLink(String),
+    /// A notification's button: this episode was watched.
+    MarkEpisode(kuro_core::MediaRef, u32),
     ShowWindow,
     Quit,
 }

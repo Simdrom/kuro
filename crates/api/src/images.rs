@@ -60,6 +60,13 @@ impl ImageCache {
         Ok(bytes)
     }
 
+    /// The file of an image already downloaded, without going to the network.
+    pub fn cached(&self, url: &str) -> Option<PathBuf> {
+        allowed(url)?;
+        let path = self.path(url);
+        path.is_file().then_some(path)
+    }
+
     pub fn size(&self) -> u64 {
         files(&self.dir).iter().map(|f| f.1).sum()
     }

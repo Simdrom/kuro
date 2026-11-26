@@ -441,7 +441,7 @@ fn notifications(app: &mut App, ui: &mut Ui) {
     }
     ui.add_space(10.0);
     if widgets::button(ui, &p, icons::BELL, t("Send a test notification"), false).clicked() {
-        app.sys.notify("Kuro", t("Notifications are working."), None);
+        app.sys.notify(crate::system::Notice::new("Kuro", t("Notifications are working.")));
     }
 }
 

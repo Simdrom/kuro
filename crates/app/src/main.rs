@@ -112,7 +112,7 @@ fn run(hidden: bool, link: Option<String>, profile: Option<String>) -> Result<()
             let reply = bg.reply();
             system::listen(profile.as_deref(), reply.clone());
             #[cfg(windows)]
-            let sys = system::WindowsSystem::new(reply);
+            let sys = system::WindowsSystem::new(reply, data.join("notifications"));
             #[cfg(windows)]
             if profile.is_none() {
                 sys.adopt_previous();

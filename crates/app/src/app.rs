@@ -22,7 +22,7 @@ use kuro_core::{
 use crate::backend::{Backend, Event, KiokuReview, KiokuStep, now};
 use crate::confetti::Confetti;
 use crate::i18n::{self, t, tf};
-use crate::system::System;
+use crate::system::{Notice, System};
 use crate::textures::Textures;
 use crate::theme::{self, Palette};
 use crate::{format, icon};
@@ -596,6 +596,16 @@ impl App {
     }
 
     /// The entry to change, or a new one for a title not in the list yet.
+    /// Moves the list up to `ep`, as a notification's button asks. Never moves it back.
+    pub fn mark_episode(&mut self, r: MediaRef, ep: u32) {
+        let Some(e) = self.entry_at(r) else { return };
+        if ep <= e.progress {
+            return;
+        }
+        let next = progress::set_progress(&e, ep, today());
+        self.save(&next);
+    }
+
     fn working_entry(&self, m: &Media) -> ListEntry {
         match self.entry(m) {
             Some(e) => (*e).clone(),
@@ -1345,6 +1355,7 @@ impl App {
             Event::OpenLink(l) => {
                 self.open_link(&l);
             }
+            Event::MarkEpisode(r, ep) => self.mark_episode(r, ep),
             Event::ShowWindow => self.show_window(ctx),
             Event::Quit => {
                 self.really_quit = true;
@@ -1416,14 +1427,27 @@ impl App {
         }
         drop(store);
         for d in due {
-            let name = d.entry.media.display_title(self.s.title_language);
-            let body = match d.event {
-                notify::Event::Episode(n) => tf("Episode {} is out", &[&n]),
-                notify::Event::Premiere => t("The first episode is out").to_owned(),
-                notify::Event::Finished => t("The last episode is out").to_owned(),
-            };
-            self.sys.notify(name, &body, Some(links::to_link(d.entry.media.media_ref())));
+            let notice = self.notice(&d);
+            self.sys.notify(notice);
         }
+    }
+
+    /// What a notification about a new episode says and offers.
+    pub fn notice(&self, d: &notify::Due) -> Notice {
+        let (e, m) = (&d.entry, &d.entry.media);
+        let (body, episode) = match d.event {
+            notify::Event::Episode(n) => (tf("Episode {} is out", &[&n]), Some(n)),
+            notify::Event::Premiere => (t("The first episode is out").to_owned(), Some(1)),
+            notify::Event::Finished => (t("The last episode is out").to_owned(), m.total()),
+        };
+        let total = m.total().map_or_else(|| "?".to_owned(), |n| n.to_string());
+        let mut n = Notice::new(m.display_title(self.s.title_language), body);
+        n.detail = Some(format!("{} · {}/{total}", format::status(e.status, m.kind), e.progress));
+        n.image = m.cover.as_deref().and_then(|u| self.bg.images.cached(u));
+        n.link = Some(links::to_link(m.media_ref()));
+        // Only an episode still ahead of the list can be marked.
+        n.mark = episode.filter(|ep| *ep > e.progress).map(|ep| (m.media_ref(), ep));
+        n
     }
 
     fn check_clipboard(&mut self, ctx: &egui::Context) {
@@ -1546,6 +1570,7 @@ impl App {
         if icon_changed {
             self.icon_applied = Some(self.s.icon);
             let data = std::sync::Arc::new(icon::render(self.s.icon, 128));
+            self.sys.set_notice_icon(&data);
             ctx.send_viewport_cmd(egui::ViewportCommand::Icon(Some(data)));
         }
         let tray = self.s.close_to_tray || self.hidden;
