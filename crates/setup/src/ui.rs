@@ -42,7 +42,7 @@ pub fn run(o: &Opts) -> i32 {
     let setup = Setup {
         desktop: o.desktop.unwrap_or(st.desktop),
         // An update brings Kuro back only if it was open.
-        launch: st.installed.is_none() || st.running,
+        launch: st.installed.is_none() || !st.running.is_empty(),
         page: if o.uninstall && st.installed.is_some() { Page::Uninstall } else { Page::Home },
         st,
         plan,
@@ -67,9 +67,9 @@ pub fn run(o: &Opts) -> i32 {
     i32::from(shown.is_err() || failed.load(Ordering::Relaxed))
 }
 
-/// 黒 on an ink tile, drawn by assets/make_icon.py.
+/// Kuro's own icon, in its default scheme.
 fn icon() -> egui::IconData {
-    eframe::icon_data::from_png_bytes(include_bytes!("../assets/setup.png")).unwrap_or_default()
+    crate::icon::render(Default::default(), 96)
 }
 
 impl Setup {
@@ -124,7 +124,7 @@ impl Setup {
         match &self.st.installed {
             Some(i) => {
                 ui.label(tf("Kuro {0} is installed in {1}", &[&i.version, &i.dir.display().to_string()]));
-                if self.st.running {
+                if !self.st.running.is_empty() {
                     ui.label(RichText::new(t("Kuro is open: it will be closed first.")).weak());
                 }
             }

@@ -22,7 +22,7 @@ sys-locale = "0.3"
 
 [target.'cfg(windows)'.dependencies]
 windows-registry = "0.100"
-windows = { version = "0.62", features = ["Win32_System_Com", "Win32_UI_Shell"] }
+windows = { version = "0.62", features = ["Win32_System_Com", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Threading", "Win32_UI_Shell"] }
 
 [build-dependencies]
 miniz_oxide = "0.8"

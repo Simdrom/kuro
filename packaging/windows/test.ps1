@@ -79,6 +79,15 @@ Assert-Version $Version
 Install-Kuro $Version
 Assert-Version $Version
 
+# A copy from another folder would take over the Kuro started after installing.
+$other = "$env:TEMP\other-kuro"
+New-Item -ItemType Directory $other -Force | Out-Null
+Copy-Item $exe $other
+$kuro = Start-Process "$other\kuro.exe" -ArgumentList '--hidden' -PassThru
+Start-Sleep 10
+Install-Kuro $Version
+Assert ($kuro.WaitForExit(5000)) 'installing also closes a copy from another folder'
+
 # Going back only when asked, and only to a Kuro that can read the lists.
 Install-Kuro $Older @() 1
 Assert-Version $Version

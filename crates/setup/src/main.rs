@@ -10,6 +10,8 @@
 compile_error!("Kuro Setup is for Windows");
 
 mod engine;
+#[path = "../../app/src/icon.rs"]
+mod icon;
 mod text;
 mod ui;
 mod win;

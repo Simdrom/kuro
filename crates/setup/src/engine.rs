@@ -84,8 +84,8 @@ pub struct Installed {
 #[derive(Clone, Debug, Default)]
 pub struct State {
     pub installed: Option<Installed>,
-    /// Kuro is running from the install folder.
-    pub running: bool,
+    /// Where the running copies of Kuro were started from, this one or any other.
+    pub running: Vec<PathBuf>,
     /// Layout of the lists on this computer, if there are any.
     pub schema: Option<i64>,
     /// There is a desktop shortcut.
@@ -102,7 +102,7 @@ pub fn read_state() -> State {
         }
         _ => None,
     };
-    let running = installed.as_ref().is_some_and(|i| in_use(&i.dir.join(EXE)));
+    let running = win::running(EXE);
     // Unreadable lists are treated as too new: an older Kuro must not risk them.
     let schema = data_dirs().map_or(Ok(None), |(data, _)| kuro_core::Store::schema_of(&data.join("kuro.db")));
     let schema = schema.unwrap_or(Some(i64::MAX));
@@ -151,11 +151,6 @@ fn default_dir() -> Result<PathBuf, String> {
     Ok(Path::new(&base).join("Programs").join("Kuro"))
 }
 
-/// A running program cannot be opened for writing.
-fn in_use(exe: &Path) -> bool {
-    std::fs::OpenOptions::new().write(true).open(exe).is_err_and(|e| e.raw_os_error() == Some(32))
-}
-
 fn io(what: &Path) -> impl Fn(std::io::Error) -> String + '_ {
     move |e| tf("Could not write {0}: {1}", &[&what.display().to_string(), &e.to_string()])
 }
@@ -164,19 +159,43 @@ fn unpack(packed: &[u8]) -> Result<Vec<u8>, String> {
     miniz_oxide::inflate::decompress_to_vec_zlib(packed).map_err(|e| format!("damaged setup: {e:?}"))
 }
 
-/// Asks Kuro to quit and waits until its file is free.
-fn close_kuro(exe: &Path, log: &Log) -> Result<(), String> {
-    if !exe.is_file() || !in_use(exe) {
+/// Asks the running Kuro to quit, as `kuro.exe --quit` does: only one runs per user, and it
+/// listens on this pipe (system.rs in the app). Kuro 0.1.0 does not know the word.
+fn ask_to_quit() {
+    let user: String =
+        std::env::var("USERNAME").unwrap_or_default().chars().filter(char::is_ascii_alphanumeric).collect();
+    if let Ok(mut pipe) = std::fs::OpenOptions::new().write(true).open(format!(r"\\.\pipe\kuro-{user}")) {
+        let _ = writeln!(pipe, "quit");
+    }
+}
+
+/// Closes Kuro and waits until it is gone. `only` limits it to the copy in that folder; otherwise
+/// any copy counts, since a copy left open would take over the one started after installing.
+fn close_kuro(only: Option<&Path>, log: &Log) -> Result<(), String> {
+    let open = || -> Vec<PathBuf> {
+        win::running(EXE)
+            .into_iter()
+            .filter(|p| only.is_none_or(|d| p.parent().is_some_and(|q| same_file(q, d))))
+            .collect()
+    };
+    let mut left = open();
+    if left.is_empty() {
         return Ok(());
     }
-    log.add(format!("Closing {}", exe.display()));
-    let _ = Command::new(exe).arg("--quit").status();
+    for p in &left {
+        log.add(format!("Closing {}", p.display()));
+    }
     let end = Instant::now() + Duration::from_secs(10);
-    while in_use(exe) {
+    while !left.is_empty() {
         if Instant::now() >= end {
-            return Err(t("Kuro is still open. Close it and try again."));
+            return Err(tf(
+                "Kuro is still open from {0}. Close it and try again.",
+                &[&left[0].display().to_string()],
+            ));
         }
-        std::thread::sleep(Duration::from_millis(200));
+        ask_to_quit();
+        std::thread::sleep(Duration::from_millis(300));
+        left = open();
     }
     Ok(())
 }
@@ -262,7 +281,7 @@ pub fn install(st: &State, c: Choices, log: &Log) -> Result<(), String> {
     };
     let exe = dir.join(EXE);
     std::fs::create_dir_all(&dir).map_err(io(&dir))?;
-    close_kuro(&exe, log)?;
+    close_kuro(None, log)?;
     replace(&exe, &unpack(PROGRAM)?, log)?;
     replace(&dir.join(LICENCES), &unpack(LICENCES_Z)?, log)?;
     // Uninstall in Settings runs this copy.
@@ -315,7 +334,7 @@ pub fn uninstall(st: &State, purge: bool, log: &Log) -> Result<(), String> {
     };
     log.add(format!("Uninstalling from {}", dir.display()));
     let exe = dir.join(EXE);
-    close_kuro(&exe, log)?;
+    close_kuro(Some(&dir), log)?;
     let hive = windows_registry::CURRENT_USER;
     if let Ok(run) = hive.options().read().write().open(RUN)
         && run.get_string("Kuro").is_ok_and(|c| points_to(&c, &exe))
@@ -420,6 +439,14 @@ mod tests {
         let exe = Path::new(r"C:\Users\a\AppData\Local\Programs\Kuro\kuro.exe");
         assert!(points_to(r#""C:\users\A\AppData\Local\Programs\Kuro\kuro.exe" --hidden"#, exe));
         assert!(!points_to(r#""C:\Other\kuro.exe" --hidden"#, exe));
+    }
+
+    #[test]
+    fn finds_where_programs_run_from() {
+        let me = std::env::current_exe().unwrap();
+        let name = me.file_name().unwrap().to_string_lossy().into_owned();
+        assert!(win::running(&name).iter().any(|p| same_file(p, &me)));
+        assert!(win::running("no-such-program.exe").is_empty());
     }
 
     #[test]

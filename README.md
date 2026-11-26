@@ -150,7 +150,8 @@ needs a private key.
   and Kioku's history sources in `kioku/`.
 - `crates/app`: interface (egui) and Windows integration.
 - `crates/setup`: the setup, with the program inside (`KURO_PAYLOAD` at build
-  time). `packaging/windows/test.ps1` tests it in the release.
+  time). `packaging/windows/build.ps1` builds it here, into `dist\`;
+  `packaging/windows/test.ps1` tests it in the release.
 
 ## Security
 
