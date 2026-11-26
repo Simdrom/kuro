@@ -2,6 +2,7 @@
 
 pub mod backup;
 pub mod calendar;
+pub mod friends;
 pub mod kioku;
 pub mod links;
 pub mod list;

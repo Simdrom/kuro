@@ -114,8 +114,8 @@ fn deep(url: &Url) -> Option<Link> {
         (
             "tab",
             [
-                name @ ("anime" | "manga" | "calendar" | "seasonal" | "ranking" | "search" | "settings"
-                | "kioku"),
+                name @ ("anime" | "manga" | "calendar" | "seasonal" | "ranking" | "search" | "friends"
+                | "settings" | "kioku"),
             ],
         ) => Some(Link::Tab((*name).to_owned())),
         _ => None,

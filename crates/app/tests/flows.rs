@@ -986,3 +986,64 @@ fn a_title_menu_answers_to_the_key_each_entry_shows() {
     settle(&mut h);
     assert_eq!(h.state().entry_at(r(1, MediaKind::Anime)).unwrap().status, ListStatus::Paused);
 }
+
+#[test]
+fn friends_show_what_they_watch_and_the_titles_in_common() {
+    use kuro_core::friends::{Friend, FriendProfile};
+    let mut h = harness();
+    h.state_mut().friend_text = "https://myanimelist.net/profile/Reader".into();
+    act(&mut h, Act::AddFriend);
+    let friend = Friend { service: Service::Mal, name: "Reader".into() };
+    assert_eq!(h.state().s.friends, std::slice::from_ref(&friend));
+    assert!(h.state().friend_text.is_empty());
+    h.state_mut().friend_text = "@reader".into();
+    h.state_mut().friend_service = Service::Mal;
+    act(&mut h, Act::AddFriend);
+    assert_eq!(h.state().s.friends.len(), 1, "names ignore case");
+
+    act(&mut h, Act::Go(Tab::Friends));
+    assert!(h.query_by_label_contains("Open Reader’s profile").is_some());
+    // Their list is on MyAnimeList; one title is also on the user's AniList list.
+    let theirs = |id: u64, title: &str, score| {
+        let mut m = media(id, MediaKind::Anime, title);
+        (m.service, m.anilist_id, m.mal_id) = (Service::Mal, None, Some(id));
+        let mut e = ListEntry::new(m);
+        (e.status, e.progress, e.score) = (ListStatus::Current, 3, score);
+        e
+    };
+    let profile = FriendProfile {
+        name: "Reader".into(),
+        avatar: None,
+        entries: vec![theirs(1001, "Lanterns Over Saltmarsh", 80), theirs(5555, "Paper Comet", 0)],
+    };
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::Friend { friend: friend.clone(), result: Ok(profile), fresh: true });
+    settle(&mut h);
+    assert!(h.query_by_label_contains("Ep 3 Paper Comet").is_some());
+
+    click(&mut h, "Open Reader’s profile");
+    assert_eq!(h.state().routes.last(), Some(&Route::Friend(friend.clone())));
+    assert!(h.query_by_label_contains("In common · 1").is_some());
+    assert!(h.query_by_label_contains("Lanterns Over Saltmarsh, Them 8 · You").is_some());
+
+    act(&mut h, Act::RemoveFriend(friend));
+    assert!(h.state().s.friends.is_empty());
+    assert!(h.state().routes.is_empty());
+}
+
+#[test]
+fn a_missing_friend_says_so_and_can_be_retried() {
+    use kuro_core::friends::Friend;
+    let mut h = harness();
+    h.state_mut().friend_text = "nobody".into();
+    act(&mut h, Act::AddFriend);
+    act(&mut h, Act::Go(Tab::Friends));
+    let friend = Friend { service: h.state().s.primary, name: "nobody".into() };
+    let ctx = h.ctx.clone();
+    h.state_mut()
+        .handle(&ctx, Event::Friend { friend: friend.clone(), result: Err(ApiError::NotFound), fresh: true });
+    settle(&mut h);
+    assert!(h.query_by_label_contains("No user with this name").is_some());
+    click(&mut h, "Retry");
+    assert!(h.state().friends[&friend].loading);
+}

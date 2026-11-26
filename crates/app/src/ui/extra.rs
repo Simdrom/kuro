@@ -48,7 +48,7 @@ pub fn overview(app: &mut App, ui: &mut Ui, r: MediaRef) {
 }
 
 /// A plain grid of cells, as many columns as fit.
-fn cells(
+pub(super) fn cells(
     app: &mut App,
     ui: &mut Ui,
     count: usize,
@@ -71,7 +71,7 @@ fn cells(
 }
 
 /// A clickable card background. Returns its response.
-fn cell_base(
+pub(super) fn cell_base(
     app: &App,
     ui: &Ui,
     rect: Rect,

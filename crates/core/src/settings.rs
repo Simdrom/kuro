@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::friends::{Friend, MAX_FRIENDS, valid_name};
 use crate::list::SortKey;
 use crate::model::{MediaKind, MediaRef, Service, TitleLanguage};
 
@@ -345,6 +346,8 @@ pub struct Settings {
     pub google_calendar: String,
     /// The calendars Kuro made in that account. It can only reach those.
     pub google_calendars: Vec<GoogleCalendar>,
+    /// People whose lists the Friends tab shows.
+    pub friends: Vec<Friend>,
 }
 
 impl Default for Settings {
@@ -398,6 +401,7 @@ impl Default for Settings {
             google_account: String::new(),
             google_calendar: String::new(),
             google_calendars: Vec::new(),
+            friends: Vec::new(),
         }
     }
 }
@@ -432,6 +436,14 @@ impl Settings {
         self.google_calendars
             .retain(|c| !c.id.is_empty() && c.id.len() <= 1024 && !c.id.contains(char::is_control));
         self.google_calendars.truncate(50);
+        let mut friends: Vec<Friend> = Vec::new();
+        for f in std::mem::take(&mut self.friends) {
+            if valid_name(&f.name) && !friends.iter().any(|x| x.same(&f)) {
+                friends.push(f);
+            }
+        }
+        friends.truncate(MAX_FRIENDS);
+        self.friends = friends;
         for c in &mut self.google_calendars {
             c.name =
                 c.name.chars().filter(|c| !c.is_control()).take(100).collect::<String>().trim().to_owned();

@@ -14,6 +14,7 @@ use kuro_api::kioku::HistorySource;
 use kuro_api::music::Track;
 use kuro_api::{Api, ApiError, Page, RankingQuery, SeasonQuery, Tokens};
 use kuro_core::backup;
+use kuro_core::friends::{Friend, FriendProfile};
 use kuro_core::kioku::{self, Group, Platform, Proposal, WatchedItem};
 use kuro_core::overview::Section;
 use kuro_core::settings::Every;
@@ -69,6 +70,14 @@ pub enum Event {
         media: MediaRef,
         result: Outcome<Vec<(Section, Vec<Media>)>>,
     },
+    /// A friend's profile and list; `fresh` once the network answered.
+    Friend {
+        friend: Friend,
+        result: Outcome<FriendProfile>,
+        fresh: bool,
+    },
+    /// The names of the people followed on AniList.
+    Following(Outcome<Vec<String>>),
     Random(Outcome<Media>),
     Resolved {
         from: MediaRef,
@@ -692,6 +701,26 @@ impl Backend {
             async move { api.overview(&root).await },
             move |result, _| Event::Overview { media, result },
         );
+    }
+
+    // Friends
+
+    /// With `force`, asks the service even when a recent copy is cached.
+    pub fn friend(&self, friend: Friend, force: bool) {
+        let api = self.api.clone();
+        let key = format!("friend:{}:{}", friend.service.key(), friend.name.to_lowercase());
+        let f = friend.clone();
+        self.cached(
+            key,
+            if force { 0 } else { 1800 },
+            async move { api.friend(&f).await },
+            move |result, fresh| Event::Friend { friend: friend.clone(), result, fresh },
+        );
+    }
+
+    pub fn following(&self) {
+        let (api, reply) = (self.api.clone(), self.reply());
+        self.spawn(async move { reply.send(Event::Following(api.following().await)) });
     }
 
     pub fn random(&self, kind: MediaKind, adult: bool) {

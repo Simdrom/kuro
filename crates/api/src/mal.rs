@@ -2,6 +2,7 @@
 
 use std::time::Duration;
 
+use kuro_core::friends::{FriendProfile, valid_name};
 use kuro_core::{
     Format, FuzzyDate, ListEntry, ListStatus, Media, MediaDetail, MediaKind, Relation, RelationKind,
     ReleaseStatus, Season, SeasonYear, Service, Theme, ThemeKind, UserProfile,
@@ -142,23 +143,55 @@ impl Mal {
     }
 
     pub async fn library(&self, token: &str, kind: MediaKind) -> Result<Vec<ListEntry>> {
+        self.list_of(Access::Token(token), "@me", kind, true).await
+    }
+
+    /// Someone's public list, by user name. Their notes are left out.
+    pub async fn user_library(
+        &self,
+        access: Access<'_>,
+        name: &str,
+        kind: MediaKind,
+    ) -> Result<Vec<ListEntry>> {
+        if !valid_name(name) {
+            return Err(ApiError::NotFound);
+        }
+        self.list_of(access, name, kind, false).await
+    }
+
+    /// A friend's profile: the service tells nothing of others but their list.
+    pub async fn user(&self, access: Access<'_>, name: &str) -> Result<FriendProfile> {
+        let mut entries = self.user_library(access, name, MediaKind::Anime).await?;
+        entries.extend(self.user_library(access, name, MediaKind::Manga).await?);
+        Ok(FriendProfile { name: name.to_owned(), avatar: None, entries })
+    }
+
+    async fn list_of(
+        &self,
+        access: Access<'_>,
+        user: &str,
+        kind: MediaKind,
+        notes: bool,
+    ) -> Result<Vec<ListEntry>> {
         let status = match kind {
             MediaKind::Anime => {
-                "list_status{status,score,num_episodes_watched,is_rewatching,start_date,finish_date,\
-                 num_times_rewatched,comments,updated_at}"
+                "list_status{status,score,num_episodes_watched,is_rewatching,start_date,finish_date,                 num_times_rewatched,updated_at"
             }
             MediaKind::Manga => {
-                "list_status{status,score,num_volumes_read,num_chapters_read,is_rereading,start_date,finish_date,\
-                 num_times_reread,comments,updated_at}"
+                "list_status{status,score,num_volumes_read,num_chapters_read,is_rereading,start_date,finish_date,                 num_times_reread,updated_at"
             }
         };
-        let first = format!("{}/users/@me/{}list", self.endpoint, kind.key());
-        let query =
-            [("fields", format!("{FIELDS},{status}")), ("limit", "500".into()), ("nsfw", "true".into())];
+        let comments = if notes { ",comments}" } else { "}" };
+        let first = format!("{}/users/{user}/{}list", self.endpoint, kind.key());
+        let query = [
+            ("fields", format!("{FIELDS},{status}{comments}")),
+            ("limit", "500".into()),
+            ("nsfw", "true".into()),
+        ];
         let mut req = self.http.client().get(first).query(&query);
         let mut out = Vec::new();
         for _ in 0..100 {
-            let v: Value = self.http.json(authorize(req, Access::Token(token)), &self.throttle).await?;
+            let v: Value = self.http.json(authorize(req, access), &self.throttle).await?;
             out.extend(list(&v["data"]).iter().filter_map(|d| entry(kind, d)));
             let Some(next) = v["paging"]["next"].as_str() else { break };
             // The token must only ever be sent to the service itself.
@@ -506,6 +539,36 @@ mod tests {
             .mount(&s)
             .await;
         assert_eq!(client(&s).library("tok", MediaKind::Anime).await, Err(ApiError::Blocked));
+    }
+
+    #[tokio::test]
+    async fn a_friends_lists_are_read_by_name_without_notes() {
+        let s = MockServer::start().await;
+        for kind in ["anime", "manga"] {
+            let progress = if kind == "anime" { "num_episodes_watched" } else { "num_chapters_read" };
+            Mock::given(path(format!("/users/Reader/{kind}list")))
+                .and(header("X-MAL-CLIENT-ID", "cid"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                    "data": [{"node": {"id": 7, "title": "A"},
+                        "list_status": {"status": "watching", progress: 4}}],
+                })))
+                .mount(&s)
+                .await;
+        }
+        let p = client(&s).user(Access::Client("cid"), "Reader").await.unwrap();
+        assert_eq!(p.name, "Reader");
+        assert_eq!(p.entries.len(), 2);
+        assert_eq!((p.entries[1].media.kind, p.entries[1].progress), (MediaKind::Manga, 4));
+        let asked = s.received_requests().await.unwrap();
+        assert!(asked.iter().all(|r| !r.url.query().unwrap_or_default().contains("comments")));
+    }
+
+    #[tokio::test]
+    async fn odd_user_names_never_reach_the_service() {
+        let s = MockServer::start().await;
+        Mock::given(any()).respond_with(ResponseTemplate::new(200)).expect(0).mount(&s).await;
+        let r = client(&s).user(Access::Client("c"), "@me/../x").await;
+        assert_eq!(r, Err(ApiError::NotFound));
     }
 
     #[test]
