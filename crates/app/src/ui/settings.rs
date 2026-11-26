@@ -681,9 +681,12 @@ fn google_row(app: &mut App, ui: &mut Ui) {
         (google.is_signed_in() && !app.s.google_account.is_empty()).then(|| app.s.google_account.clone());
     let signed = account.is_some();
     widgets::wide_row(ui, &p, icons::CALENDAR_BLANK, t("Google Calendar"), |ui| {
-        if let Some(account) = account {
+        if let Some(account) = account.filter(|_| !app.google_connecting) {
             if widgets::button(ui, &p, icons::SIGN_OUT, t("Sign out"), false).clicked() {
                 app.google_disconnect();
+            }
+            if app.google_expired && widgets::button(ui, &p, icons::SIGN_IN, t("Reconnect"), true).clicked() {
+                app.google_connect();
             }
             widgets::dim(ui, &p, &account).on_hover_text(&account);
         } else if app.google_connecting {
