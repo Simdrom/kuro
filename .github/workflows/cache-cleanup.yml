@@ -1,0 +1,40 @@
+name: Old caches
+
+# Each change to Cargo.lock leaves about 3 GB of caches behind. Past the repository's 10 GB,
+# GitHub evicts the least recently used, which can be the one the next run needs.
+# A separate workflow, not a job in CI: the release calls CI and gives it no right to write.
+
+on:
+  # Only reads the list of caches and deletes some; it runs no code from the repository.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
+    workflows: [CI]
+    types: [completed]
+    branches: [develop]
+
+permissions: {}
+
+concurrency:
+  group: cache-cleanup
+  cancel-in-progress: false
+
+jobs:
+  delete:
+    name: Delete superseded caches
+    # Pull requests read the caches of develop and save none.
+    if: github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      # Keeps the newest cache of each job; a job that failed saved none, so its older one stays.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh cache list --ref refs/heads/develop --limit 100 --json id,key,createdAt \
+            --jq 'group_by(.key | sub("(-[0-9a-f]+){2}$"; "")) | .[] | sort_by(.createdAt) | .[:-1][] | "\(.id)\t\(.key)"' |
+          while IFS=$'\t' read -r id key; do
+            echo "Deleting $key"
+            gh cache delete "$id"
+          done
