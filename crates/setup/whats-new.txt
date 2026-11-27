@@ -11,6 +11,8 @@
 # The setup's tests check this file. A release fails if its section is empty, and then starts
 # an empty one for the next version.
 
+[0.6.0]
+
 [0.5.0]
 Fixed: signing in to Google Calendar works again; in 0.4.0 Reconnect asked for a client ID and the session kept expiring.|Arreglado: iniciar sesión en Google Calendar vuelve a funcionar; en la 0.4.0 Volver a conectar pedía un ID de cliente y la sesión caducaba una y otra vez.|Corrigé : la connexion à Google Agenda fonctionne à nouveau ; en 0.4.0, Se reconnecter demandait un ID client et la session expirait sans cesse.|Behoben: Die Anmeldung bei Google Kalender funktioniert wieder; in 0.4.0 verlangte Erneut verbinden eine Client-ID und die Sitzung lief immer wieder ab.|Corretto: l'accesso a Google Calendar funziona di nuovo; nella 0.4.0 Riconnetti chiedeva un ID client e la sessione continuava a scadere.|Rettet: pålogging til Google Kalender fungerer igjen; i 0.4.0 ba Koble til på nytt om en klient-ID, og økten utløp gang på gang.|수정: Google 캘린더 로그인이 다시 작동합니다. 0.4.0에서는 다시 연결이 클라이언트 ID를 요구하고 세션이 계속 만료되었습니다.
 

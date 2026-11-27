@@ -2910,7 +2910,7 @@ dependencies = [
 
 [[package]]
 name = "kuro"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "arboard",
  "directories",
@@ -2942,7 +2942,7 @@ dependencies = [
 
 [[package]]
 name = "kuro-api"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "base64 0.23.1",
  "getrandom 0.4.3",
@@ -2964,7 +2964,7 @@ dependencies = [
 
 [[package]]
 name = "kuro-core"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "jiff",
  "rusqlite",
@@ -2977,7 +2977,7 @@ dependencies = [
 
 [[package]]
 name = "kuro-setup"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "directories",
  "eframe",
