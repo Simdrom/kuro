@@ -116,10 +116,15 @@ jobs:
           MSRV: ${{ steps.msrv.outputs.version }}
 
   release:
-    name: Release build
-    # Pull requests do not ship anything; a broken check makes it pointless.
+    name: Release build (${{ matrix.setup }})
+    # Pull requests do not ship anything. Runs beside the checks, not after them, to save
+    # their minutes; the release's package job still waits for every check.
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: check
+    strategy:
+      matrix:
+        # The setup that ships and, for the release, the same program as two other versions,
+        # only to test moving between them. Each builds on its own runner, side by side.
+        setup: ${{ fromJSON(inputs.installer-tests && '["shipped", "0.0.9", "newer"]' || '["shipped"]') }}
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -130,8 +135,15 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           key: release
-          save-if: ${{ github.ref == 'refs/heads/develop' }}
-      - run: cargo build --release --locked -p kuro
+          # One writer: the others build the same thing.
+          save-if: ${{ github.ref == 'refs/heads/develop' && matrix.setup == 'shipped' }}
+      - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
+        with:
+          tool: cargo-about@0.9.3
+          fallback: none
+      # The licences are gathered while the program compiles: they do not depend on it.
+      - name: Program and licences
+        shell: pwsh
         env:
           # Public identifiers, not secrets. Empty means everyone brings their own.
           KURO_ANILIST_CLIENT_ID: ${{ vars.KURO_ANILIST_CLIENT_ID }}
@@ -139,43 +151,54 @@ jobs:
           # Google calls a desktop app's secret not confidential; kept out of sight anyway.
           KURO_GOOGLE_CLIENT_ID: ${{ vars.KURO_GOOGLE_CLIENT_ID }}
           KURO_GOOGLE_CLIENT_SECRET: ${{ secrets.KURO_GOOGLE_CLIENT_SECRET }}
-      - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
-        with:
-          tool: cargo-about@0.9.3
-          fallback: none
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory out | Out-Null
+          $here = $PWD.Path
+          $about = Start-Job {
+            Set-Location $using:here
+            cargo about generate --locked --fail -o out/THIRD-PARTY-LICENSES.html about.hbs 2>&1
+            "exit=$LASTEXITCODE"
+          }
+          cargo build --release --locked -p kuro
+          $built = $LASTEXITCODE
+          $output = @(Receive-Job $about -Wait)
+          $output | Select-Object -SkipLast 1 | Out-Host
+          if ($built) { exit $built }
+          if ($output[-1] -ne 'exit=0') { Write-Host "cargo about: $($output[-1])"; exit 1 }
+          Copy-Item target/release/kuro.exe out
       # The setup carries the program and its licences inside.
       - name: Setup
         shell: pwsh
         env:
-          INSTALLER_TESTS: ${{ inputs.installer-tests }}
+          SETUP: ${{ matrix.setup }}
         run: |
           $ErrorActionPreference = 'Stop'
-          New-Item -ItemType Directory out, out/test | Out-Null
-          Copy-Item target/release/kuro.exe out
-          cargo about generate --locked --fail -o out/THIRD-PARTY-LICENSES.html about.hbs
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $env:KURO_PAYLOAD = "$PWD/out"
-          function Build($to) {
-            cargo build --release --locked -p kuro-setup
-            if ($LASTEXITCODE) { exit $LASTEXITCODE }
-            Copy-Item target/release/kuro-setup.exe $to
+          # 0.2.0 gives 0.12.0, which sorts the wrong way if compared as text; 0.0.9 reads
+          # older lists only.
+          switch ($env:SETUP) {
+            'shipped' { $to = 'out/kuro-setup.exe' }
+            '0.0.9' {
+              $env:KURO_SETUP_VERSION = '0.0.9'
+              $env:KURO_SETUP_SCHEMA = '1'
+            }
+            'newer' {
+              $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+              $env:KURO_SETUP_VERSION = $version -replace '^(\d+)\.(\d+)\..*', '$1.1$2.0'
+            }
           }
-          Build out/kuro-setup.exe
-          if ($env:INSTALLER_TESTS -ne 'true') { exit 0 }
-          # The same program as other versions, only to test moving between them. 0.2.0 gives
-          # 0.12.0, which sorts the wrong way if compared as text; 0.0.9 reads older lists only.
-          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
-          $newer = $version -replace '^(\d+)\.(\d+)\..*', '$1.1$2.0'
-          $env:KURO_SETUP_VERSION = '0.0.9'
-          $env:KURO_SETUP_SCHEMA = '1'
-          Build out/test/kuro-0.0.9-setup.exe
-          $env:KURO_SETUP_VERSION = $newer
-          Remove-Item Env:KURO_SETUP_SCHEMA
-          Build "out/test/kuro-$newer-setup.exe"
+          if (-not $to) {
+            New-Item -ItemType Directory test | Out-Null
+            $to = "test/kuro-$env:KURO_SETUP_VERSION-setup.exe"
+          }
+          cargo build --release --locked -p kuro-setup
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Copy-Item target/release/kuro-setup.exe $to
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: kuro-${{ github.sha }}
-          path: out
+          name: kuro-${{ github.sha }}${{ matrix.setup != 'shipped' && format('-test-{0}', matrix.setup) || '' }}
+          path: ${{ matrix.setup == 'shipped' && 'out' || 'test' }}
           if-no-files-found: error
           retention-days: 14
 
