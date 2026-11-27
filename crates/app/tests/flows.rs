@@ -1139,6 +1139,46 @@ fn friends_show_what_they_watch_and_the_titles_in_common() {
 }
 
 #[test]
+fn friends_compare_tastes_and_recommend_what_they_loved() {
+    use kuro_core::friends::{Friend, FriendProfile};
+    let mut h = harness();
+    let mut mine = (*h.state().entry_at(r(2, MediaKind::Anime)).unwrap()).clone();
+    mine.score = 70;
+    h.state_mut().save(&mine);
+    let friend = Friend { service: Service::Mal, name: "Reader".into() };
+    h.state_mut().s.friends.push(friend.clone());
+    let theirs = |id: u64, title: &str, status, score| {
+        let mut m = media(id, MediaKind::Anime, title);
+        (m.service, m.anilist_id, m.mal_id) = (Service::Mal, None, Some(id));
+        let mut e = ListEntry::new(m);
+        (e.status, e.score) = (status, score);
+        e
+    };
+    // Scored by both: 90/80, 85/85 and 70/60.
+    let entries = vec![
+        theirs(1001, "Lanterns Over Saltmarsh", ListStatus::Completed, 80),
+        theirs(1003, "Iron Orchard", ListStatus::Completed, 85),
+        theirs(1002, "The Mapmaker", ListStatus::Current, 60),
+        theirs(7777, "Quiet Signal", ListStatus::Completed, 95),
+        theirs(8888, "Loud Noise", ListStatus::Completed, 60),
+    ];
+    let profile = FriendProfile { name: "Reader".into(), avatar: None, entries };
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::Friend { friend: friend.clone(), result: Ok(profile), fresh: true });
+    act(&mut h, Act::Go(Tab::Friends));
+    assert!(h.query_by_label_contains("93% taste match").is_some());
+    assert!(h.query_by_label("Your friends recommend").is_some());
+    assert!(h.query_by_label_contains("★ 9.5 · Reader Quiet Signal").is_some());
+    assert!(h.query_by_label_contains("Loud Noise").is_none(), "only what they scored well");
+
+    act(&mut h, Act::Push(Route::Friend(friend)));
+    assert!(h.query_by_label("Loved by Reader, not in your list").is_some());
+    assert!(h.query_by_label_contains("★ 9.5 Quiet Signal").is_some());
+    assert!(h.query_by_label("0.7 lower than you on average").is_some());
+    assert!(h.query_by_label("93%").is_some());
+}
+
+#[test]
 fn a_missing_friend_says_so_and_can_be_retried() {
     use kuro_core::friends::Friend;
     let mut h = harness();

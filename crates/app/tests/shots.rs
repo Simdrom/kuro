@@ -146,7 +146,13 @@ fn friends(h: &mut egui_kittest::Harness<'static, App>) {
     use kuro_core::friends::{Friend, FriendProfile};
     use kuro_core::{ListEntry, ListStatus, Service};
     let f = Friend { service: Service::AniList, name: "InkReader".into() };
-    let titles = [(1, "Lanterns Over Saltmarsh", 85), (3, "Iron Orchard", 70), (40, "Paper Comet", 0)];
+    let titles = [
+        (1, "Lanterns Over Saltmarsh", 85),
+        (3, "Iron Orchard", 70),
+        (40, "Paper Comet", 0),
+        (41, "Quiet Signal", 95),
+        (42, "Salt and Static", 90),
+    ];
     let entries = titles
         .into_iter()
         .map(|(id, title, score)| {

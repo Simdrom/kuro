@@ -48,7 +48,8 @@ invented titles, so no cover art appears.</sub>
   catalogue, with the platforms where each title streams and its openings and
   endings.
 - **Friends.** Add people by their AniList or MyAnimeList name to see what
-  they are watching, their statistics and the titles you share.
+  they are watching, their statistics, the titles you share and how alike
+  you score them, and what they loved that is not in your list yet.
 - **Kioku.** Marks as watched what you watched on Crunchyroll, Netflix or
   Prime Video, after you review every change.
 - **Works on its own.** Desktop widget, binge sessions, daily or weekly
@@ -140,6 +141,15 @@ mark, with the source and how sure each match is. Nothing is written until
 you confirm. [How it works](#kioku).
 
 ![Kioku with Crunchyroll, Netflix and Prime Video, and a change to review](docs/screenshots/kioku.png)
+
+### Friends
+
+The **Friends** tab shows what each friend is watching or reading, with how
+alike your tastes are once you both scored a few of the same titles, and
+**Your friends recommend**: the titles they scored 8 or more and you do not
+have, those more friends loved first. A friend's profile compares you in
+detail (taste match, titles in common, whether they score higher or lower)
+and lists what they loved that is not in your list.
 
 ### Command palette
 
