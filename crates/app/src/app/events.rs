@@ -103,6 +103,17 @@ impl App {
                     Err(e) => self.say_error(format::error(&e)),
                 }
             }
+            Event::ListNames(r) => match r {
+                Ok(names) => self.s.custom_lists = names,
+                Err(e) => tracing::warn!("custom lists not read: {e}"),
+            },
+            Event::ListsEdited { op, result } => {
+                self.own_lists.busy = false;
+                match result {
+                    Ok(names) => self.apply_lists(&op, Some(names)),
+                    Err(e) => self.say_error(format::error(&e)),
+                }
+            }
             Event::Random(r) => {
                 self.search.random_busy = false;
                 match r {

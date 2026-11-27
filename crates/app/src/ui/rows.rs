@@ -396,6 +396,7 @@ pub fn menu(app: &mut App, ui: &mut Ui, item: &Item) {
             ui.close();
         }
     }
+    custom_lists(app, ui, item);
     // Once laid out: the popup's first pass only measures it.
     let first = first.unwrap_or(status.response);
     if !ui.is_sizing_pass() && ui.data_mut(|d| d.remove_temp::<bool>(focus_first_id())).is_some() {
@@ -426,6 +427,33 @@ pub fn menu(app: &mut App, ui: &mut Ui, item: &Item) {
         ui.separator();
         entry(app, ui, t("Remove from list…"), t("Del"), &[Key::Delete], Act::AskDelete(m));
     }
+}
+
+/// The user's custom lists, each ticked when the title is in it. Ticking one
+/// keeps the menu open, so a title can go into several at once.
+fn custom_lists(app: &mut App, ui: &mut Ui, item: &Item) {
+    let names = app.list_names();
+    let label = app.lists_label();
+    ui.menu_button(label, |ui| {
+        ui.set_min_width(180.0);
+        let has = |n: &str| {
+            item.entry
+                .as_ref()
+                .is_some_and(|e| e.lists().iter().any(|x| x.to_lowercase() == n.to_lowercase()))
+        };
+        for n in names {
+            let mut on = has(&n);
+            if ui.checkbox(&mut on, n.as_str()).clicked() {
+                app.act(Act::ToggleList(item.media.clone(), n));
+            }
+        }
+        ui.separator();
+        if ui.button(t("New list…")).clicked() {
+            app.act(Act::Go(crate::app::Tab::Lists));
+            app.own_lists.naming = Some(crate::app::Naming { from: None, text: String::new() });
+            ui.close();
+        }
+    });
 }
 
 /// A round icon button at a fixed place. Returns (clicked, hovered).

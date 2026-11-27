@@ -85,6 +85,13 @@ pub enum Event {
     },
     /// The names of the people followed on AniList.
     Following(Outcome<Vec<String>>),
+    /// The custom lists of the AniList account.
+    ListNames(Outcome<Vec<String>>),
+    /// A custom list changed on AniList, and the names it has now.
+    ListsEdited {
+        op: kuro_core::ListOp,
+        result: Outcome<Vec<String>>,
+    },
     Random(Outcome<Media>),
     Resolved {
         from: MediaRef,
@@ -419,6 +426,19 @@ impl Backend {
         let updates = self.api.updates.clone();
         self.cached("latest-release".into(), 86_400, async move { updates.latest().await }, |r, _| {
             Event::Release(r)
+        });
+    }
+
+    pub fn list_names(&self) {
+        let (api, reply) = (self.api.clone(), self.reply());
+        self.spawn(async move { reply.send(Event::ListNames(api.custom_lists().await)) });
+    }
+
+    pub fn edit_lists(&self, op: kuro_core::ListOp) {
+        let (api, reply) = (self.api.clone(), self.reply());
+        self.spawn(async move {
+            let result = api.edit_custom_lists(&op).await;
+            reply.send(Event::ListsEdited { op, result });
         });
     }
 

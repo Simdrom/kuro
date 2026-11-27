@@ -20,8 +20,8 @@ use kuro_core::notify;
 use kuro_core::overview::Section;
 use kuro_core::settings::{Every, GOOGLE_CALENDAR_NAME, GestureAction, GoogleCalendar, Settings};
 use kuro_core::{
-    ListEntry, ListStatus, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, SeasonYear, Service, Theme,
-    TitleLanguage, UserProfile, progress,
+    ListEntry, ListOp, ListStatus, Media, MediaDetail, MediaKind, MediaRef, PersonDetail, SeasonYear,
+    Service, Theme, TitleLanguage, UserProfile, progress,
 };
 
 use crate::backend::{Backend, Event, KiokuReview, KiokuStep, now};
@@ -59,6 +59,7 @@ pub struct App {
     index: HashMap<MediaRef, usize>,
     pub season: SeasonView,
     pub ranking: RankingView,
+    pub own_lists: OwnListsView,
     pub search: SearchView,
     pub details: HashMap<MediaRef, DetailView>,
     pub people: HashMap<u64, Load<PersonDetail>>,
@@ -196,10 +197,12 @@ impl App {
                 ranking: Ranking::All,
                 genre: None,
                 year: None,
+                mine: Mine::Any,
                 feed: Feed::default(),
                 genres: Vec::new(),
                 genres_started: false,
             },
+            own_lists: OwnListsView::default(),
             search: SearchView {
                 kind: MediaKind::Anime,
                 text: String::new(),
@@ -332,7 +335,82 @@ impl App {
 
     /// New custom lists are made on AniList's website, not here.
     pub fn can_name_lists(&self) -> bool {
-        !(self.s.primary == Service::AniList && self.bg.api.is_signed_in(Service::AniList))
+        !self.account_lists()
+    }
+
+    /// The custom lists belong to the AniList account, which has to agree to changes.
+    pub fn account_lists(&self) -> bool {
+        self.s.primary == Service::AniList && self.bg.api.is_signed_in(Service::AniList)
+    }
+
+    /// Every custom list: those made here or on the account, and any a title is in.
+    pub fn list_names(&self) -> Vec<String> {
+        let mut names: Vec<String> = Vec::new();
+        let used = MediaKind::ALL.iter().flat_map(|k| self.library(*k).iter().flat_map(|e| e.lists()));
+        for n in self.s.custom_lists.iter().chain(used) {
+            if !names.iter().any(|x| x.to_lowercase() == n.to_lowercase()) {
+                names.push(n.clone());
+            }
+        }
+        names.sort_by_key(|n| n.to_lowercase());
+        names
+    }
+
+    /// Checks a change to the lists and starts it, on AniList first when the lists are there.
+    pub(super) fn edit_lists(&mut self, op: ListOp) {
+        let op = match op {
+            ListOp::Create(n) => match kuro_core::clean_lists([n]).pop() {
+                Some(n) => ListOp::Create(n),
+                None => return,
+            },
+            ListOp::Rename(from, to) => match kuro_core::clean_lists([to]).pop() {
+                Some(to) if to == from => return,
+                Some(to) => ListOp::Rename(from, to),
+                None => return,
+            },
+            op @ ListOp::Delete(_) => op,
+        };
+        let taken = |n: &str| self.list_names().iter().any(|x| x.to_lowercase() == n.to_lowercase());
+        let clash = match &op {
+            ListOp::Create(n) => taken(n),
+            ListOp::Rename(from, to) => from.to_lowercase() != to.to_lowercase() && taken(to),
+            ListOp::Delete(_) => false,
+        };
+        if clash {
+            self.say_error(t("There is already a list with that name."));
+            return;
+        }
+        self.own_lists.naming = None;
+        if self.account_lists() {
+            self.own_lists.busy = true;
+            self.bg.edit_lists(op);
+        } else {
+            self.apply_lists(&op, None);
+        }
+    }
+
+    /// Changes the lists here, and every title in the one changed.
+    pub(super) fn apply_lists(&mut self, op: &ListOp, account: Option<Vec<String>>) {
+        self.s.custom_lists = account.unwrap_or_else(|| op.apply(&self.s.custom_lists));
+        let name = op.name().to_lowercase();
+        let touched: Vec<ListEntry> = MediaKind::ALL
+            .iter()
+            .flat_map(|k| self.library(*k).iter())
+            .filter(|e| {
+                !matches!(op, ListOp::Create(_)) && e.lists().iter().any(|x| x.to_lowercase() == name)
+            })
+            .map(|e| ListEntry { lists: Some(op.apply_to_entry(e.lists())), ..(**e).clone() })
+            .collect();
+        for e in &touched {
+            self.write(e, false);
+        }
+        let (selected, text) = match op {
+            ListOp::Create(n) => (Some(n.clone()), tf("List “{}” created", &[n])),
+            ListOp::Rename(_, to) => (Some(to.clone()), tf("List renamed to “{}”", &[to])),
+            ListOp::Delete(n) => (None, tf("List “{}” deleted", &[n])),
+        };
+        self.own_lists.selected = selected;
+        self.say(text);
     }
 
     /// The title's id on the primary service, when known.
@@ -482,6 +560,9 @@ impl App {
         if self.bg.api.is_signed_in(s) && self.bg.online() {
             self.refreshing = 2;
             self.bg.refresh_library(s, false);
+            if self.account_lists() {
+                self.bg.list_names();
+            }
         } else {
             self.refresh_airing();
         }
@@ -621,6 +702,7 @@ impl App {
                     "anime" => Tab::Anime,
                     "manga" => Tab::Manga,
                     "calendar" => Tab::Calendar,
+                    "lists" => Tab::Lists,
                     "seasonal" => Tab::Seasonal,
                     "ranking" => Tab::Ranking,
                     "search" => Tab::Search,

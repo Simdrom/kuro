@@ -122,7 +122,6 @@ Kuro {} is available|Kuro {} está disponible|Kuro {} est disponible|Kuro {} ist
 Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
 Links that change your list are off. Turn them on in Settings › Widget & automation.|Los enlaces que cambian tu lista están desactivados. Actívalos en Ajustes › Widget y automatización.|Les liens qui modifient ta liste sont désactivés. Active-les dans Réglages › Widget et automatisation.|Links, die deine Liste ändern, sind aus. Schalte sie unter Einstellungen › Widget & Automatisierung ein.|I link che modificano la tua lista sono disattivati. Attivali in Impostazioni › Widget e automazione.|Lenker som endrer listen din er av. Slå dem på i Innstillinger › Widget og automatisering.|목록을 바꾸는 링크가 꺼져 있습니다. 설정 › 위젯 및 자동화에서 켜세요.
 Loved by {}, not in your list|Le encantó a {}, no está en tu lista|Adoré par {}, absent de ta liste|{} liebt es, nicht in deiner Liste|Amato da {}, non nella tua lista|Elsket av {}, ikke i listen din|{} 님이 좋아했지만 내 목록에 없는 작품
-Make new custom lists on AniList; they show here after a refresh.|Crea listas personalizadas nuevas en AniList; aparecen aquí tras actualizar.|Crée de nouvelles listes personnalisées sur AniList ; elles apparaissent ici après une actualisation.|Neue eigene Listen legst du auf AniList an; sie erscheinen hier nach dem Aktualisieren.|Crea nuove liste personalizzate su AniList; compaiono qui dopo un aggiornamento.|Lag nye egne lister på AniList; de vises her etter en oppdatering.|새 사용자 목록은 AniList에서 만드세요. 새로 고침하면 여기에 표시됩니다.
 Median score|Nota mediana|Note médiane|Median-Wertung|Voto mediano|Mediankarakter|중앙값 점수
 More statistics|Más estadísticas|Plus de statistiques|Mehr Statistik|Altre statistiche|Mer statistikk|통계 더 보기
 Move through a menu and choose|Moverse por un menú y elegir|Parcourir un menu et choisir|Durch ein Menü gehen und auswählen|Muoversi in un menu e scegliere|Gå gjennom en meny og velg|메뉴에서 이동하고 선택
@@ -587,3 +586,26 @@ You have no titles in common yet|Aún no tenéis títulos en común|Vous n’ave
 {} is already in your friends|{} ya está en tus amigos|{} est déjà dans tes amis|{} ist schon bei deinen Freunden|{} è già tra i tuoi amici|{} er allerede blant vennene dine|{}님은 이미 친구 목록에 있습니다
 {} removed from your friends|{} se ha quitado de tus amigos|{} a été retiré de tes amis|{} aus deinen Freunden entfernt|{} rimosso dai tuoi amici|{} fjernet fra vennene dine|{}님을 친구 목록에서 제거했습니다
 {}% taste match|{} % de afinidad|{} % d’affinité|{} % Geschmacksübereinstimmung|{}% di affinità|{} % smaksmatch|취향 일치 {}%
+My Lists|Mis listas|Mes listes|Meine Listen|Le mie liste|Mine lister|내 목록
+In my list|En mi lista|Dans ma liste|In meiner Liste|Nella mia lista|I listen min|내 목록에서
+Any status|Todos los estados|Tous les statuts|Jeder Status|Qualsiasi stato|Alle statuser|모든 상태
+Not in my list|No añadidos|Pas dans ma liste|Nicht in meiner Liste|Non nella mia lista|Ikke i listen min|목록에 없음
+No custom lists yet|Aún no tienes listas personalizadas|Pas encore de listes personnalisées|Noch keine eigenen Listen|Ancora nessuna lista personalizzata|Ingen egne lister ennå|아직 사용자 목록이 없습니다
+Make new lists in My Lists.|Crea listas nuevas en Mis listas.|Crée de nouvelles listes dans Mes listes.|Neue Listen legst du unter Meine Listen an.|Crea nuove liste in Le mie liste.|Lag nye lister under Mine lister.|새 목록은 내 목록에서 만드세요.
+Make one with New list, then add titles to it.|Crea una con Nueva lista y añádele títulos.|Crée-en une avec Nouvelle liste, puis ajoute-y des titres.|Lege mit Neue Liste eine an und füge Titel hinzu.|Creane una con Nuova lista, poi aggiungi dei titoli.|Lag en med Ny liste, og legg til titler.|새 목록으로 하나 만든 뒤 작품을 추가하세요.
+New list|Nueva lista|Nouvelle liste|Neue Liste|Nuova lista|Ny liste|새 목록
+Name of the new list|Nombre de la lista nueva|Nom de la nouvelle liste|Name der neuen Liste|Nome della nuova lista|Navn på den nye listen|새 목록 이름
+Rename|Renombrar|Renommer|Umbenennen|Rinomina|Gi nytt navn|이름 바꾸기
+Add titles|Añadir títulos|Ajouter des titres|Titel hinzufügen|Aggiungi titoli|Legg til titler|작품 추가
+Find in your list|Buscar en tu lista|Chercher dans ta liste|In deiner Liste suchen|Cerca nella tua lista|Søk i listen din|내 목록에서 찾기
+This list is empty|Esta lista está vacía|Cette liste est vide|Diese Liste ist leer|Questa lista è vuota|Denne listen er tom|이 목록은 비어 있습니다
+Add titles with Add titles, or from a title's editor.|Añade títulos con Añadir títulos o desde el editor de cada título.|Ajoute des titres avec Ajouter des titres ou depuis l’éditeur d’un titre.|Füge Titel über Titel hinzufügen oder im Editor eines Titels hinzu.|Aggiungi titoli con Aggiungi titoli o dall’editor di un titolo.|Legg til titler med Legg til titler eller fra redigeringen av en tittel.|작품 추가 버튼이나 작품 편집기에서 작품을 추가하세요.
+Changing the list on AniList…|Cambiando la lista en AniList…|Modification de la liste sur AniList…|Liste wird auf AniList geändert…|Modifica della lista su AniList…|Endrer listen på AniList…|AniList에서 목록을 바꾸는 중…
+There is already a list with that name.|Ya hay una lista con ese nombre.|Une liste porte déjà ce nom.|Es gibt schon eine Liste mit diesem Namen.|Esiste già una lista con questo nome.|Det finnes allerede en liste med det navnet.|같은 이름의 목록이 이미 있습니다.
+List “{}” created|Lista «{}» creada|Liste « {} » créée|Liste „{}“ erstellt|Lista «{}» creata|Listen «{}» er opprettet|“{}” 목록을 만들었습니다
+List renamed to “{}”|Lista renombrada a «{}»|Liste renommée en « {} »|Liste in „{}“ umbenannt|Lista rinominata in «{}»|Listen har fått navnet «{}»|목록 이름을 “{}”(으)로 바꿨습니다
+List “{}” deleted|Lista «{}» eliminada|Liste « {} » supprimée|Liste „{}“ gelöscht|Lista «{}» eliminata|Listen «{}» er slettet|“{}” 목록을 삭제했습니다
+Delete the list “{}”?|¿Eliminar la lista «{}»?|Supprimer la liste « {} » ?|Liste „{}“ löschen?|Eliminare la lista «{}»?|Slette listen «{}»?|“{}” 목록을 삭제할까요?
+Its titles stay in your list; they just leave this one.|Sus títulos siguen en tu lista; sólo salen de esta.|Ses titres restent dans ta liste ; ils quittent seulement celle-ci.|Die Titel bleiben in deiner Liste; sie verlassen nur diese.|I suoi titoli restano nella tua lista; escono solo da questa.|Titlene blir værende i listen din; de forlater bare denne.|작품은 내 목록에 그대로 남고 이 목록에서만 빠집니다.
+Delete|Eliminar|Supprimer|Löschen|Elimina|Slett|삭제
+New list…|Nueva lista…|Nouvelle liste…|Neue Liste…|Nuova lista…|Ny liste…|새 목록…

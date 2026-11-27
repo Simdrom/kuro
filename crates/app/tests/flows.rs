@@ -9,7 +9,7 @@ use common::*;
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
 use kuro_api::{ApiError, Page};
-use kuro_app::app::{Act, App, Feed, Load, Route, SettingsPage, Tab};
+use kuro_app::app::{Act, App, Feed, Load, Mine, Route, SettingsPage, Tab};
 use kuro_app::backend::Event;
 use kuro_core::overview::Section;
 use kuro_core::settings::{GestureAction, ListLayout, Theme};
@@ -154,8 +154,29 @@ fn custom_lists_are_named_ticked_and_filtered() {
     let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX, device: None };
     h.state().bg.api.accept_login(Service::AniList, &UserProfile::default(), &tokens).unwrap();
     act(&mut h, Act::Edit(m));
-    assert!(h.query_by_label("Make new custom lists on AniList; they show here after a refresh.").is_some());
+    assert!(h.query_by_label("Make new lists in My Lists.").is_some());
     assert!(h.query_by_label("New name").is_none());
+}
+
+#[test]
+fn the_lists_tab_shows_one_custom_list() {
+    let mut h = harness();
+    act(&mut h, Act::Go(Tab::Lists));
+    assert!(h.query_by_label("No custom lists yet").is_some());
+    for (id, name) in [(4, "Cozy"), (2, "Rewatch")] {
+        act(&mut h, Act::Edit(Rc::new(media(id, MediaKind::Anime, "x"))));
+        h.state_mut().editor.as_mut().unwrap().new_list = name.into();
+        settle(&mut h);
+        click(&mut h, "Add");
+        click(&mut h, "Save");
+    }
+    act(&mut h, Act::Go(Tab::Lists));
+    assert_eq!(h.state().own_lists.selected.as_deref(), Some("Cozy"));
+    assert!(h.query_by_label_contains("Midnight Ferry, ").is_some());
+    assert!(h.query_by_label_contains("The Mapmaker and the Slowly Moving Northern Coast, ").is_none());
+    click(&mut h, "Rewatch  (1)");
+    assert!(h.query_by_label_contains("Midnight Ferry, ").is_none());
+    assert!(h.query_by_label_contains("The Mapmaker and the Slowly Moving Northern Coast, ").is_some());
 }
 
 #[test]
@@ -269,7 +290,10 @@ fn keyboard_shortcuts() {
     h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num3);
     settle(&mut h);
     assert_eq!(h.state().tab, Tab::Calendar);
-    h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num5);
+    h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num4);
+    settle(&mut h);
+    assert_eq!(h.state().tab, Tab::Lists);
+    h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num6);
     settle(&mut h);
     assert_eq!(h.state().tab, Tab::Ranking);
     h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Num1);
@@ -392,6 +416,95 @@ fn links_open_titles_searches_and_tabs() {
     settle(&mut h);
     assert_eq!(h.state().tab, Tab::Ranking);
     assert!(!h.state_mut().open_link("https://example.com/anime/3"));
+}
+
+#[test]
+fn custom_lists_are_made_renamed_filled_and_deleted() {
+    let mut h = harness();
+    act(&mut h, Act::Go(Tab::Lists));
+    click(&mut h, "New list");
+    h.state_mut().own_lists.naming.as_mut().unwrap().text = "  Cozy,  nights ".into();
+    settle(&mut h);
+    click(&mut h, "Create");
+    assert_eq!(h.state().s.custom_lists, ["Cozy nights"]);
+    assert!(h.query_by_label("This list is empty").is_some());
+
+    // A name already in use is refused, whatever its case.
+    act(&mut h, Act::EditLists(ListOp::Create("COZY NIGHTS".into())));
+    assert_eq!(h.state().s.custom_lists, ["Cozy nights"]);
+
+    let ferry = Rc::new(media(4, MediaKind::Anime, "Midnight Ferry"));
+    act(&mut h, Act::ToggleList(ferry.clone(), "Cozy nights".into()));
+    assert_eq!(h.state().entry_at(r(4, MediaKind::Anime)).unwrap().lists(), ["Cozy nights"]);
+    assert!(h.query_by_label_contains("Midnight Ferry, ").is_some());
+
+    // The editor offers the list, even to a title that is in none.
+    act(&mut h, Act::Edit(Rc::new(media(2, MediaKind::Anime, "x"))));
+    click(&mut h, "Cozy nights");
+    click(&mut h, "Save");
+    assert_eq!(h.state().entry_at(r(2, MediaKind::Anime)).unwrap().lists(), ["Cozy nights"]);
+
+    click(&mut h, "Rename");
+    h.state_mut().own_lists.naming.as_mut().unwrap().text = "Warm".into();
+    settle(&mut h);
+    click(&mut h, "Save");
+    assert_eq!(h.state().s.custom_lists, ["Warm"]);
+    for id in [2, 4] {
+        assert_eq!(h.state().entry_at(r(id, MediaKind::Anime)).unwrap().lists(), ["Warm"]);
+    }
+    assert_eq!(h.state().own_lists.selected.as_deref(), Some("Warm"));
+
+    click(&mut h, "Delete");
+    assert!(h.query_by_label("Delete the list “Warm”?").is_some());
+    let confirm = h.state_mut().confirm.take().unwrap().act.unwrap();
+    act(&mut h, confirm);
+    assert!(h.state().s.custom_lists.is_empty());
+    assert!(h.state().entry_at(r(4, MediaKind::Anime)).unwrap().lists().is_empty());
+    assert!(h.query_by_label("No custom lists yet").is_some());
+}
+
+#[test]
+fn custom_lists_on_anilist_change_there_first() {
+    let mut h = harness();
+    let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX, device: None };
+    h.state().bg.api.accept_login(Service::AniList, &UserProfile::default(), &tokens).unwrap();
+    act(&mut h, Act::ToggleList(Rc::new(media(4, MediaKind::Anime, "x")), "Cozy".into()));
+    act(&mut h, Act::EditLists(ListOp::Rename("Cozy".into(), "Warm".into())));
+    // Nothing changes until AniList agrees.
+    assert!(h.state().own_lists.busy);
+    assert_eq!(h.state().entry_at(r(4, MediaKind::Anime)).unwrap().lists(), ["Cozy"]);
+    let ctx = h.ctx.clone();
+    let op = ListOp::Rename("Cozy".into(), "Warm".into());
+    h.state_mut().handle(&ctx, Event::ListsEdited { op: op.clone(), result: Err(ApiError::RateLimited) });
+    settle(&mut h);
+    assert_eq!(h.state().entry_at(r(4, MediaKind::Anime)).unwrap().lists(), ["Cozy"]);
+    let names = Ok(vec!["Later".to_owned(), "Warm".to_owned()]);
+    h.state_mut().handle(&ctx, Event::ListsEdited { op, result: names });
+    settle(&mut h);
+    assert!(!h.state().own_lists.busy);
+    assert_eq!(h.state().s.custom_lists, ["Later", "Warm"]);
+    assert_eq!(h.state().entry_at(r(4, MediaKind::Anime)).unwrap().lists(), ["Warm"]);
+}
+
+#[test]
+fn the_ranking_filters_by_place_in_my_list() {
+    let mut h = harness();
+    act(&mut h, Act::Go(Tab::Ranking));
+    let ctx = h.ctx.clone();
+    let query = h.state().ranking_query();
+    let items = (1..9).map(|i| media(i, MediaKind::Anime, &format!("Title {i}"))).collect();
+    h.state_mut().handle(&ctx, Event::Ranking { query, page: 1, result: Ok(Page { items, more: false }) });
+    settle(&mut h);
+    let shown = |h: &H, i: u64| h.query_all_by_label_contains(&format!("Title {i}")).next().is_some();
+    assert!(shown(&h, 4) && shown(&h, 5));
+    h.state_mut().ranking.mine = Mine::NotAdded;
+    settle(&mut h);
+    assert!(!shown(&h, 4) && !shown(&h, 6) && shown(&h, 7) && shown(&h, 8));
+    h.state_mut().ranking.mine = Mine::Status(ListStatus::Planning);
+    settle(&mut h);
+    assert!(shown(&h, 4) && !shown(&h, 5) && !shown(&h, 7));
+    // The filter keeps the loaded pages.
+    assert_eq!(h.state().ranking.feed.items.len(), 8);
 }
 
 #[test]
@@ -1120,6 +1233,34 @@ fn a_title_menu_answers_to_the_key_each_entry_shows() {
     h.key_press(Key::Num3);
     settle(&mut h);
     assert_eq!(h.state().entry_at(r(1, MediaKind::Anime)).unwrap().status, ListStatus::Paused);
+}
+
+#[test]
+fn a_title_menu_puts_it_in_custom_lists() {
+    use egui::Key;
+    let mut h = harness();
+    act(&mut h, Act::EditLists(ListOp::Create("Cozy".into())));
+    act(&mut h, Act::Go(Tab::Anime));
+    let open_lists = |h: &mut H| {
+        h.get_by_label_contains("Lanterns Over Saltmarsh, Watching").focus();
+        settle(h);
+        h.key_press(Key::Menu);
+        settle(h);
+        h.get_by_label("Custom lists").click();
+        settle(h);
+    };
+    open_lists(&mut h);
+    h.get_by_label("Cozy").click();
+    settle(&mut h);
+    assert_eq!(h.state().entry_at(r(1, MediaKind::Anime)).unwrap().lists(), ["Cozy"]);
+
+    h.key_press(Key::Escape);
+    settle(&mut h);
+    open_lists(&mut h);
+    h.get_by_label("New list…").click();
+    settle(&mut h);
+    assert_eq!(h.state().tab, Tab::Lists);
+    assert!(h.state().own_lists.naming.is_some());
 }
 
 #[test]

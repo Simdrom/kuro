@@ -382,6 +382,22 @@ impl AniList {
         Ok(out)
     }
 
+    /// The names of the user's custom lists, anime and manga.
+    pub async fn custom_lists(&self, token: &str) -> Result<[Vec<String>; 2]> {
+        let q = "{Viewer{mediaListOptions{animeList{customLists} mangaList{customLists}}}}";
+        let d = self.query(Some(token), q, json!({})).await?;
+        let o = &d["Viewer"]["mediaListOptions"];
+        let names = |v: &Value| list(&v["customLists"]).iter().filter_map(opt_text).collect();
+        Ok([names(&o["animeList"]), names(&o["mangaList"])])
+    }
+
+    /// Replaces the names of the user's custom lists.
+    pub async fn set_custom_lists(&self, token: &str, lists: &[Vec<String>; 2]) -> Result<()> {
+        let q = "mutation($anime:[String],$manga:[String]){UpdateUser(animeListOptions:{customLists:$anime},                 mangaListOptions:{customLists:$manga}){id}}";
+        self.query(Some(token), q, json!({ "anime": lists[0], "manga": lists[1] })).await?;
+        Ok(())
+    }
+
     pub async fn save(&self, token: &str, media_id: u64, e: &ListEntry) -> Result<()> {
         // Custom lists are only sent when known: sending none would empty them.
         let (lists_var, lists_arg) =
@@ -933,6 +949,19 @@ mod tests {
         assert_eq!(got[0].next_airing, Some(Airing { episode: 5, at: 1000 }));
         assert_eq!(got[0].schedule.following, Some(2000));
         assert_eq!(got[1].schedule.following, None);
+    }
+
+    #[tokio::test]
+    async fn custom_list_names_are_read_and_replaced() {
+        let (s, a) = server(json!({"data": {"Viewer": {"mediaListOptions": {
+            "animeList": {"customLists": ["Cozy", "Rewatch"]}, "mangaList": {"customLists": []}}}}}))
+        .await;
+        let got = a.custom_lists("tok").await.unwrap();
+        assert_eq!(got, [vec!["Cozy".to_owned(), "Rewatch".to_owned()], vec![]]);
+        a.set_custom_lists("tok", &[vec!["Warm".into()], vec!["Warm".into()]]).await.unwrap();
+        let sent = s.received_requests().await.unwrap();
+        let body = String::from_utf8_lossy(&sent[1].body);
+        assert!(body.contains("UpdateUser") && body.contains(r#""anime":["Warm"]"#), "{body}");
     }
 
     #[tokio::test]
