@@ -459,6 +459,34 @@ fn a_newer_version_is_offered_until_skipped() {
 }
 
 #[test]
+fn the_calendar_says_when_an_episode_is_delayed_or_on_a_break() {
+    // Tall enough to show the later episodes too.
+    let mut h = harness_with(store(), [1240.0, 2600.0], |_| {});
+    let ctx = h.ctx.clone();
+    let day = 86_400;
+    let first = h.state().entry_at(r(1, MediaKind::Anime)).unwrap().media.next_airing.unwrap();
+    let mut m = media(1, MediaKind::Anime, "Lanterns Over Saltmarsh");
+    m.release = ReleaseStatus::Releasing;
+    m.next_airing = Some(Airing { episode: 10, at: first.at + 7 * day });
+    h.state_mut().handle(&ctx, Event::Airing(Ok(vec![m.clone()])));
+    let e = h.state().entry_at(r(1, MediaKind::Anime)).unwrap();
+    assert_eq!(e.media.schedule.delayed_from, Some(first.at));
+    act(&mut h, Act::Go(Tab::Calendar));
+    assert!(h.query_by_label("Schedule changes").is_some());
+    assert!(h.query_by_label_contains("Lanterns Over Saltmarsh: Episode 10 moved from").is_some());
+    assert!(h.query_by_label_contains("· Delayed Lanterns Over Saltmarsh").is_some());
+
+    // Episode 10 aired; 11 comes two weeks later.
+    m.next_airing = Some(Airing { episode: 11, at: first.at + 21 * day });
+    h.state_mut().handle(&ctx, Event::Airing(Ok(vec![m])));
+    let s = h.state().entry_at(r(1, MediaKind::Anime)).unwrap().media.schedule;
+    assert_eq!((s.previous, s.delayed_from), (Some(first.at + 7 * day), None));
+    settle(&mut h);
+    assert!(h.query_by_label_contains("On a break: episode 11 airs").is_some());
+    assert!(h.query_by_label_contains("moved from").is_none());
+}
+
+#[test]
 fn airing_updates_do_not_count_as_edits() {
     let mut h = harness();
     let before = h.state().entry_at(r(1, MediaKind::Anime)).unwrap().updated_at;

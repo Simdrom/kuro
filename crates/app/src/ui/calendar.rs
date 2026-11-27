@@ -3,17 +3,18 @@
 
 use std::rc::Rc;
 
-use eframe::egui::Ui;
+use eframe::egui::{self, CursorIcon, RichText, Sense, Ui};
 use jiff::Timestamp;
 use jiff::ToSpan;
 use jiff::civil::Date;
 use jiff::tz::TimeZone;
-use kuro_core::{MediaKind, calendar};
+use kuro_core::calendar::{self, Change};
+use kuro_core::{Media, MediaKind};
 
 use super::rows;
 use crate::app::{Act, App, Route, SettingsPage, today};
 use crate::i18n::{t, tf};
-use crate::{format, icons, widgets};
+use crate::{format, icons, theme, widgets};
 
 /// Days shown one by one; later episodes share one section.
 const DAYS: i64 = 7;
@@ -69,7 +70,16 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         return;
     }
 
+    let changed: Vec<(Rc<Media>, Vec<Change>)> = due
+        .iter()
+        .map(|(m, _, _)| (m.clone(), calendar::changes(m)))
+        .filter(|(_, c)| !c.is_empty())
+        .collect();
+
     super::scroll(ui, "calendar", |ui| {
+        if !changed.is_empty() {
+            schedule_changes(app, ui, &changed);
+        }
         for offset in 0..=DAYS {
             let day = first.checked_add(offset.days()).unwrap_or(first);
             let last = offset == DAYS;
@@ -102,9 +112,57 @@ pub fn show(app: &mut App, ui: &mut Ui) {
                     } else {
                         format::time(*at)
                     };
-                    rows::shelf_tile(app, ui, m, &tf("Ep {} · {}", &[ep, &when]));
+                    let mut caption = tf("Ep {} · {}", &[ep, &when]);
+                    if m.schedule.delayed_from.is_some() {
+                        caption = format!("{caption} · {}", t("Delayed"));
+                    }
+                    rows::shelf_tile(app, ui, m, &caption);
                 }
             });
+        }
+    });
+}
+
+/// What a change to the schedule means, in words.
+fn change_text(c: Change) -> String {
+    let when = format::date_time;
+    match c {
+        Change::Delayed { episode, was, now } => {
+            tf("Episode {} moved from {} to {}", &[&episode, &when(was), &when(now)])
+        }
+        Change::Break { episode, back } => tf("On a break: episode {} airs {}", &[&episode, &when(back)]),
+        Change::BreakAfter { episode, back } => {
+            tf("A week without an episode: episode {} airs {}", &[&episode, &when(back)])
+        }
+    }
+}
+
+/// Delays and breaks among the coming episodes, before the days.
+fn schedule_changes(app: &mut App, ui: &mut Ui, changed: &[(Rc<Media>, Vec<Change>)]) {
+    let p = app.p;
+    widgets::section(ui, &p, t("Schedule changes"));
+    widgets::card(ui, &p, |ui| {
+        for (i, (m, list)) in changed.iter().enumerate() {
+            if i > 0 {
+                widgets::separator(ui, &p);
+            }
+            let title = m.display_title(app.s.title_language).to_owned();
+            let text: Vec<String> = list.iter().map(|c| change_text(*c)).collect();
+            let r = ui
+                .vertical(|ui| {
+                    ui.add_space(4.0);
+                    ui.label(RichText::new(&title).font(theme::semibold(14.0)));
+                    for line in &text {
+                        ui.add(egui::Label::new(RichText::new(line).size(12.5).color(p.orange)).wrap());
+                    }
+                    ui.add_space(4.0);
+                })
+                .response
+                .interact(Sense::click());
+            widgets::label_a11y(&r, egui::Role::Button, &format!("{title}: {}", text.join(" · ")));
+            if r.on_hover_cursor(CursorIcon::PointingHand).clicked() {
+                app.act(Act::Open(m.clone()));
+            }
         }
     });
 }

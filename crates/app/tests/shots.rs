@@ -60,6 +60,15 @@ fn screens() {
     h.state_mut().routes.clear();
     h.state_mut().act(Act::Go(Tab::Calendar));
     shot(&mut h, "calendar");
+    // The same episode, a day later: a delay.
+    let mut late = media(1, MediaKind::Anime, "Lanterns Over Saltmarsh");
+    let was = h.state().entry_at(r).unwrap().media.next_airing.unwrap();
+    late.release = kuro_core::ReleaseStatus::Releasing;
+    late.next_airing = Some(kuro_core::Airing { episode: was.episode, at: was.at + 86_400 });
+    late.schedule.following = Some(was.at + 15 * 86_400);
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, kuro_app::backend::Event::Airing(Ok(vec![late])));
+    shot(&mut h, "calendar-changes");
     friends(&mut h);
     h.state_mut().act(Act::Open(m.clone()));
     shot(&mut h, "calendar-open");

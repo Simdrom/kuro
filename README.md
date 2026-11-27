@@ -132,6 +132,12 @@ your own time. Click an episode to open its title. The same schedule can go
 to an `.ics` file or to a Google Calendar of its own (see
 [Automation](#automation)).
 
+**Schedule changes**, at the top, names an episode that moved later (from
+when to when), a title on a break and a week without an episode coming up, and
+a title you are watching says so once with a notification. Delays are seen
+when the time of the same episode moves; breaks, when more than ten days
+separate two episodes.
+
 ![My Calendar, with the next episode on Sunday](docs/screenshots/calendar.png)
 
 ### Streaming history (Kioku)

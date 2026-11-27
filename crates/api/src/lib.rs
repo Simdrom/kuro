@@ -488,7 +488,7 @@ impl Api {
             if ids.is_empty() {
                 continue;
             }
-            let found = self.anilist.by_ids(s, MediaKind::Anime, &ids).await?;
+            let found = self.anilist.airing(s, &ids).await?;
             out.extend(
                 found.into_iter().filter_map(|m| if s == Service::Mal { into_mal(m) } else { Some(m) }),
             );

@@ -392,12 +392,14 @@ impl App {
             let Some(e) = self.entry_at(m.media_ref()) else { continue };
             let mut e = (*e).clone();
             let old = e.media.clone();
+            e.media.schedule = kuro_core::calendar::merge_schedule(&old, &m);
             e.media.next_airing = m.next_airing;
             e.media.release = m.release;
             e.media.episodes = m.episodes.or(e.media.episodes);
             e.media.start = m.start.or(e.media.start);
             e.media.end = m.end.or(e.media.end);
             if e.media != old {
+                self.tell_schedule(&e, &old);
                 // Not a user edit: nothing to send.
                 if let Err(err) = self.bg.store().put_entry(&e) {
                     tracing::error!("airing update failed: {err}");
@@ -407,6 +409,43 @@ impl App {
         }
         if changed {
             self.reload();
+        }
+    }
+
+    /// Says once when a title being watched is delayed or takes a break.
+    fn tell_schedule(&mut self, e: &ListEntry, old: &Media) {
+        use kuro_core::calendar::{Change, changes};
+        let n = &self.s.notifications;
+        if !n.enabled || e.status != ListStatus::Current || n.muted.contains(&e.media.media_ref()) {
+            return;
+        }
+        let was = changes(old);
+        let title = e.media.display_title(self.s.title_language).to_owned();
+        for c in changes(&e.media).into_iter().filter(|c| !was.contains(c)) {
+            let (key, body) = match c {
+                Change::Delayed { episode, now, .. } => (
+                    format!("delay:{}:{episode}:{now}", links::to_link(e.media.media_ref())),
+                    tf("Episode {} is delayed to {}", &[&episode, &format::date_time(now)]),
+                ),
+                Change::Break { episode, back } => (
+                    format!("break:{}:{episode}", links::to_link(e.media.media_ref())),
+                    tf("On a break: episode {} airs {}", &[&episode, &format::date_time(back)]),
+                ),
+                // Said in the calendar; a notification this early would be noise.
+                Change::BreakAfter { .. } => continue,
+            };
+            let store = self.bg.store();
+            let told = store.was_notified(&key).unwrap_or(true);
+            if !told {
+                let _ = store.mark_notified(&key, now());
+            }
+            drop(store);
+            if !told {
+                let mut notice = Notice::new(title.clone(), body);
+                notice.link = Some(links::to_link(e.media.media_ref()));
+                notice.image = e.media.cover.as_deref().and_then(|u| self.bg.images.cached(u));
+                self.sys.notify(notice);
+            }
         }
     }
 

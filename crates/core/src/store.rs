@@ -259,10 +259,20 @@ impl Store {
             .into_iter()
             .filter(|p| p.target == service && p.media.service == service && p.media.kind == kind)
             .collect();
+        // The schedule is learned over time; a list read again does not carry it.
+        let schedules: std::collections::HashMap<u64, crate::model::Schedule> =
+            self.entries(service, kind)?.into_iter().map(|e| (e.media.id, e.media.schedule)).collect();
         let tx = self.db.transaction()?;
         tx.execute("DELETE FROM entries WHERE service=?1 AND kind=?2", [service.key(), kind.key()])?;
         for e in remote.iter().filter(|e| e.media.service == service && e.media.kind == kind) {
-            put_entry(&tx, e)?;
+            match schedules.get(&e.media.id) {
+                Some(old) if e.media.schedule == crate::model::Schedule::default() => {
+                    let mut e = e.clone();
+                    e.media.schedule = *old;
+                    put_entry(&tx, &e)?;
+                }
+                _ => put_entry(&tx, e)?,
+            }
         }
         for e in &keep {
             put_entry(&tx, e)?;
@@ -616,6 +626,17 @@ mod tests {
             .collect();
         got.sort_unstable();
         assert_eq!(got, [(1, 5), (2, 0)]);
+    }
+
+    #[test]
+    fn refresh_keeps_the_schedule_learned_so_far() {
+        let mut s = Store::in_memory().unwrap();
+        let mut known = entry(1, 2);
+        known.media.schedule = crate::model::Schedule { previous: Some(5), ..Default::default() };
+        s.put_entry(&known).unwrap();
+        s.replace_library(Service::AniList, MediaKind::Anime, &[entry(1, 3)], false).unwrap();
+        let e = s.entry(known.media.media_ref()).unwrap().unwrap();
+        assert_eq!((e.progress, e.media.schedule.previous), (3, Some(5)));
     }
 
     #[test]

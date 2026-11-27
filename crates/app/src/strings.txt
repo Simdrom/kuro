@@ -1,5 +1,6 @@
 A small window above the others with your progress and statistics. It opens again with Kuro if you leave it open.|Una ventana pequeña sobre las demás con tu progreso y tus estadísticas. Se vuelve a abrir con Kuro si la dejas abierta.|Une petite fenêtre au-dessus des autres avec ta progression et tes statistiques. Elle se rouvre avec Kuro si tu la laisses ouverte.|Ein kleines Fenster über den anderen mit deinem Fortschritt und deiner Statistik. Es öffnet sich mit Kuro wieder, wenn du es offen lässt.|Una piccola finestra sopra le altre con i tuoi progressi e le tue statistiche. Si riapre con Kuro se la lasci aperta.|Et lite vindu over de andre med fremdrift og statistikk. Det åpnes igjen med Kuro hvis du lar det stå åpent.|진행 상황과 통계를 다른 창 위에 보여 주는 작은 창입니다. 열어 두면 Kuro와 함께 다시 열립니다.
 A summary of the week on Monday|Un resumen de la semana el lunes|Un résumé de la semaine le lundi|Eine Wochenübersicht am Montag|Un riepilogo della settimana il lunedì|Et sammendrag av uken på mandag|월요일에 한 주 요약
+A week without an episode: episode {} airs {}|Una semana sin episodio: el episodio {} se emite el {}|Une semaine sans épisode : l’épisode {} sort le {}|Eine Woche ohne Folge: Folge {} läuft am {}|Una settimana senza episodio: l’episodio {} va in onda il {}|En uke uten episode: episode {} sendes {}|한 주 휴방: {}화는 {}에 방영됩니다
 About|Acerca de|À propos|Über|Informazioni|Om|정보
 About the same as you|Más o menos como tú|À peu près comme toi|Etwa wie du|Più o meno come te|Omtrent som deg|나와 비슷함
 Accounts|Cuentas|Comptes|Konten|Account|Kontoer|계정
@@ -93,6 +94,7 @@ Data source|Fuente de datos|Source de données|Datenquelle|Origine dei dati|Data
 Date started|Fecha de inicio|Date de début|Startdatum|Data di inizio|Startdato|시작한 날짜
 Del|Supr|Suppr|Entf|Canc|Del|Del
 Delay after airing|Retraso tras la emisión|Délai après la diffusion|Verzögerung nach Ausstrahlung|Ritardo dopo la trasmissione|Forsinkelse etter sending|방영 후 지연
+Delayed|Retrasado|Reporté|Verschoben|Rinviato|Utsatt|연기됨
 Descending|Descendente|Décroissant|Absteigend|Decrescente|Synkende|내림차순
 Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget desktop|Skrivebordswidget|데스크톱 위젯
 Display|Visualización|Affichage|Anzeige|Visualizzazione|Visning|표시
@@ -101,6 +103,8 @@ Download|Descargar|Télécharger|Herunterladen|Scarica|Last ned|다운로드
 Each copy is named by its date. Older copies beyond the limit are deleted.|Cada copia lleva su fecha en el nombre. Las más antiguas por encima del límite se borran.|Chaque copie porte sa date dans son nom. Les plus anciennes au-delà de la limite sont supprimées.|Jede Kopie trägt ihr Datum im Namen. Ältere Kopien über dem Limit werden gelöscht.|Ogni copia ha la sua data nel nome. Le più vecchie oltre il limite vengono eliminate.|Hver kopi har datoen i navnet. Eldre kopier over grensen slettes.|각 사본의 이름에는 날짜가 들어갑니다. 한도를 넘는 오래된 사본은 삭제됩니다.
 Episode|Episodio|Épisode|Folge|Episodio|Episode|에피소드
 Episode calendar|Calendario de episodios|Calendrier des épisodes|Episodenkalender|Calendario degli episodi|Episodekalender|에피소드 캘린더
+Episode {} is delayed to {}|El episodio {} se retrasa al {}|L’épisode {} est reporté au {}|Folge {} ist verschoben auf {}|L’episodio {} è rinviato al {}|Episode {} er utsatt til {}|{}화가 {}(으)로 연기되었습니다
+Episode {} moved from {} to {}|El episodio {} pasa del {} al {}|L’épisode {} passe du {} au {}|Folge {} verschoben von {} auf {}|L’episodio {} passa da {} a {}|Episode {} er flyttet fra {} til {}|{}화가 {}에서 {}(으)로 변경되었습니다
 Episode {} · {}|Episodio {} · {}|Épisode {} · {}|Folge {} · {}|Episodio {} · {}|Episode {} · {}|{}화 · {}
 Episodes go to|Los episodios van a|Les épisodes vont dans|Folgen landen in|Gli episodi vanno in|Episodene havner i|에피소드를 넣을 곳
 Every day|Cada día|Chaque jour|Jeden Tag|Ogni giorno|Hver dag|매일
@@ -129,6 +133,7 @@ No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewäh
 No progress for {} days|Sin avances desde hace {} días|Aucun progrès depuis {} jours|Seit {} Tagen kein Fortschritt|Nessun progresso da {} giorni|Ingen fremdrift på {} dager|{}일 동안 진행 없음
 Not available in this build|No disponible en esta versión|Indisponible dans cette version|In dieser Version nicht verfügbar|Non disponibile in questa versione|Ikke tilgjengelig i denne versjonen|이 버전에서는 사용할 수 없습니다
 Nothing to count yet|Aún no hay nada que contar|Rien à compter pour l’instant|Noch nichts zu zählen|Ancora niente da contare|Ingenting å telle ennå|아직 집계할 작품이 없습니다
+On a break: episode {} airs {}|En pausa: el episodio {} se emite el {}|En pause : l’épisode {} sort le {}|Pause: Folge {} läuft am {}|In pausa: l’episodio {} va in onda il {}|Pause: episode {} sendes {}|휴방 중: {}화는 {}에 방영됩니다
 Open the menu of the selected title|Abrir el menú del título seleccionado|Ouvrir le menu du titre sélectionné|Menü des ausgewählten Titels öffnen|Apri il menu del titolo selezionato|Åpne menyen for den valgte tittelen|선택한 작품의 메뉴 열기
 Overview|Resumen|Vue d’ensemble|Überblick|Panoramica|Oversikt|개요
 Reminders|Recordatorios|Rappels|Erinnerungen|Promemoria|Påminnelser|리마인더
@@ -193,6 +198,7 @@ Light|Claro|Clair|Hell|Chiaro|Lys|라이트
 Light novel|Novela ligera|Light novel|Light Novel|Light novel|Light novel|라이트 노벨
 Link copied|Enlace copiado|Lien copié|Link kopiert|Link copiato|Lenke kopiert|링크를 복사했습니다
 Links|Enlaces|Liens|Links|Link|Lenker|링크
+Schedule changes|Cambios en la emisión|Changements de diffusion|Geänderte Ausstrahlung|Cambi di programmazione|Endringer i sendeplanen|방영 일정 변경
 Score a few of the same titles to see how alike your tastes are.|Puntúa algunos de los mismos títulos para ver cuánto se parecen vuestros gustos.|Note quelques titres en commun pour voir à quel point vos goûts se ressemblent.|Bewerte ein paar gleiche Titel, um zu sehen, wie ähnlich euer Geschmack ist.|Dai un voto ad alcuni degli stessi titoli per vedere quanto si somigliano i vostri gusti.|Gi karakter til noen av de samme titlene for å se hvor like smakene deres er.|같은 작품 몇 개에 점수를 매기면 취향이 얼마나 비슷한지 볼 수 있습니다.
 Scored by both|Puntuados por ambos|Notés par vous deux|Von beiden bewertet|Votati da entrambi|Karaktersatt av begge|둘 다 점수를 매긴 작품
 Settings › About has the download.|La descarga está en Ajustes › Acerca de.|Le téléchargement se trouve dans Réglages › À propos.|Der Download ist unter Einstellungen › Über.|Il download è in Impostazioni › Informazioni.|Nedlastingen finner du i Innstillinger › Om.|다운로드는 설정 › 정보에 있습니다.

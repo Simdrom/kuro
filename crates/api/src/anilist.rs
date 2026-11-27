@@ -169,6 +169,34 @@ impl AniList {
         Ok(out)
     }
 
+    /// Anime by id, as [`Self::by_ids`] reads them, with when the episode
+    /// after the next one airs.
+    pub async fn airing(&self, by: Service, ids: &[u64]) -> Result<Vec<Media>> {
+        let field = match by {
+            Service::AniList => "id_in",
+            Service::Mal => "idMal_in",
+        };
+        let q = format!(
+            "query($ids:[Int]){{Page(perPage:{PER_PAGE}){{media(type:ANIME,{field}:$ids){{...M \
+             airingSchedule(notYetAired:true,perPage:2){{nodes{{episode airingAt}}}}}}}}}} {SUMMARY}"
+        );
+        let mut out = Vec::new();
+        for chunk in ids.chunks(PER_PAGE) {
+            let d = self.query(None, &q, json!({ "ids": chunk })).await?;
+            for v in list(&d["Page"]["media"]) {
+                let Some(mut m) = media(v) else { continue };
+                if let Some(a) = m.next_airing {
+                    m.schedule.following = list(&v["airingSchedule"]["nodes"])
+                        .iter()
+                        .find(|n| num(&n["episode"]) == Some(a.episode + 1))
+                        .and_then(|n| n["airingAt"].as_i64());
+                }
+                out.push(m);
+            }
+        }
+        Ok(out)
+    }
+
     /// Relations of several titles at once, for the series overview.
     pub async fn relations(&self, kind: MediaKind, ids: &[u64]) -> Result<Vec<(MediaRef, Vec<Relation>)>> {
         let q = format!(
@@ -892,6 +920,19 @@ mod tests {
         );
         assert_eq!(l[0].finish, None);
         assert_eq!(l[0].lists, Some(vec!["Cozy".to_owned()]));
+    }
+
+    #[tokio::test]
+    async fn airing_reads_when_the_episode_after_next_airs() {
+        let mut m = media_json(1);
+        m["nextAiringEpisode"] = json!({"episode": 5, "airingAt": 1000});
+        m["airingSchedule"] =
+            json!({"nodes": [{"episode": 5, "airingAt": 1000}, {"episode": 6, "airingAt": 2000}]});
+        let (_s, a) = server(json!({"data": {"Page": {"media": [m, media_json(2)]}}})).await;
+        let got = a.airing(Service::AniList, &[1, 2]).await.unwrap();
+        assert_eq!(got[0].next_airing, Some(Airing { episode: 5, at: 1000 }));
+        assert_eq!(got[0].schedule.following, Some(2000));
+        assert_eq!(got[1].schedule.following, None);
     }
 
     #[tokio::test]

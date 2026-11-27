@@ -236,6 +236,20 @@ pub struct Media {
     pub broadcast: Option<String>,
     pub adult: bool,
     pub next_airing: Option<Airing>,
+    /// The airing around the next episode, as far as it is known.
+    pub schedule: Schedule,
+}
+
+/// What is known about the airing around the next episode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct Schedule {
+    /// Unix seconds the episode after the next one airs, once announced.
+    pub following: Option<i64>,
+    /// Unix seconds the episode before the next one aired, once seen.
+    pub previous: Option<i64>,
+    /// Unix seconds the next episode was first due, when it has moved later since.
+    pub delayed_from: Option<i64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
