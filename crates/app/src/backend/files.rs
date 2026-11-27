@@ -10,7 +10,16 @@ impl Backend {
         self.spawn(async move {
             let bytes = images.get(&url).await;
             let image = match bytes {
-                Ok(b) => tokio::task::spawn_blocking(move || decode_image(&b)).await.ok().flatten(),
+                Ok(b) => {
+                    let decoded = tokio::task::spawn_blocking(move || decode_image(&b)).await.ok().flatten();
+                    decoded.map(|(image, smaller)| {
+                        if let Some(smaller) = smaller {
+                            let (images, url) = (images.clone(), url.clone());
+                            tokio::spawn(async move { images.replace(&url, &smaller).await });
+                        }
+                        image
+                    })
+                }
                 Err(e) => {
                     tracing::debug!("image failed: {e}");
                     None
@@ -147,8 +156,9 @@ fn run_backup(
     Ok(backup::latest(after.iter().map(String::as_str)).map(backup::file_name))
 }
 
-/// Decodes within limits that stop decompression bombs.
-fn decode_image(bytes: &[u8]) -> Option<egui::ColorImage> {
+/// Decodes within limits that stop decompression bombs. When the image is scaled down,
+/// also returns a re-encoded copy of what is shown, if that is smaller than the original.
+fn decode_image(bytes: &[u8]) -> Option<(egui::ColorImage, Option<Vec<u8>>)> {
     const MAX_SIDE: u32 = 4096;
     const SHOWN: u32 = 640;
     let mut r = image::ImageReader::new(std::io::Cursor::new(bytes)).with_guessed_format().ok()?;
@@ -158,12 +168,26 @@ fn decode_image(bytes: &[u8]) -> Option<egui::ColorImage> {
     limits.max_alloc = Some(96 * 1024 * 1024);
     r.limits(limits);
     let mut img = r.decode().ok()?;
+    let mut smaller = None;
     if img.width() > SHOWN || img.height() > SHOWN * 2 {
         img = img.thumbnail(SHOWN, SHOWN * 2);
+        smaller = encode(&img).filter(|b| b.len() < bytes.len());
     }
     let rgba = img.into_rgba8();
     let size = [rgba.width() as usize, rgba.height() as usize];
-    Some(egui::ColorImage::from_rgba_unmultiplied(size, &rgba))
+    Some((egui::ColorImage::from_rgba_unmultiplied(size, &rgba), smaller))
+}
+
+/// JPEG for covers, PNG when transparency has to be kept.
+fn encode(img: &image::DynamicImage) -> Option<Vec<u8>> {
+    let mut out = std::io::Cursor::new(Vec::new());
+    if img.color().has_alpha() {
+        img.write_to(&mut out, image::ImageFormat::Png).ok()?;
+    } else {
+        let enc = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 90);
+        img.to_rgb8().write_with_encoder(enc).ok()?;
+    }
+    Some(out.into_inner())
 }
 
 #[cfg(test)]
@@ -182,7 +206,24 @@ mod tests {
     #[test]
     fn large_images_are_downscaled() {
         let mut buf = std::io::Cursor::new(Vec::new());
-        image::RgbImage::new(2000, 1000).write_to(&mut buf, image::ImageFormat::Png).unwrap();
-        assert!(decode_image(buf.get_ref()).unwrap().size[0] <= 640);
+        // Detail, so the original PNG is larger than a JPEG of the shown size.
+        let noisy = image::RgbImage::from_fn(2000, 1000, |x, y| {
+            let v = (x.wrapping_mul(31) ^ y.wrapping_mul(17)) as u8;
+            image::Rgb([v, v.wrapping_mul(3), v ^ 0x5a])
+        });
+        noisy.write_to(&mut buf, image::ImageFormat::Png).unwrap();
+        let (image, smaller) = decode_image(buf.get_ref()).unwrap();
+        assert!(image.size[0] <= 640);
+        // The smaller copy decodes to the same size and is not scaled again.
+        let (again, none) = decode_image(&smaller.unwrap()).unwrap();
+        assert_eq!(again.size, image.size);
+        assert!(none.is_none());
+    }
+
+    #[test]
+    fn small_images_are_kept_as_they_are() {
+        let mut buf = std::io::Cursor::new(Vec::new());
+        image::RgbImage::new(230, 325).write_to(&mut buf, image::ImageFormat::Png).unwrap();
+        assert!(decode_image(buf.get_ref()).unwrap().1.is_none());
     }
 }
