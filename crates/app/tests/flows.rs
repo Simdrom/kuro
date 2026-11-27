@@ -447,7 +447,7 @@ fn a_newer_version_is_offered_until_skipped() {
     h.state_mut().handle(&ctx, Event::Release(Ok(release("99.0.0"))));
     assert_eq!(h.state().update.as_ref().map(|u| u.version.as_str()), Some("99.0.0"));
     settle(&mut h);
-    click(&mut h, "Kuro 99.0.0 is available");
+    click(&mut h, "New version");
     assert_eq!(h.state().routes.last(), Some(&Route::Settings(SettingsPage::About)));
     assert!(h.query_by_label("Download").is_some());
     click(&mut h, "Skip this version");

@@ -302,8 +302,9 @@ fn status(app: &mut App, ui: &mut Ui, text: bool) {
         ui.add(egui::Label::new(RichText::new(hint).size(12.0).color(color)).wrap());
     }
     if let Some(u) = &app.update {
-        let label = crate::i18n::tf("Kuro {} is available", &[&u.version]);
-        if nav_item(ui, &p, icons::SPARKLE, &label, false, text).on_hover_text(&label).clicked() {
+        // Short enough for the sidebar; the whole sentence on hover.
+        let hint = crate::i18n::tf("Kuro {} is available", &[&u.version]);
+        if nav_item(ui, &p, icons::SPARKLE, t("New version"), false, text).on_hover_text(&hint).clicked() {
             app.act(Act::Go(Tab::Settings));
             app.act(Act::Push(Route::Settings(SettingsPage::About)));
         }

@@ -968,7 +968,7 @@ fn about(app: &mut App, ui: &mut Ui) {
     card(ui, &p, |ui| {
         ui.add(
             egui::Label::new(t(
-                "No analytics and no ads. The app talks only to AniList, MyAnimeList, Apple Music search, AnimeThemes and Jikan. Sign-in tokens are kept in the Windows Credential Manager.",
+                "No analytics and no ads. The app talks only to AniList, MyAnimeList, Apple Music search, AnimeThemes, Jikan and GitHub (for new versions), and to Google Calendar and Crunchyroll once you connect them. Sign-in tokens are kept in the Windows Credential Manager.",
             ))
             .wrap(),
         );
