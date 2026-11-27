@@ -248,26 +248,6 @@ mod windows {
             }
             Some(dest)
         }
-
-        /// Moves registrations made before the app was renamed.
-        pub fn adopt_previous(&self) {
-            let _ = CURRENT_USER.remove_tree(r"Software\Classes\AppUserModelId\MangoDesktop.Tracker");
-            if let Ok(run) = CURRENT_USER.options().read().write().open(RUN)
-                && run.get_string("MangoDesktop").is_ok()
-                && self.set_autostart(true).is_ok()
-            {
-                let _ = run.remove_value("MangoDesktop");
-            }
-            // The scheme may belong to another program, so look before removing it.
-            const OLD: &str = r"Software\Classes\mango";
-            let command = CURRENT_USER
-                .open(format!(r"{OLD}\shell\open\command"))
-                .and_then(|k| k.get_string(""))
-                .unwrap_or_default();
-            if command.contains("mango-desktop.exe") && self.set_link_handler(true).is_ok() {
-                let _ = CURRENT_USER.remove_tree(OLD);
-            }
-        }
     }
 
     impl System for WindowsSystem {

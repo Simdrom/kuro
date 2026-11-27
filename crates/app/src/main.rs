@@ -48,26 +48,6 @@ fn main() {
     }
 }
 
-/// Brings over the list, settings and sessions saved before the app was renamed.
-fn adopt_previous(data: &std::path::Path, default_profile: bool, secrets: &str) {
-    const OLD: &str = "mango.db";
-    let mut places = vec![data.join(OLD)];
-    if default_profile && let Some(d) = directories::ProjectDirs::from("", "", "MangoDesktop") {
-        places.push(d.data_local_dir().join(OLD));
-    }
-    for old in places {
-        match Store::adopt(&old, &data.join("kuro.db")) {
-            Ok(true) => break,
-            Ok(false) => {}
-            Err(e) => tracing::warn!("the previous list could not be brought over: {e}"),
-        }
-    }
-    let old = if default_profile { "mango-desktop" } else { "mango-desktop-profile" };
-    if let Err(e) = Keyring::new(secrets).adopt(&Keyring::new(old)) {
-        tracing::warn!("the previous sessions could not be brought over: {e}");
-    }
-}
-
 /// Name of the Credential Manager entries of a profile.
 fn secrets_name(profile: Option<&str>) -> &'static str {
     if profile.is_some() { "kuro-profile" } else { "kuro" }
@@ -86,7 +66,6 @@ fn run(hidden: bool, link: Option<String>, profile: Option<String>) -> Result<()
         }
     };
     std::fs::create_dir_all(&data)?;
-    adopt_previous(&data, profile.is_none(), secrets);
     let store = Store::open(&data.join("kuro.db"))?;
     let s = store.settings()?;
     let ids = ClientIds::with_defaults(&s.anilist_client_id, &s.mal_client_id);
@@ -113,10 +92,6 @@ fn run(hidden: bool, link: Option<String>, profile: Option<String>) -> Result<()
             system::listen(profile.as_deref(), reply.clone());
             #[cfg(windows)]
             let sys = system::WindowsSystem::new(reply, data.join("notifications"));
-            #[cfg(windows)]
-            if profile.is_none() {
-                sys.adopt_previous();
-            }
             #[cfg(windows)]
             let sys: Box<dyn system::System> = Box::new(sys);
             #[cfg(not(windows))]
