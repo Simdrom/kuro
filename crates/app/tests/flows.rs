@@ -65,6 +65,37 @@ fn plus_button_adds_an_episode_and_queues_nothing_when_signed_out() {
 }
 
 #[test]
+fn changes_made_here_can_be_undone_from_the_toast() {
+    let mut h = harness();
+    click(&mut h, "Add one: Lanterns Over Saltmarsh");
+    assert_eq!(progress(&h, 1), 10);
+    assert!(h.query_by_label_contains("Lanterns Over Saltmarsh · Watching · 10/24").is_some());
+    click(&mut h, "Undo");
+    assert_eq!(progress(&h, 1), 9);
+    assert_eq!(h.state().bg.store().entry(r(1, MediaKind::Anime)).unwrap().unwrap().progress, 9);
+    assert_eq!(h.state().toast.as_ref().map(|t| t.text.as_str()), Some("Change undone"));
+
+    // A removal comes back with everything it had.
+    let before = h.state().entry_at(r(6, MediaKind::Anime)).unwrap();
+    act(&mut h, Act::Delete(r(6, MediaKind::Anime)));
+    assert!(h.state().entry_at(r(6, MediaKind::Anime)).is_none());
+    click(&mut h, "Undo");
+    let back = h.state().entry_at(r(6, MediaKind::Anime)).unwrap();
+    assert_eq!((back.status, back.progress, back.score), (before.status, before.progress, before.score));
+
+    // A title added by the change leaves the list again.
+    act(&mut h, Act::SetStatus(Rc::new(media(90, MediaKind::Anime, "New Shore")), ListStatus::Planning));
+    assert!(h.state().entry_at(r(90, MediaKind::Anime)).is_some());
+    act(&mut h, Act::Undo);
+    assert!(h.state().entry_at(r(90, MediaKind::Anime)).is_none());
+
+    // Nothing changed, nothing to undo.
+    h.state_mut().toast = None;
+    act(&mut h, Act::Step(Rc::new(media(3, MediaKind::Anime, "Iron Orchard")), 1));
+    assert!(h.state().toast.is_none());
+}
+
+#[test]
 fn finishing_a_title_completes_it_and_fires_confetti() {
     let mut h = harness_with(store(), [1240.0, 820.0], |s| s.animations = true);
     let m = Rc::new(h.state().entry_at(r(2, MediaKind::Anime)).unwrap().media.clone());

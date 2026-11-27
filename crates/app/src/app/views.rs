@@ -85,6 +85,8 @@ pub enum Act {
     Edit(Rc<Media>),
     AskDelete(Rc<Media>),
     Delete(MediaRef),
+    /// Puts back the change in the toast.
+    Undo,
     Url(String),
     Copy(String),
     Binge(Option<MediaRef>),
@@ -321,6 +323,16 @@ pub struct Toast {
     pub text: String,
     pub until: f64,
     pub error: bool,
+    /// The change the toast offers to undo.
+    pub undo: Option<Undo>,
+}
+
+/// What a change replaced, so that it can be put back.
+#[derive(Debug, Clone)]
+pub struct Undo {
+    /// The title as it was; `None` when the change added it to the list.
+    pub before: Option<ListEntry>,
+    pub at: MediaRef,
 }
 
 pub struct ListView {

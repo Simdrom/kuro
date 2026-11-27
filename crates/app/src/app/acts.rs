@@ -62,21 +62,21 @@ impl App {
                 let e = self.working_entry(&m);
                 let e = if n > 0 && e.status == ListStatus::Completed && !e.repeating { return } else { e };
                 let next = progress::step(&e, n, today());
-                self.save(&next);
+                self.change(&next);
             }
             Act::StepVolumes(m, n) => {
                 let next = progress::step_volumes(&self.working_entry(&m), n, today());
-                self.save(&next);
+                self.change(&next);
             }
             Act::SetStatus(m, s) => {
                 let next = progress::set_status(&self.working_entry(&m), s, today());
-                self.save(&next);
+                self.change(&next);
             }
             Act::Repeat(m) => {
                 let next = progress::start_repeat(&self.working_entry(&m));
-                self.save(&next);
+                self.change(&next);
             }
-            Act::Save(e) => self.save(&e),
+            Act::Save(e) => self.change(&e),
             Act::Edit(m) => {
                 let is_new = self.entry(&m).is_none();
                 let entry = self.working_entry(&m);
@@ -100,6 +100,7 @@ impl App {
                 });
             }
             Act::Delete(r) => self.delete(r),
+            Act::Undo => self.undo(),
             Act::Url(u) => self.sys.open_url(&u),
             Act::Copy(text) => {
                 self.sys.copy(&text);

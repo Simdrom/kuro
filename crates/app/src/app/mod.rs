@@ -134,6 +134,15 @@ pub struct App {
     screen: egui::Rect,
 }
 
+/// Seconds a toast that can undo a change stays up.
+const UNDO_SECONDS: f64 = 6.0;
+
+/// Whether two entries hold the same progress, status, score and notes.
+fn same_state(a: &ListEntry, b: &ListEntry) -> bool {
+    let bare = |e: &ListEntry| ListEntry { media: Media::default(), updated_at: 0, ..e.clone() };
+    bare(a) == bare(b)
+}
+
 pub fn today() -> Date {
     jiff::ZonedDateTime::now().date()
 }
@@ -338,7 +347,46 @@ impl App {
             .collect()
     }
 
-    pub fn save(&mut self, entry: &ListEntry) {
+    /// Saves `entry` without offering to undo it, as automatic changes do.
+    /// False when it could not be saved, which the user is told.
+    pub fn save(&mut self, entry: &ListEntry) -> bool {
+        self.write(entry, true)
+    }
+
+    /// Saves a change the user made here, with a toast that can undo it.
+    pub fn change(&mut self, entry: &ListEntry) {
+        let before = self.entry(&entry.media).map(|e| (*e).clone());
+        if !self.save(entry) {
+            return;
+        }
+        let Some(after) = self.entry(&entry.media) else { return };
+        if before.as_ref().is_some_and(|b| same_state(b, &after)) {
+            return;
+        }
+        let title = after.media.display_title(self.s.title_language);
+        let total = after.media.total().map_or_else(|| "?".to_owned(), |n| n.to_string());
+        let status = format::status(after.status, after.media.kind);
+        let text = format!("{title} · {status} · {}/{total}", after.progress);
+        self.offer_undo(text, Undo { before, at: after.media.media_ref() });
+    }
+
+    fn offer_undo(&mut self, text: String, undo: Undo) {
+        self.toast = Some(Toast { text, until: self.time + UNDO_SECONDS, error: false, undo: Some(undo) });
+    }
+
+    /// Puts back what the change in the toast replaced.
+    pub(super) fn undo(&mut self) {
+        let Some(u) = self.toast.take().and_then(|t| t.undo) else { return };
+        let done = match u.before {
+            Some(b) => self.write(&b, false),
+            None => self.remove(u.at).is_some(),
+        };
+        if done {
+            self.say(t("Change undone"));
+        }
+    }
+
+    fn write(&mut self, entry: &ListEntry, celebrate: bool) -> bool {
         let mut e = progress::sanitize(entry);
         e.media = self.home_media(&e.media);
         e.updated_at = now();
@@ -348,7 +396,7 @@ impl App {
         if let Err(err) = saved {
             tracing::error!("save failed: {err}");
             self.say_error(t("Your change could not be saved."));
-            return;
+            return false;
         }
         let done = e.status == ListStatus::Completed
             && before.as_ref().is_none_or(|b| b.status != ListStatus::Completed || b.repeating);
@@ -362,7 +410,7 @@ impl App {
                 self.lib[k].push(Rc::new(e));
             }
         }
-        if done && self.s.confetti && self.s.animations {
+        if celebrate && done && self.s.confetti && self.s.animations {
             let colors = [self.p.tint, self.p.yellow, self.p.green, self.p.orange, self.p.red];
             self.confetti.fire(self.screen, &colors);
         }
@@ -370,21 +418,29 @@ impl App {
         if !targets.is_empty() {
             self.bg.sync();
         }
+        true
     }
 
-    fn delete(&mut self, r: MediaRef) {
-        let Some(e) = self.entry_at(r) else { return };
+    /// Removes a title from the list and returns it as it was.
+    fn remove(&mut self, r: MediaRef) -> Option<ListEntry> {
+        let e = self.entry_at(r)?;
         let targets = self.targets();
         let saved = self.bg.store().delete_and_queue(&e, &targets);
         if let Err(err) = saved {
             tracing::error!("delete failed: {err}");
             self.say_error(t("Your change could not be saved."));
-            return;
+            return None;
         }
         self.lib[slot(r.kind)].retain(|x| x.media.media_ref() != r);
         self.reindex();
         self.bg.sync();
-        self.say(t("Removed from your list"));
+        Some((*e).clone())
+    }
+
+    fn delete(&mut self, r: MediaRef) {
+        if let Some(e) = self.remove(r) {
+            self.offer_undo(t("Removed from your list").into(), Undo { before: Some(e), at: r });
+        }
     }
 
     /// The entry to change, or a new one for a title not in the list yet.
@@ -443,11 +499,11 @@ impl App {
     // Feedback
 
     pub fn say(&mut self, text: impl Into<String>) {
-        self.toast = Some(Toast { text: text.into(), until: self.time + 2.6, error: false });
+        self.toast = Some(Toast { text: text.into(), until: self.time + 2.6, error: false, undo: None });
     }
 
     pub fn say_error(&mut self, text: impl Into<String>) {
-        self.toast = Some(Toast { text: text.into(), until: self.time + 6.0, error: true });
+        self.toast = Some(Toast { text: text.into(), until: self.time + 6.0, error: true, undo: None });
     }
 
     // Browsing requests

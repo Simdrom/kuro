@@ -362,7 +362,9 @@ fn toast(app: &mut App, ctx: &Context) {
     }
     ctx.request_repaint_after(std::time::Duration::from_millis(200));
     let p = app.p;
+    let (text, can_undo) = (toast.text.clone(), toast.undo.is_some());
     let fill = if toast.error { p.red } else { theme::blend(p.card, p.text, 0.12) };
+    let mut undo = false;
     let r = egui::Area::new(Id::unique("toast"))
         .anchor(Align2::CENTER_BOTTOM, vec2(0.0, -26.0))
         .order(egui::Order::Tooltip)
@@ -377,10 +379,27 @@ fn toast(app: &mut App, ctx: &Context) {
                 .show(ui, |ui| {
                     ui.set_max_width(460.0_f32.min(ctx.content_rect().width() - 70.0));
                     let fg: Color32 = theme::on(fill);
-                    ui.add(egui::Label::new(RichText::new(&toast.text).color(fg)).wrap());
+                    ui.horizontal(|ui| {
+                        let room = ui.available_width() - if can_undo { 80.0 } else { 0.0 };
+                        ui.scope(|ui| {
+                            ui.set_max_width(room.max(60.0));
+                            ui.add(egui::Label::new(RichText::new(&text).color(fg)).wrap());
+                        });
+                        if can_undo {
+                            let label = RichText::new(t("Undo")).color(fg).strong();
+                            undo = ui.add(egui::Button::new(label).frame(false)).clicked();
+                        }
+                    });
                 });
         });
-    if r.response.clicked() {
+    if undo {
+        app.act(Act::Undo);
+    } else if r.response.clicked() {
         app.toast = None;
+    } else if r.response.contains_pointer()
+        && let Some(t) = app.toast.as_mut()
+    {
+        // Kept up while the pointer is on it, so it can still be undone.
+        t.until = t.until.max(now + 1.5);
     }
 }
