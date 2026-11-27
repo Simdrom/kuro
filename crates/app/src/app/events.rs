@@ -370,6 +370,10 @@ impl App {
                 }
                 self.kioku.found = Some(FoundFile { platform, path, key });
             }
+            Event::Release(r) => match r {
+                Ok(r) => self.found_release(r),
+                Err(e) => tracing::info!("no answer about new versions: {e}"),
+            },
             Event::OpenLink(l) => {
                 self.open_link(&l);
             }

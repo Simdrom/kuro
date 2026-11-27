@@ -113,6 +113,10 @@ pub struct App {
     pub google_error: Option<String>,
     /// Google refused the session: only signing in again brings it back.
     pub google_expired: bool,
+    /// A newer Kuro, unless the user skipped it.
+    pub update: Option<kuro_api::updates::Release>,
+    /// When GitHub is asked next whether a newer Kuro is out.
+    update_at: f64,
     /// The name being typed for a new Google calendar.
     pub google_new: Option<String>,
     /// A new Google calendar is being made.
@@ -245,6 +249,8 @@ impl App {
             google_error: None,
             google_expired: false,
             google_new: None,
+            update: None,
+            update_at: 0.0,
             google_creating: false,
             acts: Vec::new(),
             next_tick: 0.0,

@@ -301,6 +301,13 @@ fn status(app: &mut App, ui: &mut Ui, text: bool) {
         let color = if problem.is_some() { p.orange } else { p.dim };
         ui.add(egui::Label::new(RichText::new(hint).size(12.0).color(color)).wrap());
     }
+    if let Some(u) = &app.update {
+        let label = crate::i18n::tf("Kuro {} is available", &[&u.version]);
+        if nav_item(ui, &p, icons::SPARKLE, &label, false, text).on_hover_text(&label).clicked() {
+            app.act(Act::Go(Tab::Settings));
+            app.act(Act::Push(Route::Settings(SettingsPage::About)));
+        }
+    }
 }
 
 fn top_bar(app: &mut App, ui: &mut Ui) {

@@ -117,6 +117,15 @@ impl App {
                 self.calendar_error = None;
                 self.next_tick = 0.0;
             }
+            if old.check_updates != self.s.check_updates || old.skipped_version != self.s.skipped_version {
+                // Asked again at once; skipping hides the version.
+                (self.update_at, self.next_tick) = (0.0, 0.0);
+                if !self.s.check_updates
+                    || self.update.as_ref().is_some_and(|u| u.version == self.s.skipped_version)
+                {
+                    self.update = None;
+                }
+            }
             if old.backup != self.s.backup {
                 // Look at the new folder now rather than within the hour.
                 (self.backup_at, self.next_tick) = (0.0, 0.0);

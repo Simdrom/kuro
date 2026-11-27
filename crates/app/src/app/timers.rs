@@ -19,6 +19,7 @@ impl App {
             self.refresh_airing();
         }
         self.auto_backup();
+        self.check_updates();
         self.kioku_check();
         self.scan_downloads();
         self.write_calendar();
@@ -35,6 +36,39 @@ impl App {
         if self.unsynced > 0 && self.sync_error.as_ref().is_none_or(|(_, e)| e.is_transient()) {
             self.bg.sync();
         }
+    }
+
+    /// Asks whether a newer Kuro is out every few hours; the answer is
+    /// reused for a day, so GitHub is asked at most once a day.
+    fn check_updates(&mut self) {
+        if !self.s.check_updates || !self.bg.online() || self.time < self.update_at {
+            return;
+        }
+        self.update_at = self.time + 6.0 * 3600.0;
+        self.bg.latest_release();
+    }
+
+    /// Keeps a newer release unless it was skipped, and says so once per version.
+    pub(super) fn found_release(&mut self, r: kuro_api::updates::Release) {
+        let current = env!("CARGO_PKG_VERSION");
+        if !kuro_api::updates::is_newer(&r.version, current) || r.version == self.s.skipped_version {
+            self.update = None;
+            return;
+        }
+        let key = format!("update:{}", r.version);
+        let store = self.bg.store();
+        let told = store.was_notified(&key).unwrap_or(true);
+        if !told {
+            let _ = store.mark_notified(&key, now());
+        }
+        drop(store);
+        if !told {
+            let mut n = Notice::new("Kuro", tf("Kuro {} is available", &[&r.version]));
+            n.detail = Some(t("Settings › About has the download.").into());
+            n.link = Some("kuro://tab/settings".into());
+            self.sys.notify(n);
+        }
+        self.update = Some(r);
     }
 
     /// Looks at the backup folder about once an hour.

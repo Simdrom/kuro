@@ -321,6 +321,11 @@ available yet.
   "netflix", "prime" or "amazon" in their name that read as that history.
   Kioku then offers to review the file; nothing is read beyond that folder,
   and a file you set aside is not offered again.
+- **New versions**: about once a day Kuro asks GitHub for its latest
+  release. A newer one is announced once with a notification, and shows in
+  the sidebar and in **Settings › About** with **Download** (the release page)
+  and **Skip this version**. Nothing is downloaded on its own, and the check
+  can be turned off there.
 - **Links** open titles, searches and tabs, and a few do things without
   bringing the window forward, so a desktop shortcut, a hotkey tool or a
   Stream Deck can use them:
@@ -378,6 +383,9 @@ needs a private key.
 - Kioku talks only to www.crunchyroll.com, follows no redirects and sends its
   own user agent (`Kuro-Kioku/<version>`). Its sign-in window only shows
   Crunchyroll's pages over HTTPS and keeps nothing on disk.
+- The check for new versions asks only api.github.com for Kuro's latest
+  release, with its own user agent and no redirects, and opens only Kuro's own
+  release pages.
 - `cargo deny check` covers advisories, licences and sources.
 
 ## Tests

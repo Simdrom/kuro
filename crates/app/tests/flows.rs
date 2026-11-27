@@ -401,6 +401,31 @@ fn adult_titles_stay_hidden_by_default() {
 }
 
 #[test]
+fn a_newer_version_is_offered_until_skipped() {
+    use kuro_api::updates::Release;
+    let mut h = harness();
+    let ctx = h.ctx.clone();
+    let release = |v: &str| Release {
+        version: v.into(),
+        url: format!("https://github.com/Simdrom/kuro/releases/tag/v{v}"),
+    };
+    h.state_mut().handle(&ctx, Event::Release(Ok(release("0.0.1"))));
+    assert!(h.state().update.is_none(), "an older version is not offered");
+    h.state_mut().handle(&ctx, Event::Release(Ok(release("99.0.0"))));
+    assert_eq!(h.state().update.as_ref().map(|u| u.version.as_str()), Some("99.0.0"));
+    settle(&mut h);
+    click(&mut h, "Kuro 99.0.0 is available");
+    assert_eq!(h.state().routes.last(), Some(&Route::Settings(SettingsPage::About)));
+    assert!(h.query_by_label("Download").is_some());
+    click(&mut h, "Skip this version");
+    assert!(h.state().update.is_none());
+    h.state_mut().handle(&ctx, Event::Release(Ok(release("99.0.0"))));
+    assert!(h.state().update.is_none(), "a skipped version stays skipped");
+    h.state_mut().handle(&ctx, Event::Release(Ok(release("99.0.1"))));
+    assert!(h.state().update.is_some(), "the next one is offered again");
+}
+
+#[test]
 fn airing_updates_do_not_count_as_edits() {
     let mut h = harness();
     let before = h.state().entry_at(r(1, MediaKind::Anime)).unwrap().updated_at;

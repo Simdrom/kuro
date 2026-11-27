@@ -163,6 +163,8 @@ pub enum Event {
         /// Unix seconds of its last change.
         modified: i64,
     },
+    /// The newest published Kuro.
+    Release(Outcome<kuro_api::updates::Release>),
     /// A link passed by another process or the tray.
     OpenLink(String),
     /// A notification's button: this episode was watched.
@@ -410,6 +412,14 @@ impl Backend {
             async move { api.friend(&f).await },
             move |result, fresh| Event::Friend { friend: friend.clone(), result, fresh },
         );
+    }
+
+    /// The newest published Kuro, asked of GitHub at most once a day.
+    pub fn latest_release(&self) {
+        let updates = self.api.updates.clone();
+        self.cached("latest-release".into(), 86_400, async move { updates.latest().await }, |r, _| {
+            Event::Release(r)
+        });
     }
 
     pub fn following(&self) {

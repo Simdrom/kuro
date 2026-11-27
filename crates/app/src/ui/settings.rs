@@ -935,7 +935,27 @@ fn about(app: &mut App, ui: &mut Ui) {
     section(ui, &p, "Kuro");
     card(ui, &p, |ui| {
         widgets::fact(ui, &p, t("Version"), env!("CARGO_PKG_VERSION"));
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::CLOUD_ARROW_UP, t("Check for new versions"), &mut app.s.check_updates);
+        if let Some(u) = app.update.clone() {
+            separator(ui, &p);
+            row(ui, &p, icons::SPARKLE, &tf("Kuro {} is available", &[&u.version]), |ui| {
+                if widgets::button(ui, &p, icons::ARROW_SQUARE_OUT, t("Download"), true).clicked() {
+                    app.act(Act::Url(u.url.clone()));
+                }
+                if widgets::button(ui, &p, "", t("Skip this version"), false).clicked() {
+                    app.s.skipped_version.clone_from(&u.version);
+                }
+            });
+        }
     });
+    note(
+        ui,
+        &p,
+        t(
+            "Kuro asks GitHub about once a day whether a newer version is out. Nothing about you or your list is sent.",
+        ),
+    );
     note(ui, &p, t("Kuro is Japanese for black, like the ink of manga."));
     note(
         ui,
