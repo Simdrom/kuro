@@ -110,6 +110,7 @@ pub fn sanitize(entry: &ListEntry) -> ListEntry {
         e.progress_volumes = e.progress_volumes.min(v);
     }
     e.score = e.score.min(100);
+    e.lists = e.lists.map(crate::model::clean_lists);
     if let (Some(s), Some(f)) = (e.start.and_then(|d| d.exact()), e.finish.and_then(|d| d.exact()))
         && f < s
     {

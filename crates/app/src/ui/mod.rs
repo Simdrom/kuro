@@ -15,6 +15,7 @@ pub mod kioku;
 pub mod mylist;
 pub mod rows;
 pub mod settings;
+pub mod stats;
 
 use eframe::egui::{
     self, Align, Align2, CentralPanel, CornerRadius, CursorIcon, Frame, Layout, Margin, Panel, RichText,
@@ -299,6 +300,14 @@ fn status(app: &mut App, ui: &mut Ui, text: bool) {
     if text && hint != "F5" {
         let color = if problem.is_some() { p.orange } else { p.dim };
         ui.add(egui::Label::new(RichText::new(hint).size(12.0).color(color)).wrap());
+    }
+    if let Some(u) = &app.update {
+        // Short enough for the sidebar; the whole sentence on hover.
+        let hint = crate::i18n::tf("Kuro {} is available", &[&u.version]);
+        if nav_item(ui, &p, icons::SPARKLE, t("New version"), false, text).on_hover_text(&hint).clicked() {
+            app.act(Act::Go(Tab::Settings));
+            app.act(Act::Push(Route::Settings(SettingsPage::About)));
+        }
     }
 }
 

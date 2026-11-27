@@ -73,6 +73,16 @@ pub fn master(app: &mut App, ui: &mut Ui) {
                     separator(ui, &p);
                     widgets::fact(ui, &p, t("My average score"), &decimal(m, 2));
                 }
+                separator(ui, &p);
+                let on = app.routes.last() == Some(&Route::Stats(k));
+                let more = t("More statistics");
+                let r = widgets::nav_row(ui, &p, icons::CHART_BAR, p.tint, more, "", on);
+                // Named apart from the same row of the other list.
+                widgets::label_a11y(&r, Role::Button, &format!("{more}: {}", format::kind(k)));
+                if r.clicked() {
+                    app.routes.clear();
+                    app.act(Act::Push(Route::Stats(k)));
+                }
             });
         }
         section(ui, &p, t("Preferences"));
@@ -925,7 +935,27 @@ fn about(app: &mut App, ui: &mut Ui) {
     section(ui, &p, "Kuro");
     card(ui, &p, |ui| {
         widgets::fact(ui, &p, t("Version"), env!("CARGO_PKG_VERSION"));
+        separator(ui, &p);
+        toggle_row(ui, &p, icons::CLOUD_ARROW_UP, t("Check for new versions"), &mut app.s.check_updates);
+        if let Some(u) = app.update.clone() {
+            separator(ui, &p);
+            row(ui, &p, icons::SPARKLE, &tf("Kuro {} is available", &[&u.version]), |ui| {
+                if widgets::button(ui, &p, icons::ARROW_SQUARE_OUT, t("Download"), true).clicked() {
+                    app.act(Act::Url(u.url.clone()));
+                }
+                if widgets::button(ui, &p, "", t("Skip this version"), false).clicked() {
+                    app.s.skipped_version.clone_from(&u.version);
+                }
+            });
+        }
     });
+    note(
+        ui,
+        &p,
+        t(
+            "Kuro asks GitHub about once a day whether a newer version is out. Nothing about you or your list is sent.",
+        ),
+    );
     note(ui, &p, t("Kuro is Japanese for black, like the ink of manga."));
     note(
         ui,
@@ -938,7 +968,7 @@ fn about(app: &mut App, ui: &mut Ui) {
     card(ui, &p, |ui| {
         ui.add(
             egui::Label::new(t(
-                "No analytics and no ads. The app talks only to AniList, MyAnimeList, Apple Music search, AnimeThemes and Jikan. Sign-in tokens are kept in the Windows Credential Manager.",
+                "No analytics and no ads. The app talks only to AniList, MyAnimeList, Apple Music search, AnimeThemes, Jikan and GitHub (for new versions), and to Google Calendar and Crunchyroll once you connect them. Sign-in tokens are kept in the Windows Credential Manager.",
             ))
             .wrap(),
         );

@@ -65,6 +65,37 @@ fn plus_button_adds_an_episode_and_queues_nothing_when_signed_out() {
 }
 
 #[test]
+fn changes_made_here_can_be_undone_from_the_toast() {
+    let mut h = harness();
+    click(&mut h, "Add one: Lanterns Over Saltmarsh");
+    assert_eq!(progress(&h, 1), 10);
+    assert!(h.query_by_label_contains("Lanterns Over Saltmarsh · Watching · 10/24").is_some());
+    click(&mut h, "Undo");
+    assert_eq!(progress(&h, 1), 9);
+    assert_eq!(h.state().bg.store().entry(r(1, MediaKind::Anime)).unwrap().unwrap().progress, 9);
+    assert_eq!(h.state().toast.as_ref().map(|t| t.text.as_str()), Some("Change undone"));
+
+    // A removal comes back with everything it had.
+    let before = h.state().entry_at(r(6, MediaKind::Anime)).unwrap();
+    act(&mut h, Act::Delete(r(6, MediaKind::Anime)));
+    assert!(h.state().entry_at(r(6, MediaKind::Anime)).is_none());
+    click(&mut h, "Undo");
+    let back = h.state().entry_at(r(6, MediaKind::Anime)).unwrap();
+    assert_eq!((back.status, back.progress, back.score), (before.status, before.progress, before.score));
+
+    // A title added by the change leaves the list again.
+    act(&mut h, Act::SetStatus(Rc::new(media(90, MediaKind::Anime, "New Shore")), ListStatus::Planning));
+    assert!(h.state().entry_at(r(90, MediaKind::Anime)).is_some());
+    act(&mut h, Act::Undo);
+    assert!(h.state().entry_at(r(90, MediaKind::Anime)).is_none());
+
+    // Nothing changed, nothing to undo.
+    h.state_mut().toast = None;
+    act(&mut h, Act::Step(Rc::new(media(3, MediaKind::Anime, "Iron Orchard")), 1));
+    assert!(h.state().toast.is_none());
+}
+
+#[test]
 fn finishing_a_title_completes_it_and_fires_confetti() {
     let mut h = harness_with(store(), [1240.0, 820.0], |s| s.animations = true);
     let m = Rc::new(h.state().entry_at(r(2, MediaKind::Anime)).unwrap().media.clone());
@@ -92,6 +123,39 @@ fn opening_a_title_shows_its_details_and_back_closes_them() {
     h.key_press(egui::Key::Escape);
     settle(&mut h);
     assert!(h.state().routes.is_empty());
+}
+
+#[test]
+fn custom_lists_are_named_ticked_and_filtered() {
+    let mut h = harness();
+    let m = Rc::new(media(4, MediaKind::Anime, "Midnight Ferry"));
+    act(&mut h, Act::Edit(m.clone()));
+    h.state_mut().editor.as_mut().unwrap().new_list = "  Cozy,  nights ".into();
+    settle(&mut h);
+    click(&mut h, "Add");
+    assert_eq!(h.state().editor.as_ref().unwrap().entry.lists, Some(vec!["Cozy nights".to_owned()]));
+    click(&mut h, "Save");
+    assert_eq!(h.state().entry_at(r(4, MediaKind::Anime)).unwrap().lists(), ["Cozy nights"]);
+
+    // Known names are offered on other titles, and ticking one adds it.
+    act(&mut h, Act::Edit(Rc::new(media(2, MediaKind::Anime, "x"))));
+    click(&mut h, "Cozy nights");
+    click(&mut h, "Save");
+    assert_eq!(h.state().entry_at(r(2, MediaKind::Anime)).unwrap().lists(), ["Cozy nights"]);
+
+    h.state_mut().lists[0].filter =
+        kuro_core::list::Filter { list: Some("cozy NIGHTS".into()), ..Default::default() };
+    settle(&mut h);
+    assert!(h.query_by_label_contains("Midnight Ferry, ").is_some());
+    assert!(h.query_by_label_contains("The Mapmaker and the Slowly Moving Northern Coast, ").is_some());
+    assert!(h.query_by_label_contains("Lanterns Over Saltmarsh, ").is_none());
+
+    // Signed in to AniList, new lists are made on the website.
+    let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX, device: None };
+    h.state().bg.api.accept_login(Service::AniList, &UserProfile::default(), &tokens).unwrap();
+    act(&mut h, Act::Edit(m));
+    assert!(h.query_by_label("Make new custom lists on AniList; they show here after a refresh.").is_some());
+    assert!(h.query_by_label("New name").is_none());
 }
 
 #[test]
@@ -298,6 +362,24 @@ fn statistics_rows_jump_to_the_list() {
 }
 
 #[test]
+fn more_statistics_show_scores_genres_and_years() {
+    for size in [[1240.0, 820.0], [430.0, 800.0]] {
+        let mut h = harness_with(store(), size, |_| {});
+        act(&mut h, Act::Go(Tab::Settings));
+        click(&mut h, "More statistics: Anime");
+        assert_eq!(h.state().routes.last(), Some(&Route::Stats(MediaKind::Anime)));
+        assert!(h.query_by_label_contains("Scores · ").is_some());
+        assert!(h.query_by_label_contains("Drama: ").is_some());
+        assert!(h.query_by_label_contains("Studio Example: ").is_some());
+        act(&mut h, Act::Push(Route::Stats(MediaKind::Manga)));
+        assert!(h.query_by_label_contains("Studio Example").is_none(), "no studios for manga");
+    }
+    let mut h = harness_with(Store::in_memory().unwrap(), [1240.0, 820.0], |_| {});
+    act(&mut h, Act::Push(Route::Stats(MediaKind::Anime)));
+    assert!(h.query_by_label("Nothing to count yet").is_some());
+}
+
+#[test]
 fn links_open_titles_searches_and_tabs() {
     let mut h = harness();
     assert!(h.state_mut().open_link("https://anilist.co/anime/3"));
@@ -349,6 +431,59 @@ fn adult_titles_stay_hidden_by_default() {
     h.state_mut().ranking.feed = Feed { items: vec![Rc::new(m)], started: true, ..Feed::default() };
     settle(&mut h);
     assert!(h.query_by_label_contains("Hidden One").is_none());
+}
+
+#[test]
+fn a_newer_version_is_offered_until_skipped() {
+    use kuro_api::updates::Release;
+    let mut h = harness();
+    let ctx = h.ctx.clone();
+    let release = |v: &str| Release {
+        version: v.into(),
+        url: format!("https://github.com/Simdrom/kuro/releases/tag/v{v}"),
+    };
+    h.state_mut().handle(&ctx, Event::Release(Ok(release("0.0.1"))));
+    assert!(h.state().update.is_none(), "an older version is not offered");
+    h.state_mut().handle(&ctx, Event::Release(Ok(release("99.0.0"))));
+    assert_eq!(h.state().update.as_ref().map(|u| u.version.as_str()), Some("99.0.0"));
+    settle(&mut h);
+    click(&mut h, "New version");
+    assert_eq!(h.state().routes.last(), Some(&Route::Settings(SettingsPage::About)));
+    assert!(h.query_by_label("Download").is_some());
+    click(&mut h, "Skip this version");
+    assert!(h.state().update.is_none());
+    h.state_mut().handle(&ctx, Event::Release(Ok(release("99.0.0"))));
+    assert!(h.state().update.is_none(), "a skipped version stays skipped");
+    h.state_mut().handle(&ctx, Event::Release(Ok(release("99.0.1"))));
+    assert!(h.state().update.is_some(), "the next one is offered again");
+}
+
+#[test]
+fn the_calendar_says_when_an_episode_is_delayed_or_on_a_break() {
+    // Tall enough to show the later episodes too.
+    let mut h = harness_with(store(), [1240.0, 2600.0], |_| {});
+    let ctx = h.ctx.clone();
+    let day = 86_400;
+    let first = h.state().entry_at(r(1, MediaKind::Anime)).unwrap().media.next_airing.unwrap();
+    let mut m = media(1, MediaKind::Anime, "Lanterns Over Saltmarsh");
+    m.release = ReleaseStatus::Releasing;
+    m.next_airing = Some(Airing { episode: 10, at: first.at + 7 * day });
+    h.state_mut().handle(&ctx, Event::Airing(Ok(vec![m.clone()])));
+    let e = h.state().entry_at(r(1, MediaKind::Anime)).unwrap();
+    assert_eq!(e.media.schedule.delayed_from, Some(first.at));
+    act(&mut h, Act::Go(Tab::Calendar));
+    assert!(h.query_by_label("Schedule changes").is_some());
+    assert!(h.query_by_label_contains("Lanterns Over Saltmarsh: Episode 10 moved from").is_some());
+    assert!(h.query_by_label_contains("· Delayed Lanterns Over Saltmarsh").is_some());
+
+    // Episode 10 aired; 11 comes two weeks later.
+    m.next_airing = Some(Airing { episode: 11, at: first.at + 21 * day });
+    h.state_mut().handle(&ctx, Event::Airing(Ok(vec![m])));
+    let s = h.state().entry_at(r(1, MediaKind::Anime)).unwrap().media.schedule;
+    assert_eq!((s.previous, s.delayed_from), (Some(first.at + 7 * day), None));
+    settle(&mut h);
+    assert!(h.query_by_label_contains("On a break: episode 11 airs").is_some());
+    assert!(h.query_by_label_contains("moved from").is_none());
 }
 
 #[test]
@@ -1029,6 +1164,46 @@ fn friends_show_what_they_watch_and_the_titles_in_common() {
     act(&mut h, Act::RemoveFriend(friend));
     assert!(h.state().s.friends.is_empty());
     assert!(h.state().routes.is_empty());
+}
+
+#[test]
+fn friends_compare_tastes_and_recommend_what_they_loved() {
+    use kuro_core::friends::{Friend, FriendProfile};
+    let mut h = harness();
+    let mut mine = (*h.state().entry_at(r(2, MediaKind::Anime)).unwrap()).clone();
+    mine.score = 70;
+    h.state_mut().save(&mine);
+    let friend = Friend { service: Service::Mal, name: "Reader".into() };
+    h.state_mut().s.friends.push(friend.clone());
+    let theirs = |id: u64, title: &str, status, score| {
+        let mut m = media(id, MediaKind::Anime, title);
+        (m.service, m.anilist_id, m.mal_id) = (Service::Mal, None, Some(id));
+        let mut e = ListEntry::new(m);
+        (e.status, e.score) = (status, score);
+        e
+    };
+    // Scored by both: 90/80, 85/85 and 70/60.
+    let entries = vec![
+        theirs(1001, "Lanterns Over Saltmarsh", ListStatus::Completed, 80),
+        theirs(1003, "Iron Orchard", ListStatus::Completed, 85),
+        theirs(1002, "The Mapmaker", ListStatus::Current, 60),
+        theirs(7777, "Quiet Signal", ListStatus::Completed, 95),
+        theirs(8888, "Loud Noise", ListStatus::Completed, 60),
+    ];
+    let profile = FriendProfile { name: "Reader".into(), avatar: None, entries };
+    let ctx = h.ctx.clone();
+    h.state_mut().handle(&ctx, Event::Friend { friend: friend.clone(), result: Ok(profile), fresh: true });
+    act(&mut h, Act::Go(Tab::Friends));
+    assert!(h.query_by_label_contains("93% taste match").is_some());
+    assert!(h.query_by_label("Your friends recommend").is_some());
+    assert!(h.query_by_label_contains("★ 9.5 · Reader Quiet Signal").is_some());
+    assert!(h.query_by_label_contains("Loud Noise").is_none(), "only what they scored well");
+
+    act(&mut h, Act::Push(Route::Friend(friend)));
+    assert!(h.query_by_label("Loved by Reader, not in your list").is_some());
+    assert!(h.query_by_label_contains("★ 9.5 Quiet Signal").is_some());
+    assert!(h.query_by_label("0.7 lower than you on average").is_some());
+    assert!(h.query_by_label("93%").is_some());
 }
 
 #[test]

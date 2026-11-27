@@ -69,6 +69,9 @@ fn date_row(ui: &mut Ui, p: &theme::Palette, label: &str, text: &mut String) -> 
 fn editor(app: &mut App, ctx: &Context) {
     let Some(mut ed) = app.editor.take() else { return };
     let p = app.p;
+    let mut names = kuro_core::list_names(app.library(ed.entry.media.kind).iter().map(|e| &**e));
+    names.extend(ed.entry.lists().iter().filter(|n| !names.contains(n)).cloned().collect::<Vec<_>>());
+    let (lists_label, can_name) = (app.lists_label(), app.can_name_lists());
     let (mut close, mut save, mut delete) = (false, false, false);
     let mut valid = true;
     let modal = Modal::new(Id::unique("editor")).frame(frame(app)).show(ctx, |ui| {
@@ -148,6 +151,10 @@ fn editor(app: &mut App, ctx: &Context) {
                     let label =
                         if kind == MediaKind::Anime { t("Times rewatched") } else { t("Times reread") };
                     counter(ui, &p, label, &mut e.repeat_count, None);
+                });
+                ui.add_space(8.0);
+                widgets::card(ui, &p, |ui| {
+                    lists_card(ui, &p, e, &names, &mut ed.new_list, lists_label, can_name);
                 });
                 ui.add_space(8.0);
                 widgets::card(ui, &p, |ui| {
@@ -290,6 +297,12 @@ fn command(app: &mut App, ctx: &Context) {
                 rows.push((name.into(), icons::GEAR, Act::Push(Route::Settings(page))));
             }
         }
+        for k in MediaKind::ALL {
+            let name = tf("{} statistics", &[&format::kind(k)]);
+            if !q.is_empty() && name.to_lowercase().contains(&q) {
+                rows.push((name, icons::CHART_BAR, Act::Push(Route::Stats(k))));
+            }
+        }
         let kioku = super::kioku::NAME;
         let about = t("kioku.palette");
         if !q.is_empty() && [kioku, about, "crunchyroll"].iter().any(|n| n.to_lowercase().contains(&q)) {
@@ -353,6 +366,55 @@ fn command(app: &mut App, ctx: &Context) {
     }
 }
 
+/// The user's own lists or tags of a title: known names to tick, and a new one.
+fn lists_card(
+    ui: &mut Ui,
+    p: &crate::theme::Palette,
+    e: &mut kuro_core::ListEntry,
+    names: &[String],
+    new: &mut String,
+    label: &str,
+    can_name: bool,
+) {
+    ui.label(label);
+    if !names.is_empty() {
+        ui.horizontal_wrapped(|ui| {
+            for n in names {
+                let on = e.lists().iter().any(|x| x.to_lowercase() == n.to_lowercase());
+                if ui.selectable_label(on, n).clicked() {
+                    let mut next: Vec<String> = e.lists().to_vec();
+                    if on {
+                        next.retain(|x| x.to_lowercase() != n.to_lowercase());
+                    } else {
+                        next.push(n.clone());
+                    }
+                    e.lists = Some(kuro_core::clean_lists(next));
+                }
+            }
+        });
+    }
+    if !can_name {
+        widgets::note(ui, p, t("Make new custom lists on AniList; they show here after a refresh."));
+        return;
+    }
+    ui.horizontal(|ui| {
+        let r = ui.add(
+            egui::TextEdit::singleline(new)
+                .hint_text(t("New name"))
+                .char_limit(kuro_core::MAX_LIST_NAME)
+                .desired_width((ui.available_width() - 90.0).max(80.0)),
+        );
+        r.widget_info(|| egui::WidgetInfo::labeled(egui::Role::TextInput, true, t("New name")));
+        let enter = r.lost_focus() && ui.input(|i| i.key_pressed(Key::Enter));
+        if (widgets::button(ui, p, icons::PLUS, t("Add"), false).clicked() || enter) && !new.trim().is_empty()
+        {
+            let next: Vec<String> = e.lists().iter().cloned().chain([new.trim().to_owned()]).collect();
+            e.lists = Some(kuro_core::clean_lists(next));
+            new.clear();
+        }
+    });
+}
+
 fn toast(app: &mut App, ctx: &Context) {
     let Some(toast) = &app.toast else { return };
     let now = ctx.input(|i| i.time);
@@ -362,7 +424,9 @@ fn toast(app: &mut App, ctx: &Context) {
     }
     ctx.request_repaint_after(std::time::Duration::from_millis(200));
     let p = app.p;
+    let (text, can_undo) = (toast.text.clone(), toast.undo.is_some());
     let fill = if toast.error { p.red } else { theme::blend(p.card, p.text, 0.12) };
+    let mut undo = false;
     let r = egui::Area::new(Id::unique("toast"))
         .anchor(Align2::CENTER_BOTTOM, vec2(0.0, -26.0))
         .order(egui::Order::Tooltip)
@@ -377,10 +441,27 @@ fn toast(app: &mut App, ctx: &Context) {
                 .show(ui, |ui| {
                     ui.set_max_width(460.0_f32.min(ctx.content_rect().width() - 70.0));
                     let fg: Color32 = theme::on(fill);
-                    ui.add(egui::Label::new(RichText::new(&toast.text).color(fg)).wrap());
+                    ui.horizontal(|ui| {
+                        let room = ui.available_width() - if can_undo { 80.0 } else { 0.0 };
+                        ui.scope(|ui| {
+                            ui.set_max_width(room.max(60.0));
+                            ui.add(egui::Label::new(RichText::new(&text).color(fg)).wrap());
+                        });
+                        if can_undo {
+                            let label = RichText::new(t("Undo")).color(fg).strong();
+                            undo = ui.add(egui::Button::new(label).frame(false)).clicked();
+                        }
+                    });
                 });
         });
-    if r.response.clicked() {
+    if undo {
+        app.act(Act::Undo);
+    } else if r.response.clicked() {
         app.toast = None;
+    } else if r.response.contains_pointer()
+        && let Some(t) = app.toast.as_mut()
+    {
+        // Kept up while the pointer is on it, so it can still be undone.
+        t.until = t.until.max(now + 1.5);
     }
 }

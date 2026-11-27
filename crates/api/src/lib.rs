@@ -9,6 +9,7 @@ pub mod mal;
 pub mod music;
 pub mod oauth;
 pub mod secrets;
+pub mod updates;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
@@ -129,6 +130,8 @@ pub struct Api {
     pub crunchyroll: kioku::crunchyroll::Crunchyroll,
     /// The episode calendar in Google Calendar.
     pub google: google::Google,
+    /// Whether a newer Kuro is out.
+    pub updates: updates::Updates,
     secrets: Arc<dyn SecretStore>,
     ids: Arc<RwLock<ClientIds>>,
     users: Arc<Mutex<HashMap<Service, u64>>>,
@@ -156,6 +159,7 @@ impl Api {
             music: music::Music::new(http.clone()),
             crunchyroll: kioku::crunchyroll::Crunchyroll::new(secrets.clone())?,
             google: google::Google::new(http.clone(), secrets.clone()),
+            updates: updates::Updates::new()?,
             http,
             secrets,
             ids: Arc::new(RwLock::new(ids)),
@@ -484,7 +488,7 @@ impl Api {
             if ids.is_empty() {
                 continue;
             }
-            let found = self.anilist.by_ids(s, MediaKind::Anime, &ids).await?;
+            let found = self.anilist.airing(s, &ids).await?;
             out.extend(
                 found.into_iter().filter_map(|m| if s == Service::Mal { into_mal(m) } else { Some(m) }),
             );
@@ -514,6 +518,7 @@ mod tests {
             music: music::Music::with_endpoints(http.clone(), uri, uri, uri, Duration::ZERO),
             crunchyroll: kioku::crunchyroll::Crunchyroll::new(secrets.clone()).unwrap(),
             google: google::Google::new(http.clone(), secrets.clone()),
+            updates: updates::Updates::with_endpoint(http.clone(), uri),
             http,
             secrets,
             ids: Arc::new(RwLock::new(ClientIds { anilist: "1".into(), mal: "cid".into() })),

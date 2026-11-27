@@ -181,7 +181,7 @@ impl Mal {
                 "list_status{status,score,num_volumes_read,num_chapters_read,is_rereading,start_date,finish_date,                 num_times_reread,updated_at"
             }
         };
-        let comments = if notes { ",comments}" } else { "}" };
+        let comments = if notes { ",comments,tags}" } else { "}" };
         let first = format!("{}/users/{user}/{}list", self.endpoint, kind.key());
         let query = [
             ("fields", format!("{FIELDS},{status}{comments}")),
@@ -225,6 +225,10 @@ impl Mal {
             ("start_date", date(e.start)),
             ("finish_date", date(e.finish)),
         ];
+        // Tags are only sent when known: sending none would empty them.
+        if let Some(l) = &e.lists {
+            form.push(("tags", l.join(",")));
+        }
         match kind {
             MediaKind::Anime => form.extend([
                 ("num_watched_episodes", e.progress.to_string()),
@@ -399,6 +403,8 @@ fn entry(kind: MediaKind, v: &Value) -> Option<ListEntry> {
         repeating,
         repeat_count: n("num_times_rewatched", "num_times_reread"),
         notes: text(&s["comments"]),
+        // Only asked for in the user's own list; elsewhere unknown.
+        lists: s["tags"].as_array().map(|t| t.iter().filter_map(|x| x.as_str().map(str::to_owned)).collect()),
         updated_at: s["updated_at"]
             .as_str()
             .and_then(|t| t.parse::<jiff::Timestamp>().ok())
@@ -607,6 +613,28 @@ mod tests {
             ..ListEntry::default()
         };
         client(&s).save("tok", MediaKind::Manga, 2, &e).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn tags_are_read_and_sent_only_when_known() {
+        let s = MockServer::start().await;
+        Mock::given(method("PATCH"))
+            .and(body_string_contains("tags=cozy%2Cbest"))
+            .respond_with(ResponseTemplate::new(200))
+            .expect(1)
+            .mount(&s)
+            .await;
+        Mock::given(method("PATCH")).respond_with(ResponseTemplate::new(200)).mount(&s).await;
+        let tagged = ListEntry { lists: Some(vec!["cozy".into(), "best".into()]), ..ListEntry::default() };
+        client(&s).save("tok", MediaKind::Anime, 2, &tagged).await.unwrap();
+        client(&s).save("tok", MediaKind::Anime, 2, &ListEntry::default()).await.unwrap();
+        let sent = s.received_requests().await.unwrap();
+        assert!(!String::from_utf8_lossy(&sent[1].body).contains("tags"));
+        let v =
+            json!({"node": {"id": 1, "title": "A"}, "list_status": {"status": "watching", "tags": ["cozy"]}});
+        assert_eq!(entry(MediaKind::Anime, &v).unwrap().lists, Some(vec!["cozy".to_owned()]));
+        let v = json!({"node": {"id": 1, "title": "A"}, "list_status": {"status": "watching"}});
+        assert_eq!(entry(MediaKind::Anime, &v).unwrap().lists, None);
     }
 
     #[tokio::test]

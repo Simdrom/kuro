@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use eframe::egui::{self, Align, Align2, CursorIcon, Key, Layout, Rect, RichText, Sense, Ui, pos2, vec2};
 use kuro_api::ApiError;
-use kuro_core::friends::{Friend, FriendProfile, in_common};
+use kuro_core::friends::{Friend, FriendProfile, Pick, Taste, in_common, picks, taste};
 use kuro_core::{ListEntry, ListStatus, MediaKind, Service, stats};
 
 use super::extra::{cell_base, cells};
@@ -59,6 +59,7 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         return;
     }
     super::scroll(ui, "friends", |ui| {
+        recommended(app, ui);
         for f in app.s.friends.clone() {
             ui.add_space(10.0);
             friend_card(app, ui, &f);
@@ -107,7 +108,11 @@ fn friend_card(app: &mut App, ui: &mut Ui, f: &Friend) {
                 let title =
                     egui::Label::new(RichText::new(&name).font(theme::semibold(15.0))).sense(Sense::click());
                 open |= ui.add(title).on_hover_cursor(CursorIcon::PointingHand).clicked();
-                widgets::dim(ui, &p, summary(f, data.as_deref()));
+                let mut line = summary(f, data.as_deref());
+                if let Some(m) = data.as_deref().and_then(|d| match_with(app, d)) {
+                    line = format!("{line} · {}", tf("{}% taste match", &[&m.matching]));
+                }
+                widgets::dim(ui, &p, line);
             });
             rows::trailing(ui, |ui| {
                 if widgets::icon_button(ui, &p, icons::TRASH, &tf("Remove {}", &[&name])).clicked() {
@@ -253,6 +258,8 @@ pub fn profile(app: &mut App, ui: &mut Ui, f: &Friend) {
                 widgets::dim(ui, &p, f.service.name());
             });
         });
+        compare(app, ui, &d);
+        favourites(app, ui, &name, &d);
         stats_cards(app, ui, &d);
         for k in MediaKind::ALL {
             let list: Vec<&ListEntry> =
@@ -270,6 +277,98 @@ pub fn profile(app: &mut App, ui: &mut Ui, f: &Friend) {
             });
         }
         shared(app, ui, &p, &d);
+    });
+}
+
+/// Every title in the user's lists, anime and manga.
+fn my_entries(app: &App) -> Vec<Rc<ListEntry>> {
+    MediaKind::ALL.into_iter().flat_map(|k| app.library(k).to_vec()).collect()
+}
+
+/// How alike the user and a friend score, once enough titles were scored by both.
+fn match_with(app: &App, d: &FriendProfile) -> Option<Taste> {
+    let mine = my_entries(app);
+    taste(&in_common(mine.iter().map(|e| &**e), &d.entries))
+}
+
+/// Taste match, titles in common and who scores higher.
+fn compare(app: &App, ui: &mut Ui, d: &FriendProfile) {
+    let p = app.p;
+    let mine = my_entries(app);
+    let both = in_common(mine.iter().map(|e| &**e), &d.entries);
+    widgets::section(ui, &p, t("Compared with you"));
+    widgets::card(ui, &p, |ui| {
+        widgets::fact(ui, &p, t("Titles in common"), &both.len().to_string());
+        let Some(m) = taste(&both) else {
+            widgets::separator(ui, &p);
+            widgets::note(ui, &p, t("Score a few of the same titles to see how alike your tastes are."));
+            return;
+        };
+        widgets::separator(ui, &p);
+        widgets::fact(ui, &p, t("Taste match"), &format!("{}%", m.matching));
+        widgets::separator(ui, &p);
+        widgets::fact(ui, &p, t("Scored by both"), &m.shared.to_string());
+        widgets::separator(ui, &p);
+        let bias = if m.bias.abs() < 0.25 {
+            t("About the same as you").to_owned()
+        } else if m.bias > 0.0 {
+            tf("{} higher than you on average", &[&decimal(m.bias, 1)])
+        } else {
+            tf("{} lower than you on average", &[&decimal(-m.bias, 1)])
+        };
+        widgets::fact(ui, &p, t("They score"), &bias);
+    });
+}
+
+/// What the friend scored highest that the user does not have.
+fn favourites(app: &mut App, ui: &mut Ui, name: &str, d: &FriendProfile) {
+    let mine = my_entries(app);
+    let found = visible_picks(app, picks(mine.iter().map(|e| &**e), &[(name, &d.entries)]));
+    if found.is_empty() {
+        return;
+    }
+    widgets::section(ui, &app.p.clone(), &tf("Loved by {}, not in your list", &[&name]));
+    shelf(app, ui, &found, |p| format!("★ {}", score(p.score())));
+}
+
+/// What friends loved that the user does not have, from the lists read so far.
+fn recommended(app: &mut App, ui: &mut Ui) {
+    let lists: Vec<(String, Rc<FriendProfile>)> = app
+        .s
+        .friends
+        .iter()
+        .filter_map(|f| app.friends.get(f).and_then(|v| v.data.clone()).map(|d| (d.name.clone(), d)))
+        .collect();
+    let named: Vec<(&str, &[ListEntry])> =
+        lists.iter().map(|(n, d)| (n.as_str(), d.entries.as_slice())).collect();
+    let mine = my_entries(app);
+    let found = visible_picks(app, picks(mine.iter().map(|e| &**e), &named));
+    if found.is_empty() {
+        return;
+    }
+    let p = app.p;
+    widgets::section(ui, &p, t("Your friends recommend"));
+    // One row, as on a friend's card.
+    let fit = ((ui.available_width() + GAP) / (TILE + GAP)).floor().max(1.0) as usize;
+    let shown: Vec<Pick> = found.into_iter().take(fit * 2).collect();
+    shelf(app, ui, &shown, |p| match p.by.as_slice() {
+        [(who, s)] => format!("★ {} · {who}", score(*s)),
+        many => format!("★ {} · {}", score(p.score()), tf("{} friends", &[&many.len()])),
+    });
+}
+
+/// Picks the user may see: adult titles only when they are shown.
+fn visible_picks(app: &App, all: Vec<Pick>) -> Vec<Pick> {
+    all.into_iter().filter(|p| app.s.show_adult || !p.media.adult).collect()
+}
+
+fn shelf(app: &mut App, ui: &mut Ui, picks: &[Pick], caption: impl Fn(&Pick) -> String) {
+    ui.horizontal_wrapped(|ui| {
+        ui.add_space(12.0);
+        ui.spacing_mut().item_spacing = vec2(GAP, GAP);
+        for p in picks.iter().take(18) {
+            rows::shelf_tile(app, ui, &Rc::new(p.media.clone()), &caption(p));
+        }
     });
 }
 
@@ -308,7 +407,7 @@ fn stats_cards(app: &App, ui: &mut Ui, d: &FriendProfile) {
 
 /// Titles on both lists, with both scores.
 fn shared(app: &mut App, ui: &mut Ui, p: &Palette, d: &FriendProfile) {
-    let mine: Vec<Rc<ListEntry>> = MediaKind::ALL.into_iter().flat_map(|k| app.library(k).to_vec()).collect();
+    let mine = my_entries(app);
     let mut both: Vec<(Rc<ListEntry>, ListEntry)> = in_common(mine.iter().map(|e| &**e), &d.entries)
         .into_iter()
         .filter(|(m, _)| app.s.show_adult || !m.media.adult)

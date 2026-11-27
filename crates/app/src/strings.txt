@@ -1,6 +1,8 @@
 A small window above the others with your progress and statistics. It opens again with Kuro if you leave it open.|Una ventana pequeña sobre las demás con tu progreso y tus estadísticas. Se vuelve a abrir con Kuro si la dejas abierta.|Une petite fenêtre au-dessus des autres avec ta progression et tes statistiques. Elle se rouvre avec Kuro si tu la laisses ouverte.|Ein kleines Fenster über den anderen mit deinem Fortschritt und deiner Statistik. Es öffnet sich mit Kuro wieder, wenn du es offen lässt.|Una piccola finestra sopra le altre con i tuoi progressi e le tue statistiche. Si riapre con Kuro se la lasci aperta.|Et lite vindu over de andre med fremdrift og statistikk. Det åpnes igjen med Kuro hvis du lar det stå åpent.|진행 상황과 통계를 다른 창 위에 보여 주는 작은 창입니다. 열어 두면 Kuro와 함께 다시 열립니다.
 A summary of the week on Monday|Un resumen de la semana el lunes|Un résumé de la semaine le lundi|Eine Wochenübersicht am Montag|Un riepilogo della settimana il lunedì|Et sammendrag av uken på mandag|월요일에 한 주 요약
+A week without an episode: episode {} airs {}|Una semana sin episodio: el episodio {} se emite el {}|Une semaine sans épisode : l’épisode {} sort le {}|Eine Woche ohne Folge: Folge {} läuft am {}|Una settimana senza episodio: l’episodio {} va in onda il {}|En uke uten episode: episode {} sendes {}|한 주 휴방: {}화는 {}에 방영됩니다
 About|Acerca de|À propos|Über|Informazioni|Om|정보
+About the same as you|Más o menos como tú|À peu près comme toi|Etwa wie du|Più o meno come te|Omtrent som deg|나와 비슷함
 Accounts|Cuentas|Comptes|Konten|Account|Kontoer|계정
 Adaptation|Adaptación|Adaptation|Adaption|Adattamento|Adaptasjon|각색
 Add a client ID in Settings › Accounts to use this service.|Añade un ID de cliente en Ajustes › Cuentas para usar este servicio.|Ajoute un ID client dans Réglages › Comptes pour utiliser ce service.|Füge unter Einstellungen › Konten eine Client-ID hinzu, um diesen Dienst zu nutzen.|Aggiungi un ID client in Impostazioni › Account per usare questo servizio.|Legg til en klient-ID i Innstillinger › Kontoer for å bruke tjenesten.|이 서비스를 사용하려면 설정 › 계정에서 클라이언트 ID를 추가하세요.
@@ -36,6 +38,7 @@ Background|Contexto|Contexte|Hintergrund|Contesto|Bakgrunn|배경
 Backup|Copia de seguridad|Sauvegarde|Sicherung|Backup|Sikkerhetskopi|백업
 Backup saved|Copia guardada|Sauvegarde enregistrée|Sicherung gespeichert|Backup salvato|Sikkerhetskopi lagret|백업을 저장했습니다
 Badge|Etiqueta|Badge|Plakette|Etichetta|Merke|배지
+Best scored genre|Género con mejor nota|Genre le mieux noté|Bestbewertetes Genre|Genere con il voto più alto|Sjangeren med best karakter|가장 높게 평가한 장르
 Binge session|Maratón|Marathon|Binge-Session|Maratona|Maraton|정주행
 Black|Negro|Noir|Schwarz|Nero|Svart|검정
 Blue|Azul|Bleu|Blau|Blu|Blå|파랑
@@ -49,10 +52,12 @@ Calendar name|Nombre del calendario|Nom de l’agenda|Name des Kalenders|Nome de
 Cancel|Cancelar|Annuler|Abbrechen|Annulla|Avbryt|취소
 Cancelled|Cancelado|Annulé|Abgebrochen|Annullato|Avlyst|취소됨
 Candy|Caramelo|Bonbon|Bonbon|Caramella|Sukkertøy|캔디
+Change undone|Cambio deshecho|Modification annulée|Änderung rückgängig gemacht|Modifica annullata|Endringen er angret|변경을 취소했습니다
 Changes are saved to your primary service.|Los cambios se guardan en tu servicio principal.|Les changements sont enregistrés dans ton service principal.|Änderungen werden in deinem Hauptdienst gespeichert.|Le modifiche vengono salvate nel servizio principale.|Endringer lagres i hovedtjenesten din.|변경 사항을 기본 서비스에 저장합니다.
 Changes waiting to sync|Cambios pendientes de sincronizar|Changements à synchroniser|Noch nicht synchronisierte Änderungen|Modifiche da sincronizzare|Endringer som venter på synkronisering|동기화 대기 중인 변경 사항
 Chapters|Capítulos|Chapitres|Kapitel|Capitoli|Kapitler|챕터
 Characters & voice actors|Personajes y actores de voz|Personnages et doubleurs|Figuren & Synchronsprecher|Personaggi e doppiatori|Figurer og stemmeskuespillere|캐릭터 및 성우
+Check for new versions|Buscar versiones nuevas|Rechercher les nouvelles versions|Nach neuen Versionen suchen|Cerca nuove versioni|Se etter nye versjoner|새 버전 확인
 Choose a setting|Elige un ajuste|Choisis un réglage|Wähle eine Einstellung|Scegli un’impostazione|Velg en innstilling|설정을 선택하세요
 Choose a title|Elige un título|Choisis un titre|Wähle einen Titel|Scegli un titolo|Velg en tittel|작품을 선택하세요
 Choose what the widget shows in Settings › Widget & automation.|Elige qué muestra el widget en Ajustes › Widget y automatización.|Choisis ce que le widget affiche dans Réglages › Widget et automatisation.|Wähle unter Einstellungen › Widget & Automatisierung, was das Widget zeigt.|Scegli cosa mostra il widget in Impostazioni › Widget e automazione.|Velg hva widgeten viser i Innstillinger › Widget og automatisering.|설정 › 위젯 및 자동화에서 위젯에 표시할 항목을 고르세요.
@@ -62,9 +67,11 @@ Clear filters|Quitar filtros|Effacer les filtres|Filter löschen|Cancella filtri
 Client ID|ID de cliente|ID client|Client-ID|ID client|Klient-ID|클라이언트 ID
 Close|Cerrar|Fermer|Schließen|Chiudi|Lukk|닫기
 Community|Comunidad|Communauté|Community|Community|Fellesskap|커뮤니티
+Compared with you|Comparado contigo|Comparé à toi|Im Vergleich mit dir|Rispetto a te|Sammenlignet med deg|나와 비교
 Compilation|Recopilación|Compilation|Zusammenschnitt|Compilation|Samling|총집편
 Complete series overview|Vista completa de la serie|Vue complète de la série|Komplette Serienübersicht|Panoramica completa della serie|Full serieoversikt|시리즈 전체 보기
 Completed|Completado|Terminé|Abgeschlossen|Completato|Fullført|완료
+Completed by year|Completados por año|Terminés par année|Abgeschlossen pro Jahr|Completati per anno|Fullført per år|연도별 완료
 Confetti when I complete a title|Confeti al completar un título|Confettis quand je termine un titre|Konfetti beim Abschließen eines Titels|Coriandoli quando completo un titolo|Konfetti når jeg fullfører en tittel|작품을 완료하면 색종이 효과
 Contains|Contiene|Contient|Enthält|Contiene|Inneholder|포함
 Continue only if this is your account.|Continúa solo si esta es tu cuenta.|Continue seulement si c’est ton compte.|Fahre nur fort, wenn das dein Konto ist.|Continua solo se questo è il tuo account.|Fortsett bare hvis dette er kontoen din.|본인 계정인 경우에만 계속하세요.
@@ -80,39 +87,57 @@ Create|Crear|Créer|Erstellen|Crea|Opprett|만들기
 Create a client on AniList with this redirect URL, then paste its ID here. It is free.|Crea un cliente en AniList con esta URL de redirección y pega aquí su ID. Es gratis.|Crée un client sur AniList avec cette URL de redirection, puis colle son ID ici. C’est gratuit.|Erstelle auf AniList einen Client mit dieser Weiterleitungs-URL und füge die ID hier ein. Das ist kostenlos.|Crea un client su AniList con questo URL di reindirizzamento e incolla qui il suo ID. È gratuito.|Opprett en klient på AniList med denne omdirigerings-URL-en, og lim inn ID-en her. Det er gratis.|AniList에서 이 리디렉션 URL로 클라이언트를 만든 뒤 ID를 여기에 붙여 넣으세요. 무료입니다.
 Create a client on MyAnimeList (app type “other”) with this redirect URL, then paste its ID here. It is free.|Crea un cliente en MyAnimeList (tipo de app «other») con esta URL de redirección y pega aquí su ID. Es gratis.|Crée un client sur MyAnimeList (type « other ») avec cette URL de redirection, puis colle son ID ici. C’est gratuit.|Erstelle auf MyAnimeList einen Client (App-Typ „other“) mit dieser Weiterleitungs-URL und füge die ID hier ein. Das ist kostenlos.|Crea un client su MyAnimeList (tipo “other”) con questo URL di reindirizzamento e incolla qui il suo ID. È gratuito.|Opprett en klient på MyAnimeList (apptype «other») med denne omdirigerings-URL-en, og lim inn ID-en her. Det er gratis.|MyAnimeList에서 이 리디렉션 URL로 클라이언트(앱 유형 “other”)를 만든 뒤 ID를 여기에 붙여 넣으세요. 무료입니다.
 Credits|Créditos|Crédits|Danksagung|Riconoscimenti|Bidrag|크레딧
+Custom lists|Listas personalizadas|Listes personnalisées|Eigene Listen|Liste personalizzate|Egne lister|사용자 목록
 Dark|Oscuro|Sombre|Dunkel|Scuro|Mørk|다크
 Data & caches|Datos y cachés|Données et caches|Daten & Zwischenspeicher|Dati e cache|Data og hurtiglager|데이터 및 캐시
 Data source|Fuente de datos|Source de données|Datenquelle|Origine dei dati|Datakilde|데이터 출처
 Date started|Fecha de inicio|Date de début|Startdatum|Data di inizio|Startdato|시작한 날짜
 Del|Supr|Suppr|Entf|Canc|Del|Del
 Delay after airing|Retraso tras la emisión|Délai après la diffusion|Verzögerung nach Ausstrahlung|Ritardo dopo la trasmissione|Forsinkelse etter sending|방영 후 지연
+Delayed|Retrasado|Reporté|Verschoben|Rinviato|Utsatt|연기됨
 Descending|Descendente|Décroissant|Absteigend|Decrescente|Synkende|내림차순
 Desktop widget|Widget de escritorio|Widget de bureau|Desktop-Widget|Widget desktop|Skrivebordswidget|데스크톱 위젯
 Display|Visualización|Affichage|Anzeige|Visualizzazione|Visning|표시
 Double-click|Doble clic|Double-clic|Doppelklick|Doppio clic|Dobbeltklikk|더블 클릭
+Download|Descargar|Télécharger|Herunterladen|Scarica|Last ned|다운로드
 Each copy is named by its date. Older copies beyond the limit are deleted.|Cada copia lleva su fecha en el nombre. Las más antiguas por encima del límite se borran.|Chaque copie porte sa date dans son nom. Les plus anciennes au-delà de la limite sont supprimées.|Jede Kopie trägt ihr Datum im Namen. Ältere Kopien über dem Limit werden gelöscht.|Ogni copia ha la sua data nel nome. Le più vecchie oltre il limite vengono eliminate.|Hver kopi har datoen i navnet. Eldre kopier over grensen slettes.|각 사본의 이름에는 날짜가 들어갑니다. 한도를 넘는 오래된 사본은 삭제됩니다.
 Episode|Episodio|Épisode|Folge|Episodio|Episode|에피소드
 Episode calendar|Calendario de episodios|Calendrier des épisodes|Episodenkalender|Calendario degli episodi|Episodekalender|에피소드 캘린더
+Episode {} is delayed to {}|El episodio {} se retrasa al {}|L’épisode {} est reporté au {}|Folge {} ist verschoben auf {}|L’episodio {} è rinviato al {}|Episode {} er utsatt til {}|{}화가 {}(으)로 연기되었습니다
+Episode {} moved from {} to {}|El episodio {} pasa del {} al {}|L’épisode {} passe du {} au {}|Folge {} verschoben von {} auf {}|L’episodio {} passa da {} a {}|Episode {} er flyttet fra {} til {}|{}화가 {}에서 {}(으)로 변경되었습니다
 Episode {} · {}|Episodio {} · {}|Épisode {} · {}|Folge {} · {}|Episodio {} · {}|Episode {} · {}|{}화 · {}
 Episodes go to|Los episodios van a|Les épisodes vont dans|Folgen landen in|Gli episodi vanno in|Episodene havner i|에피소드를 넣을 곳
 Every day|Cada día|Chaque jour|Jeden Tag|Ogni giorno|Hver dag|매일
 Every hour|Cada hora|Toutes les heures|Jede Stunde|Ogni ora|Hver time|매시간
 Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
 Every {} hours|Cada {} horas|Toutes les {} heures|Alle {} Stunden|Ogni {} ore|Hver {}. time|{}시간마다
+Finished rather than dropped|Terminados en vez de abandonados|Terminés plutôt qu’abandonnés|Beendet statt abgebrochen|Finiti invece che abbandonati|Fullført i stedet for droppet|중단하지 않고 끝낸 비율
 Folder|Carpeta|Dossier|Ordner|Cartella|Mappe|폴더
 Google Calendar|Google Calendar|Google Agenda|Google Kalender|Google Calendar|Google Kalender|Google 캘린더
 Google Calendar could not be updated: {}|No se ha podido actualizar Google Calendar: {}|Google Agenda n’a pas pu être mis à jour : {}|Google Kalender konnte nicht aktualisiert werden: {}|Impossibile aggiornare Google Calendar: {}|Google Kalender kunne ikke oppdateres: {}|Google 캘린더를 업데이트하지 못했습니다: {}
 Google did not give Kuro access to the calendar. Sign out, sign in again and tick the calendar box.|Google no ha dado a Kuro acceso al calendario. Cierra sesión, vuelve a iniciarla y marca la casilla del calendario.|Google n’a pas donné à Kuro l’accès à l’agenda. Déconnecte-toi, reconnecte-toi et coche la case de l’agenda.|Google hat Kuro keinen Zugriff auf den Kalender gegeben. Melde dich ab, wieder an und setze das Häkchen beim Kalender.|Google non ha dato a Kuro l’accesso al calendario. Esci, accedi di nuovo e spunta la casella del calendario.|Google ga ikke Kuro tilgang til kalenderen. Logg av, logg på igjen og kryss av for kalenderen.|Google에서 Kuro에 캘린더 접근 권한을 주지 않았습니다. 로그아웃한 뒤 다시 로그인하고 캘린더 항목을 선택하세요.
 In a menu, the key shown beside an entry runs it|En un menú, la tecla que aparece junto a una opción la ejecuta|Dans un menu, la touche affichée à côté d’une entrée l’exécute|In einem Menü führt die Taste neben einem Eintrag ihn aus|In un menu, il tasto accanto a una voce la esegue|I en meny kjører tasten ved siden av et valg det|메뉴에서 항목 옆에 표시된 키를 누르면 실행됩니다
+Kuro asks GitHub about once a day whether a newer version is out. Nothing about you or your list is sent.|Kuro pregunta a GitHub una vez al día si hay una versión nueva. No se envía nada sobre ti ni sobre tu lista.|Kuro demande à GitHub environ une fois par jour si une nouvelle version est sortie. Rien sur toi ni sur ta liste n’est envoyé.|Kuro fragt GitHub etwa einmal am Tag, ob eine neue Version erschienen ist. Nichts über dich oder deine Liste wird gesendet.|Kuro chiede a GitHub circa una volta al giorno se è uscita una nuova versione. Non viene inviato nulla su di te o sulla tua lista.|Kuro spør GitHub omtrent én gang om dagen om en ny versjon er ute. Ingenting om deg eller listen din sendes.|Kuro는 하루에 한 번 정도 GitHub에 새 버전이 나왔는지 확인합니다. 나나 내 목록에 관한 정보는 보내지 않습니다.
+Kuro {} is available|Kuro {} está disponible|Kuro {} est disponible|Kuro {} ist verfügbar|Kuro {} è disponibile|Kuro {} er tilgjengelig|Kuro {}을(를) 사용할 수 있습니다
 Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
 Links that change your list are off. Turn them on in Settings › Widget & automation.|Los enlaces que cambian tu lista están desactivados. Actívalos en Ajustes › Widget y automatización.|Les liens qui modifient ta liste sont désactivés. Active-les dans Réglages › Widget et automatisation.|Links, die deine Liste ändern, sind aus. Schalte sie unter Einstellungen › Widget & Automatisierung ein.|I link che modificano la tua lista sono disattivati. Attivali in Impostazioni › Widget e automazione.|Lenker som endrer listen din er av. Slå dem på i Innstillinger › Widget og automatisering.|목록을 바꾸는 링크가 꺼져 있습니다. 설정 › 위젯 및 자동화에서 켜세요.
+Loved by {}, not in your list|Le encantó a {}, no está en tu lista|Adoré par {}, absent de ta liste|{} liebt es, nicht in deiner Liste|Amato da {}, non nella tua lista|Elsket av {}, ikke i listen din|{} 님이 좋아했지만 내 목록에 없는 작품
+Make new custom lists on AniList; they show here after a refresh.|Crea listas personalizadas nuevas en AniList; aparecen aquí tras actualizar.|Crée de nouvelles listes personnalisées sur AniList ; elles apparaissent ici après une actualisation.|Neue eigene Listen legst du auf AniList an; sie erscheinen hier nach dem Aktualisieren.|Crea nuove liste personalizzate su AniList; compaiono qui dopo un aggiornamento.|Lag nye egne lister på AniList; de vises her etter en oppdatering.|새 사용자 목록은 AniList에서 만드세요. 새로 고침하면 여기에 표시됩니다.
+Median score|Nota mediana|Note médiane|Median-Wertung|Voto mediano|Mediankarakter|중앙값 점수
+More statistics|Más estadísticas|Plus de statistiques|Mehr Statistik|Altre statistiche|Mer statistikk|통계 더 보기
 Move through a menu and choose|Moverse por un menú y elegir|Parcourir un menu et choisir|Durch ein Menü gehen und auswählen|Muoversi in un menu e scegliere|Gå gjennom en meny og velg|메뉴에서 이동하고 선택
 New calendar…|Calendario nuevo…|Nouvel agenda…|Neuer Kalender…|Nuovo calendario…|Ny kalender…|새 캘린더…
+New name|Nombre nuevo|Nouveau nom|Neuer Name|Nuovo nome|Nytt navn|새 이름
+New version|Versión nueva|Nouvelle version|Neue Version|Nuova versione|Ny versjon|새 버전
 Next episodes|Próximos episodios|Prochains épisodes|Nächste Folgen|Prossimi episodi|Neste episoder|다음 에피소드
+No analytics and no ads. The app talks only to AniList, MyAnimeList, Apple Music search, AnimeThemes, Jikan and GitHub (for new versions), and to Google Calendar and Crunchyroll once you connect them. Sign-in tokens are kept in the Windows Credential Manager.|Sin analíticas ni anuncios. La app solo habla con AniList, MyAnimeList, la búsqueda de Apple Music, AnimeThemes, Jikan y GitHub (para las versiones nuevas), y con Google Calendar y Crunchyroll cuando los conectas. Los tokens de sesión se guardan en el Administrador de credenciales de Windows.|Ni statistiques ni publicités. L’app ne parle qu’à AniList, MyAnimeList, la recherche Apple Music, AnimeThemes, Jikan et GitHub (pour les nouvelles versions), et à Google Agenda et Crunchyroll une fois que tu les connectes. Les jetons de connexion sont gardés dans le Gestionnaire d’identification de Windows.|Keine Analysen und keine Werbung. Die App spricht nur mit AniList, MyAnimeList, der Apple-Music-Suche, AnimeThemes, Jikan und GitHub (für neue Versionen) sowie mit Google Kalender und Crunchyroll, sobald du sie verbindest. Anmelde-Tokens liegen in der Windows-Anmeldeinformationsverwaltung.|Niente analisi e niente pubblicità. L’app comunica solo con AniList, MyAnimeList, la ricerca di Apple Music, AnimeThemes, Jikan e GitHub (per le nuove versioni), e con Google Calendar e Crunchyroll quando li colleghi. I token di accesso sono conservati in Gestione credenziali di Windows.|Ingen analyse og ingen reklame. Appen snakker bare med AniList, MyAnimeList, Apple Music-søk, AnimeThemes, Jikan og GitHub (for nye versjoner), og med Google Kalender og Crunchyroll når du kobler dem til. Påloggingstokener lagres i Windows Legitimasjonsbehandling.|분석과 광고가 없습니다. 앱은 AniList, MyAnimeList, Apple Music 검색, AnimeThemes, Jikan, GitHub(새 버전 확인)와만 통신하며, Google 캘린더와 Crunchyroll은 연결한 경우에만 통신합니다. 로그인 토큰은 Windows 자격 증명 관리자에 보관됩니다.
 No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewählt|Nessuna cartella scelta|Ingen mappe valgt|선택한 폴더 없음
 No progress for {} days|Sin avances desde hace {} días|Aucun progrès depuis {} jours|Seit {} Tagen kein Fortschritt|Nessun progresso da {} giorni|Ingen fremdrift på {} dager|{}일 동안 진행 없음
 Not available in this build|No disponible en esta versión|Indisponible dans cette version|In dieser Version nicht verfügbar|Non disponibile in questa versione|Ikke tilgjengelig i denne versjonen|이 버전에서는 사용할 수 없습니다
+Nothing to count yet|Aún no hay nada que contar|Rien à compter pour l’instant|Noch nichts zu zählen|Ancora niente da contare|Ingenting å telle ennå|아직 집계할 작품이 없습니다
+On a break: episode {} airs {}|En pausa: el episodio {} se emite el {}|En pause : l’épisode {} sort le {}|Pause: Folge {} läuft am {}|In pausa: l’episodio {} va in onda il {}|Pause: episode {} sendes {}|휴방 중: {}화는 {}에 방영됩니다
 Open the menu of the selected title|Abrir el menú del título seleccionado|Ouvrir le menu du titre sélectionné|Menü des ausgewählten Titels öffnen|Apri il menu del titolo selezionato|Åpne menyen for den valgte tittelen|선택한 작품의 메뉴 열기
+Overview|Resumen|Vue d’ensemble|Überblick|Panoramica|Oversikt|개요
 Reminders|Recordatorios|Rappels|Erinnerungen|Promemoria|Påminnelser|리마인더
 Reminders are notifications: turn notifications on to get them.|Los recordatorios son notificaciones: activa las notificaciones para recibirlos.|Les rappels sont des notifications : active les notifications pour les recevoir.|Erinnerungen sind Benachrichtigungen: Schalte Benachrichtigungen ein, um sie zu erhalten.|I promemoria sono notifiche: attiva le notifiche per riceverli.|Påminnelser er varsler: slå på varsler for å få dem.|리마인더는 알림입니다. 받으려면 알림을 켜세요.
 Right-click always opens the full menu. Dragging a row sideways also works on touch screens.|El clic derecho siempre abre el menú completo. Arrastrar una fila de lado también funciona en pantallas táctiles.|Le clic droit ouvre toujours le menu complet. Faire glisser une ligne sur le côté marche aussi sur les écrans tactiles.|Rechtsklick öffnet immer das ganze Menü. Eine Zeile zur Seite ziehen geht auch auf Touchscreens.|Il clic destro apre sempre il menu completo. Trascinare una riga di lato funziona anche sugli schermi touch.|Høyreklikk åpner alltid hele menyen. Å dra en rad sidelengs fungerer også på berøringsskjermer.|오른쪽 클릭하면 항상 전체 메뉴가 열립니다. 행을 옆으로 드래그하는 것은 터치스크린에서도 됩니다.
@@ -175,6 +200,11 @@ Light|Claro|Clair|Hell|Chiaro|Lys|라이트
 Light novel|Novela ligera|Light novel|Light Novel|Light novel|Light novel|라이트 노벨
 Link copied|Enlace copiado|Lien copié|Link kopiert|Link copiato|Lenke kopiert|링크를 복사했습니다
 Links|Enlaces|Liens|Links|Link|Lenker|링크
+Schedule changes|Cambios en la emisión|Changements de diffusion|Geänderte Ausstrahlung|Cambi di programmazione|Endringer i sendeplanen|방영 일정 변경
+Score a few of the same titles to see how alike your tastes are.|Puntúa algunos de los mismos títulos para ver cuánto se parecen vuestros gustos.|Note quelques titres en commun pour voir à quel point vos goûts se ressemblent.|Bewerte ein paar gleiche Titel, um zu sehen, wie ähnlich euer Geschmack ist.|Dai un voto ad alcuni degli stessi titoli per vedere quanto si somigliano i vostri gusti.|Gi karakter til noen av de samme titlene for å se hvor like smakene deres er.|같은 작품 몇 개에 점수를 매기면 취향이 얼마나 비슷한지 볼 수 있습니다.
+Scored by both|Puntuados por ambos|Notés par vous deux|Von beiden bewertet|Votati da entrambi|Karaktersatt av begge|둘 다 점수를 매긴 작품
+Settings › About has the download.|La descarga está en Ajustes › Acerca de.|Le téléchargement se trouve dans Réglages › À propos.|Der Download ist unter Einstellungen › Über.|Il download è in Impostazioni › Informazioni.|Nedlastingen finner du i Innstillinger › Om.|다운로드는 설정 › 정보에 있습니다.
+Skip this version|Omitir esta versión|Ignorer cette version|Diese Version überspringen|Salta questa versione|Hopp over denne versjonen|이 버전 건너뛰기
 Statistics|Estadísticas|Statistiques|Statistik|Statistiche|Statistikk|통계
 Step, binge and refresh links work without bringing the window forward, so a shortcut, a hotkey tool or a Stream Deck can use them. Step links need the switch above; a title's menu copies one.|Los enlaces step, binge y refresh funcionan sin traer la ventana al frente, así que puedes usarlos desde un acceso directo, una herramienta de atajos o un Stream Deck. Los enlaces step necesitan el interruptor de arriba; el menú de un título copia uno.|Les liens step, binge et refresh marchent sans mettre la fenêtre au premier plan : un raccourci, un outil de touches ou un Stream Deck peut s’en servir. Les liens step demandent l’interrupteur ci-dessus ; le menu d’un titre en copie un.|Step-, Binge- und Refresh-Links funktionieren, ohne das Fenster nach vorne zu holen, also kann eine Verknüpfung, ein Hotkey-Tool oder ein Stream Deck sie nutzen. Step-Links brauchen den Schalter oben; das Menü eines Titels kopiert einen.|I link step, binge e refresh funzionano senza portare la finestra in primo piano, quindi può usarli un collegamento, uno strumento di scorciatoie o uno Stream Deck. I link step richiedono l’interruttore qui sopra; il menu di un titolo ne copia uno.|Step-, binge- og refresh-lenker virker uten å hente vinduet frem, så en snarvei, et hurtigtastverktøy eller en Stream Deck kan bruke dem. Step-lenker trenger bryteren over; menyen til en tittel kopierer en.|step, binge, refresh 링크는 창을 앞으로 가져오지 않고 작동하므로 바로 가기, 단축키 도구, Stream Deck에서 쓸 수 있습니다. step 링크는 위의 스위치가 필요하며, 작품 메뉴에서 복사할 수 있습니다.
 Stop|Detener|Arrêter|Beenden|Interrompi|Stopp|중지
@@ -210,7 +240,6 @@ Next|Siguiente|Suivant|Weiter|Avanti|Neste|다음
 Next episode|Próximo episodio|Prochain épisode|Nächste Folge|Prossimo episodio|Neste episode|다음 에피소드
 Next season|Temporada siguiente|Saison suivante|Nächste Saison|Stagione successiva|Neste sesong|다음 시즌
 Night|Noche|Nuit|Nacht|Notte|Natt|밤
-No analytics and no ads. The app talks only to AniList, MyAnimeList, Apple Music search, AnimeThemes and Jikan. Sign-in tokens are kept in the Windows Credential Manager.|Sin analíticas ni anuncios. La app solo se comunica con AniList, MyAnimeList, la búsqueda de Apple Music, AnimeThemes y Jikan. Los tokens de acceso se guardan en el Administrador de credenciales de Windows.|Ni statistiques ni publicités. L’app ne communique qu’avec AniList, MyAnimeList, la recherche Apple Music, AnimeThemes et Jikan. Les jetons de connexion sont gardés dans le Gestionnaire d’identification Windows.|Keine Analyse und keine Werbung. Die App spricht nur mit AniList, MyAnimeList, der Apple-Music-Suche, AnimeThemes und Jikan. Anmelde-Token liegen in der Windows-Anmeldeinformationsverwaltung.|Nessuna analisi e nessuna pubblicità. L’app comunica solo con AniList, MyAnimeList, la ricerca di Apple Music, AnimeThemes e Jikan. I token di accesso sono conservati in Gestione credenziali di Windows.|Ingen analyse og ingen annonser. Appen snakker bare med AniList, MyAnimeList, Apple Music-søk, AnimeThemes og Jikan. Påloggingstokener lagres i Windows Legitimasjonsbehandling.|분석도 광고도 없습니다. 앱은 AniList, MyAnimeList, Apple Music 검색, AnimeThemes, Jikan과만 통신합니다. 로그인 토큰은 Windows 자격 증명 관리자에 보관합니다.
 No connection. Check your network and try again.|Sin conexión. Revisa tu red e inténtalo de nuevo.|Pas de connexion. Vérifie ton réseau et réessaie.|Keine Verbindung. Prüfe dein Netzwerk und versuche es erneut.|Nessuna connessione. Controlla la rete e riprova.|Ingen tilkobling. Sjekk nettverket og prøv igjen.|연결되지 않았습니다. 네트워크를 확인하고 다시 시도하세요.
 None|Ninguno|Aucun|Keine|Nessuno|Ingen|없음
 Not found|No encontrado|Introuvable|Nicht gefunden|Non trovato|Ikke funnet|찾을 수 없음
@@ -361,6 +390,7 @@ Synonyms|Sinónimos|Synonymes|Synonyme|Sinonimi|Synonymer|동의어
 Synopsis|Sinopsis|Synopsis|Handlung|Trama|Sammendrag|줄거리
 System|Sistema|Système|System|Sistema|System|시스템
 Tags|Etiquetas|Tags|Tags|Tag|Stikkord|태그
+Taste match|Afinidad|Affinité|Geschmacksübereinstimmung|Affinità|Smaksmatch|취향 일치
 Teal|Turquesa|Turquoise|Türkis|Turchese|Blågrønn|청록
 The automatic backup failed: {}|La copia automática ha fallado: {}|La sauvegarde automatique a échoué : {}|Die automatische Sicherung ist fehlgeschlagen: {}|Il backup automatico non è riuscito: {}|Den automatiske sikkerhetskopien mislyktes: {}|자동 백업에 실패했습니다: {}
 The calendar could not be saved: {}|No se ha podido guardar el calendario: {}|Le calendrier n’a pas pu être enregistré : {}|Der Kalender konnte nicht gespeichert werden: {}|Impossibile salvare il calendario: {}|Kalenderen kunne ikke lagres: {}|캘린더를 저장하지 못했습니다: {}
@@ -371,17 +401,21 @@ The next episode of everything you watch or plan to watch is written to this .ic
 The service is not available right now ({}).|El servicio no está disponible ahora ({}).|Le service est indisponible pour le moment ({}).|Der Dienst ist gerade nicht verfügbar ({}).|Il servizio non è disponibile al momento ({}).|Tjenesten er ikke tilgjengelig akkurat nå ({}).|지금은 서비스를 사용할 수 없습니다({}).
 The {} list will be removed from this computer. Your online list is kept.|La lista de {} se borrará de este equipo. Tu lista en línea se conserva.|La liste {} sera supprimée de cet ordinateur. Ta liste en ligne est conservée.|Die {}-Liste wird von diesem Computer entfernt. Deine Online-Liste bleibt erhalten.|La lista di {} verrà rimossa da questo computer. La lista online resta.|{}-listen fjernes fra denne datamaskinen. Nettlisten din beholdes.|{} 목록이 이 컴퓨터에서 제거됩니다. 온라인 목록은 유지됩니다.
 Theme|Tema|Thème|Design|Tema|Tema|테마
+They score|Puntúa|Ses notes|Bewertet|Vota|Gir karakter|점수 경향
 This backup could not be read: {}|No se pudo leer esta copia: {}|Cette sauvegarde est illisible : {}|Diese Sicherung konnte nicht gelesen werden: {}|Impossibile leggere questo backup: {}|Sikkerhetskopien kunne ikke leses: {}|이 백업을 읽을 수 없습니다: {}
 This title is not in your list.|Este título no está en tu lista.|Ce titre n’est pas dans ta liste.|Dieser Titel ist nicht in deiner Liste.|Questo titolo non è nella tua lista.|Denne tittelen er ikke i listen din.|이 작품은 목록에 없습니다.
 Time|Hora|Heure|Zeit|Ora|Tid|시간
+Time watched|Tiempo visto|Temps de visionnage|Gesehene Zeit|Tempo di visione|Tid sett|시청 시간
 Times reread|Veces releído|Nombre de relectures|Erneut gelesen|Volte riletto|Ganger lest på nytt|다시 읽은 횟수
 Times rewatched|Veces vuelto a ver|Nombre de revisionnages|Erneut gesehen|Volte rivisto|Ganger sett på nytt|다시 본 횟수
 Tint|Color de acento|Couleur d’accent|Akzentfarbe|Colore d’accento|Aksentfarge|강조 색상
 Title|Título|Titre|Titel|Titolo|Tittel|제목
 Title language|Idioma de los títulos|Langue des titres|Sprache der Titel|Lingua dei titoli|Språk på titler|제목 언어
 Title, or an AniList or MyAnimeList link|Título, o un enlace de AniList o MyAnimeList|Titre, ou lien AniList ou MyAnimeList|Titel oder AniList-/MyAnimeList-Link|Titolo, o link AniList o MyAnimeList|Tittel, eller lenke til AniList eller MyAnimeList|제목 또는 AniList, MyAnimeList 링크
+Titles|Títulos|Titres|Titel|Titoli|Titler|작품
 Titles I stopped watching or reading|Títulos que dejé de ver o leer|Titres que j’ai arrêté de regarder ou lire|Titel, die ich nicht weiterschaue oder -lese|Titoli che ho smesso di guardare o leggere|Titler jeg sluttet å se eller lese|보거나 읽다가 멈춘 작품
 Titles and rankings|Títulos y rankings|Titres et classements|Titel und Ranglisten|Titoli e classifiche|Titler og rangeringer|작품 및 순위
+Titles in common|Títulos en común|Titres en commun|Gemeinsame Titel|Titoli in comune|Felles titler|공통 작품
 Titles in the backup replace the ones in your list.|Los títulos de la copia sustituyen a los de tu lista.|Les titres de la sauvegarde remplacent ceux de ta liste.|Titel aus der Sicherung ersetzen die in deiner Liste.|I titoli del backup sostituiscono quelli della tua lista.|Titler i sikkerhetskopien erstatter dem i listen din.|백업의 작품이 목록의 작품을 대체합니다.
 Titles per group|Títulos por grupo|Titres par groupe|Titel pro Gruppe|Titoli per gruppo|Titler per gruppe|그룹당 작품 수
 Today|Hoy|Aujourd’hui|Heute|Oggi|I dag|오늘
@@ -391,6 +425,7 @@ Track your anime and manga|Sigue tu anime y manga|Suis tes animes et mangas|Beha
 Trailer|Tráiler|Bande-annonce|Trailer|Trailer|Trailer|예고편
 Trending|Tendencias|Tendances|Im Trend|Di tendenza|Populært nå|급상승
 Turn on notifications|Activar notificaciones|Activer les notifications|Benachrichtigungen einschalten|Attiva notifiche|Slå på varsler|알림 켜기
+Undo|Deshacer|Annuler|Rückgängig|Annulla|Angre|실행 취소
 Unknown|Desconocido|Inconnu|Unbekannt|Sconosciuto|Ukjent|알 수 없음
 Upcoming|Próximamente|À venir|Demnächst|In arrivo|Kommende|예정
 Updated {}|Actualizado el {}|Mis à jour le {}|Aktualisiert am {}|Aggiornato il {}|Oppdatert {}|{} 업데이트
@@ -408,6 +443,7 @@ Write dates as YYYY-MM-DD.|Escribe las fechas como AAAA-MM-DD.|Écris les dates 
 YYYY-MM-DD|AAAA-MM-DD|AAAA-MM-JJ|JJJJ-MM-TT|AAAA-MM-GG|ÅÅÅÅ-MM-DD|YYYY-MM-DD
 Year|Año|Année|Jahr|Anno|År|연도
 Your change could not be saved.|No se pudo guardar el cambio.|Le changement n’a pas pu être enregistré.|Deine Änderung konnte nicht gespeichert werden.|Impossibile salvare la modifica.|Endringen kunne ikke lagres.|변경 사항을 저장할 수 없습니다.
+Your friends recommend|Tus amigos recomiendan|Tes amis recommandent|Deine Freunde empfehlen|I tuoi amici consigliano|Vennene dine anbefaler|친구 추천
 Your list is read again from your account, so changes made on the website or another device show up without refreshing. Your own changes are always sent right away.|Tu lista se vuelve a leer desde tu cuenta, así que los cambios hechos en la web o en otro dispositivo aparecen sin actualizar. Tus propios cambios siempre se envían al momento.|Ta liste est relue depuis ton compte : les changements faits sur le site ou sur un autre appareil apparaissent sans actualiser. Tes propres changements sont toujours envoyés tout de suite.|Deine Liste wird erneut aus deinem Konto gelesen, damit Änderungen auf der Website oder einem anderen Gerät ohne Aktualisieren erscheinen. Deine eigenen Änderungen werden immer sofort gesendet.|La tua lista viene riletta dal tuo account, così le modifiche fatte sul sito o su un altro dispositivo compaiono senza aggiornare. Le tue modifiche vengono sempre inviate subito.|Listen din leses på nytt fra kontoen, så endringer gjort på nettstedet eller en annen enhet vises uten å oppdatere. Dine egne endringer sendes alltid med en gang.|목록을 계정에서 다시 읽어 와서 웹사이트나 다른 기기에서 한 변경이 새로 고침 없이 나타납니다. 내 변경 사항은 항상 바로 전송됩니다.
 Your list stays on this computer until you sign in. Nothing is shared with anyone else.|Tu lista se queda en este equipo hasta que inicies sesión. No se comparte nada con nadie más.|Ta liste reste sur cet ordinateur jusqu’à ce que tu te connectes. Rien n’est partagé avec d’autres.|Deine Liste bleibt auf diesem Computer, bis du dich anmeldest. Nichts wird mit anderen geteilt.|La tua lista resta su questo computer finché non accedi. Nulla viene condiviso con altri.|Listen blir på denne datamaskinen til du logger på. Ingenting deles med andre.|로그인하기 전까지 목록은 이 컴퓨터에만 있습니다. 다른 누구와도 공유하지 않습니다.
 Your progress, score and notes for “{}” will be deleted.|Se borrarán tu progreso, nota y comentarios de «{}».|Ta progression, ta note et tes commentaires pour « {} » seront supprimés.|Dein Fortschritt, deine Wertung und deine Notizen zu „{}“ werden gelöscht.|Progressi, voto e note di “{}” verranno eliminati.|Fremdrift, score og notater for «{}» slettes.|“{}”의 진행, 점수, 메모가 삭제됩니다.
@@ -426,7 +462,10 @@ kioku.auto|Read the Crunchyroll history|Leer el historial de Crunchyroll|Lire l�
 {} d {} h|{} d {} h|{} j {} h|{} T {} Std|{} g {} h|{} d {} t|{}일 {}시간
 {} days|{} días|{} jours|{} Tage|{} giorni|{} dager|{}일
 {} eps|{} eps.|{} ép.|{} Folgen|{} ep.|{} ep.|{}화
+{} friends|{} amigos|{} amis|{} Freunde|{} amici|{} venner|친구 {}명
 {} h {} min|{} h {} min|{} h {} min|{} Std {} Min|{} h {} min|{} t {} min|{}시간 {}분
+{} higher than you on average|{} más alto que tú de media|{} de plus que toi en moyenne|Im Schnitt {} höher als du|In media {} più di te|{} høyere enn deg i snitt|평균적으로 나보다 {}점 높음
+{} lower than you on average|{} más bajo que tú de media|{} de moins que toi en moyenne|Im Schnitt {} niedriger als du|In media {} meno di te|{} lavere enn deg i snitt|평균적으로 나보다 {}점 낮음
 {} members|{} miembros|{} membres|{} Mitglieder|{} membri|{} medlemmer|회원 {}명
 {} min|{} min|{} min|{} Min|{} min|{} min|{}분
 {} min per episode|{} min por episodio|{} min par épisode|{} Min pro Folge|{} min a episodio|{} min per episode|에피소드당 {}분
@@ -547,3 +586,4 @@ You have no titles in common yet|Aún no tenéis títulos en común|Vous n’ave
 {} friends added|{} amigos añadidos|{} amis ajoutés|{} Freunde hinzugefügt|{} amici aggiunti|{} venner lagt til|친구 {}명을 추가했습니다
 {} is already in your friends|{} ya está en tus amigos|{} est déjà dans tes amis|{} ist schon bei deinen Freunden|{} è già tra i tuoi amici|{} er allerede blant vennene dine|{}님은 이미 친구 목록에 있습니다
 {} removed from your friends|{} se ha quitado de tus amigos|{} a été retiré de tes amis|{} aus deinen Freunden entfernt|{} rimosso dai tuoi amici|{} fjernet fra vennene dine|{}님을 친구 목록에서 제거했습니다
+{}% taste match|{} % de afinidad|{} % d’affinité|{} % Geschmacksübereinstimmung|{}% di affinità|{} % smaksmatch|취향 일치 {}%

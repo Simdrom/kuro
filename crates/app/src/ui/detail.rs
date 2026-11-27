@@ -36,6 +36,7 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         Some(Route::Settings(page)) => super::settings::page(app, ui, page),
         Some(Route::Kioku) => super::kioku::show(app, ui),
         Some(Route::Friend(f)) => super::friends::profile(app, ui, &f),
+        Some(Route::Stats(k)) => super::stats::show(app, ui, k),
     }
 }
 
@@ -366,6 +367,11 @@ fn my_card(app: &mut App, ui: &mut Ui, m: &Rc<Media>) {
             widgets::bar(ui.painter(), rect, f, fg, fg.gamma_multiply(0.3));
         }
         dates_line(app, ui, &e);
+        if !e.lists().is_empty() {
+            ui.add_space(2.0);
+            let text = format!("{}: {}", app.lists_label(), e.lists().join("  ·  "));
+            ui.add(egui::Label::new(RichText::new(text).size(12.0).color(fg)).wrap());
+        }
         if !e.notes.trim().is_empty() {
             ui.add_space(2.0);
             ui.add(egui::Label::new(RichText::new(e.notes.trim()).color(fg).italics()).wrap());

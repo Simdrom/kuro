@@ -348,6 +348,10 @@ pub struct Settings {
     pub google_calendars: Vec<GoogleCalendar>,
     /// People whose lists the Friends tab shows.
     pub friends: Vec<Friend>,
+    /// Asks GitHub now and then whether a newer Kuro is out.
+    pub check_updates: bool,
+    /// A version the user chose not to be told about again.
+    pub skipped_version: String,
 }
 
 impl Default for Settings {
@@ -402,6 +406,8 @@ impl Default for Settings {
             google_calendar: String::new(),
             google_calendars: Vec::new(),
             friends: Vec::new(),
+            check_updates: true,
+            skipped_version: String::new(),
         }
     }
 }

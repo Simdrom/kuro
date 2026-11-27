@@ -22,13 +22,14 @@ invented titles, so no cover art appears.</sub>
 ## Contents
 
 - [Highlights](#highlights)
+- [New in 0.6](#new-in-06)
 - [A tour of Kuro](#a-tour-of-kuro)
 - [Install](#install)
 - [Run from source](#run-from-source)
 - [Kioku](#kioku)
 - [Automation](#automation)
 - [What changes from a phone app](#what-changes-from-a-phone-app)
-- [Layout](#layout) · [Security](#security) · [Tests](#tests) ·
+- [Project structure](#project-structure) · [Security](#security) · [Tests](#tests) ·
   [Branches and releases](#branches-and-releases)
 
 ## Highlights
@@ -37,18 +38,24 @@ invented titles, so no cover art appears.</sub>
   every change is sent at once (and retried while offline), or keep a list
   that never leaves this computer.
 - **Anime and manga.** Episodes, or volumes and chapters, with status, score,
-  dates, rewatches and notes.
+  dates, rewatches, notes and your own custom lists or tags. Every change made
+  in the window can be undone from the message it shows.
 - **Made for the desktop.** A sidebar or tab bar, a detail panel beside the
   list, three layouts, a Ctrl+K palette, and a menu on every title that also
   opens from the keyboard.
 - **Know what airs next.** The next episode and how far behind you are, a
-  calendar tab, an `.ics` file or a Google Calendar of its own, and Windows
-  notifications with the cover and a button to mark the episode.
+  calendar tab that points out delays and breaks, an `.ics` file or a Google
+  Calendar of its own, and Windows notifications with the cover and a button
+  to mark the episode.
 - **Discover.** Seasonal charts, rankings and search across the whole
   catalogue, with the platforms where each title streams and its openings and
   endings.
 - **Friends.** Add people by their AniList or MyAnimeList name to see what
-  they are watching, their statistics and the titles you share.
+  they are watching, their statistics, the titles you share, how alike your
+  tastes are, and what they loved that is not in your list yet.
+- **Statistics.** Days watched by status, and a closer look: how your scores
+  spread, your median, your genres and studios and how you score them, formats
+  and the titles you completed each year.
 - **Kioku.** Marks as watched what you watched on Crunchyroll, Netflix or
   Prime Video, after you review every change.
 - **Works on its own.** Desktop widget, binge sessions, daily or weekly
@@ -57,7 +64,19 @@ invented titles, so no cover art appears.</sub>
 - **Your way.** System, light, dark and pure black themes, and the interface
   in English, Spanish, French, German, Italian, Norwegian and Korean.
 - **Small and private.** One native Rust program, no analytics and no ads,
-  sign-in tokens in the Windows Credential Manager.
+  sign-in tokens in the Windows Credential Manager. It tells you when a newer
+  version is out, and never downloads one on its own.
+
+## New in 0.6
+
+| Feature | What it does | More |
+| --- | --- | --- |
+| Undo | Every change made in the window (an episode, a status, the editor, a removal) shows a message with **Undo**, which puts the title back as it was | [Your lists](#your-lists) |
+| Custom lists and tags | AniList custom lists or MyAnimeList tags: ticked or named in the editor, shown on the title, and a filter of the list | [Your lists](#your-lists) |
+| More statistics | Score spread, median, genres, studios, formats, finished rather than dropped, completed by year | [Statistics](#statistics) |
+| Friends compared | Taste match with each friend, and **Your friends recommend**: what they scored 8 or more and you do not have | [Friends](#friends) |
+| Delays and breaks | **Schedule changes** in My Calendar, and one notification for a title you watch | [My Calendar](#my-calendar) |
+| New versions | Said once with a notification, then in the sidebar and in **Settings › About** with **Download** and **Skip this version** | [New versions](#new-versions) |
 
 ## A tour of Kuro
 
@@ -68,6 +87,21 @@ completed, on hold, dropped, planned) with a count on each chip. Every title
 shows your progress, the average score and yours, and, while it airs, the
 next episode and how many you are behind. **+ Ep** marks the next one; the
 pencil opens the editor.
+
+Every change you make here, from **+ Ep** to a removal, shows a message at
+the bottom with **Undo**: it puts the title back as it was, or takes it out
+again when the change added it, and sends that to your account like any edit.
+The message stays while the pointer is on it. Changes Kuro makes on its own
+(links, notifications, Kioku) do not offer it.
+
+Put titles in your own lists, such as *To rewatch* or *Cozy*: custom lists
+on AniList (made on its website, ticked in Kuro) or tags on MyAnimeList and on
+a list kept on this computer (named right in the editor). The filter shows one
+of them at a time, and the title names them.
+
+| Undo | Custom lists in the editor |
+| --- | --- |
+| ![A message after adding an episode, with Undo](docs/screenshots/undo.png) | ![The editor with the custom lists Cozy and To rewatch ticked](docs/screenshots/editor-lists.png) |
 
 Search in your list, filter, sort, see what you changed recently, and pick
 the layout that suits the moment:
@@ -126,7 +160,15 @@ your own time. Click an episode to open its title. The same schedule can go
 to an `.ics` file or to a Google Calendar of its own (see
 [Automation](#automation)).
 
-![My Calendar, with the next episode on Sunday](docs/screenshots/calendar.png)
+**Schedule changes**, at the top, names an episode that moved later (from
+when to when), a title on a break and a week without an episode coming up, and
+a title you are watching says so once with a notification. Delays are seen
+when the time of the same episode moves; breaks, when more than ten days
+separate two episodes.
+
+| The week | Schedule changes |
+| --- | --- |
+| ![My Calendar, with the next episode on Sunday](docs/screenshots/calendar.png) | ![A delayed episode and a week without one, above the days](docs/screenshots/calendar-changes.png) |
 
 ### Streaming history (Kioku)
 
@@ -136,6 +178,17 @@ you confirm. [How it works](#kioku).
 
 ![Kioku with Crunchyroll, Netflix and Prime Video, and a change to review](docs/screenshots/kioku.png)
 
+### Friends
+
+The **Friends** tab shows what each friend is watching or reading, with how
+alike your tastes are once you both scored a few of the same titles, and
+**Your friends recommend**: the titles they scored 8 or more and you do not
+have, those more friends loved first. A friend's profile compares you in
+detail (taste match, titles in common, whether they score higher or lower)
+and lists what they loved that is not in your list.
+
+![The Friends tab with recommendations, and a friend's profile compared with you](docs/screenshots/friend-profile.png)
+
 ### Command palette
 
 **Ctrl+K** jumps to any title in your lists, a tab or a setting, and runs
@@ -143,13 +196,33 @@ actions such as refresh, a random title or Kioku, without touching the mouse.
 
 ![The Ctrl+K palette over the posters layout](docs/screenshots/palette.png)
 
-### Settings, statistics and automation
+### Statistics
 
 Settings opens with your statistics: titles and days in each status, and your
-average score. Its pages cover general options, lists, accounts,
-notifications, mouse and keyboard (what double-click, middle-click and drag
-do), appearance, widget and automation, data (import, export, backups) and
-about.
+average score. **More statistics**, under each list (or **Anime statistics**
+in the Ctrl+K palette), goes further: titles, episodes or chapters and time,
+the median score beside the average, how your scores spread from 1 to 10, the
+genres and studios you watch most with how you score them, formats, how many
+titles you finished rather than dropped, and the titles you completed each
+year. Plans are left out.
+
+![More statistics: an overview, the spread of scores and the top genres](docs/screenshots/stats.png)
+
+### New versions
+
+About once a day Kuro asks GitHub whether a newer version is out. A new one is
+announced once with a notification and waits in the sidebar (**New version**)
+and in **Settings › About**, with **Download**, which opens the release page,
+and **Skip this version**. Nothing is downloaded on its own, nothing about you
+or your list is sent, and **Check for new versions** turns it off.
+
+![Settings › About with Kuro 0.7.0 available, and New version in the sidebar](docs/screenshots/update.png)
+
+### Settings and automation
+
+The pages of Settings cover general options, lists, accounts, notifications,
+mouse and keyboard (what double-click, middle-click and drag do), appearance,
+widget and automation, data (import, export, backups) and about.
 
 ![Widget & automation settings beside the statistics](docs/screenshots/automation.png)
 
@@ -319,6 +392,11 @@ available yet.
   "netflix", "prime" or "amazon" in their name that read as that history.
   Kioku then offers to review the file; nothing is read beyond that folder,
   and a file you set aside is not offered again.
+- **New versions**: about once a day Kuro asks GitHub for its latest
+  release. A newer one is announced once with a notification, and shows in
+  the sidebar and in **Settings › About** with **Download** (the release page)
+  and **Skip this version**. Nothing is downloaded on its own, and the check
+  can be turned off there.
 - **Links** open titles, searches and tabs, and a few do things without
   bringing the window forward, so a desktop shortcut, a hotkey tool or a
   Stream Deck can use them:
@@ -350,16 +428,75 @@ Not included: watch complications, visionOS, and Arabic (the interface toolkit
 has no right-to-left layout). Spotify opens a search, since its catalogue API
 needs a private key.
 
-## Layout
+## Project structure
 
-- `crates/core`: domain model, progress rules, SQLite store. No network, no UI.
-  Kioku's matcher and review rules live in `kioku/`.
-- `crates/api`: AniList, MyAnimeList and music clients, OAuth, secret storage,
-  and Kioku's history sources in `kioku/`.
-- `crates/app`: interface (egui) and Windows integration.
-- `crates/setup`: the setup, with the program inside (`KURO_PAYLOAD` at build
-  time). `packaging/windows/build.ps1` builds it here, into `dist\`;
-  `packaging/windows/test.ps1` tests it in the release.
+A Cargo workspace of four crates. Each one depends only on those above it in
+this list, so the rules can be tested without a network or a window.
+
+| Crate | Package | What it holds |
+| --- | --- | --- |
+| `crates/core` | `kuro-core` | The domain: model, list rules, statistics, calendar and SQLite store. No network, no interface. |
+| `crates/api` | `kuro-api` | Every remote service behind one `Api`: AniList, MyAnimeList, music, Google Calendar, GitHub releases, sign-in and Kioku's sources. |
+| `crates/app` | `kuro` | The program: interface (egui), background work and Windows integration. |
+| `crates/setup` | `kuro-setup` | The setup, with the program inside (`KURO_PAYLOAD` at build time). |
+
+```text
+kuro/
+├─ crates/
+│  ├─ core/src/
+│  │  ├─ model.rs         ListEntry, Media, Schedule, custom list names
+│  │  ├─ progress.rs      rules that turn an action into a new entry
+│  │  ├─ list.rs          filtering (status, format, genre, custom list) and sorting
+│  │  ├─ stats.rs         counts by status and Insights (scores, genres, years…)
+│  │  ├─ calendar.rs      upcoming episodes, .ics, delays and breaks
+│  │  ├─ friends.rs       friends, titles in common, taste match and picks
+│  │  ├─ notify.rs        which episode notifications are due
+│  │  ├─ reminders.rs     titles left behind and the weekly summary
+│  │  ├─ overview.rs      every title of a franchise, in order
+│  │  ├─ season.rs · links.rs · backup.rs · settings.rs
+│  │  ├─ store.rs         SQLite: library, outbox, cache, settings, Kioku
+│  │  └─ kioku/           history items, the matcher and the review
+│  ├─ api/src/
+│  │  ├─ lib.rs           Api: one facade over every service
+│  │  ├─ anilist.rs · mal.rs   lists, search, details, custom lists and tags
+│  │  ├─ music.rs         openings and endings, and where to play them
+│  │  ├─ google.rs        the Google calendar of episodes
+│  │  ├─ updates.rs       the latest release on GitHub
+│  │  ├─ oauth.rs · secrets.rs · http.rs · images.rs
+│  │  └─ kioku/           Crunchyroll, Netflix and Prime Video histories
+│  ├─ app/src/
+│  │  ├─ app/             state, and what changes it:
+│  │  │  ├─ mod.rs        App: library, save, undo, links
+│  │  │  ├─ views.rs      the state of each screen, Act and Route
+│  │  │  ├─ acts.rs       requests from the interface
+│  │  │  ├─ events.rs     answers from the background, schedule changes
+│  │  │  ├─ timers.rs     notifications, reminders, backups, new versions
+│  │  │  ├─ calendar.rs   the .ics file and Google Calendar
+│  │  │  ├─ kioku.rs      applying a Kioku review
+│  │  │  └─ window.rs     keys, clipboard, settings changes, the window
+│  │  ├─ backend/         work off the interface thread:
+│  │  │  ├─ mod.rs        Event, the runtime and the response cache
+│  │  │  ├─ sync.rs       reading the list and sending changes
+│  │  │  ├─ files.rs      images, file dialogs, backups
+│  │  │  ├─ google.rs     Google Calendar
+│  │  │  └─ history.rs    Kioku: reading and matching a history
+│  │  ├─ ui/              one file per screen: mylist, detail, browse,
+│  │  │                   calendar, friends, stats, settings, kioku,
+│  │  │                   dialogs (editor, palette, toasts), float (widget)
+│  │  ├─ strings.txt      every text in 7 languages
+│  │  └─ system.rs · theme.rs · widgets.rs · i18n.rs · format.rs …
+│  └─ setup/src/          engine, window, texts and whats-new.txt
+├─ docs/screenshots/      the pictures of this README
+├─ packaging/windows/     build.ps1 (the setup, into dist\) and test.ps1
+└─ .github/               CI, the release workflow and branch rules
+```
+
+Things move one way. The interface never changes state while it draws: it
+asks with an `Act`, which `app/acts.rs` applies after the frame. Network and
+disk work runs in `backend/` and comes back as an `Event`, which
+`app/events.rs` handles. Every change to the list goes through `App::save`
+(or `App::change`, which also offers to undo it): the store keeps it with an
+entry in the outbox, and `backend/sync.rs` sends it, retrying while offline.
 
 ## Security
 
@@ -376,6 +513,9 @@ needs a private key.
 - Kioku talks only to www.crunchyroll.com, follows no redirects and sends its
   own user agent (`Kuro-Kioku/<version>`). Its sign-in window only shows
   Crunchyroll's pages over HTTPS and keeps nothing on disk.
+- The check for new versions asks only api.github.com for Kuro's latest
+  release, with its own user agent and no redirects, and opens only Kuro's own
+  release pages.
 - `cargo deny check` covers advisories, licences and sources.
 
 ## Tests
@@ -385,6 +525,7 @@ needs a private key.
                                                         # a Netflix file with KURO_KIOKU_NETFLIX_CSV
                                                         # a Prime Video file with KURO_KIOKU_AMAZON_FILE
     cargo test -p kuro --test shots -- --ignored --test-threads=1 # renders every screen to target/shots
+    cargo test -p kuro --test shots readme -- --ignored         # the newer README pictures, to docs/screenshots
     cargo clippy --workspace --all-targets -- -D warnings
 
 `KURO_PROFILE_DIR=<folder>` runs a separate profile.

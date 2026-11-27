@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::model::{ListEntry, ListStatus, MediaKind, Service};
+use crate::model::{ListEntry, ListStatus, Media, MediaKind, Service};
 
 /// The most friends kept, so a damaged settings file cannot grow without end.
 pub const MAX_FRIENDS: usize = 100;
@@ -108,6 +108,120 @@ pub fn in_common<'a, 'b>(
         .collect()
 }
 
+/// Titles both scored before a taste match is worth saying.
+pub const MIN_SHARED: usize = 3;
+/// Scores from 0 to 100 at or above which a friend's title is a pick.
+pub const PICK_SCORE: u8 = 80;
+
+/// How alike two people score the titles they both scored.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Taste {
+    /// Titles both scored.
+    pub shared: usize,
+    /// From 0 (as far apart as scores go) to 100 (the same scores).
+    pub matching: u8,
+    /// How far apart their scores are on average, out of 10.
+    pub gap: f32,
+    /// How much higher they score on average, out of 10; below zero, lower.
+    pub bias: f32,
+}
+
+/// The taste match of `(mine, theirs)` pairs, from [`in_common`]; `None`
+/// until [`MIN_SHARED`] titles were scored by both.
+pub fn taste(both: &[(&ListEntry, &ListEntry)]) -> Option<Taste> {
+    let scored: Vec<(f32, f32)> = both
+        .iter()
+        .filter(|(m, t)| m.score > 0 && t.score > 0)
+        .map(|(m, t)| (f32::from(m.score), f32::from(t.score)))
+        .collect();
+    if scored.len() < MIN_SHARED {
+        return None;
+    }
+    let n = scored.len() as f32;
+    let gap = scored.iter().map(|(m, t)| (m - t).abs()).sum::<f32>() / n;
+    let bias = scored.iter().map(|(m, t)| t - m).sum::<f32>() / n;
+    Some(Taste {
+        shared: scored.len(),
+        matching: (100.0 - gap).round().clamp(0.0, 100.0) as u8,
+        gap: gap / 10.0,
+        bias: bias / 10.0,
+    })
+}
+
+/// A title friends scored well that is not in the user's list.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pick {
+    pub media: Media,
+    /// Who scored it, with their score from 0 to 100, highest first.
+    pub by: Vec<(String, u8)>,
+}
+
+impl Pick {
+    /// The friends' average score, from 0 to 100.
+    pub fn score(&self) -> u8 {
+        let sum: u32 = self.by.iter().map(|(_, s)| u32::from(*s)).sum();
+        u8::try_from(sum / self.by.len().max(1) as u32).unwrap_or(100)
+    }
+}
+
+/// What `friends` (a name and a list each) scored [`PICK_SCORE`] or more,
+/// finished or are still on, and is not in `mine` under any service: the
+/// titles more of them liked first, then the best scored.
+pub fn picks<'a>(
+    mine: impl IntoIterator<Item = &'a ListEntry>,
+    friends: &[(&str, &[ListEntry])],
+) -> Vec<Pick> {
+    let mut have: std::collections::HashSet<(Service, MediaKind, u64)> = std::collections::HashSet::new();
+    for e in mine {
+        for s in Service::ALL {
+            if let Some(id) = e.media.id_on(s) {
+                have.insert((s, e.media.kind, id));
+            }
+        }
+    }
+    let known = |m: &Media| {
+        Service::ALL.into_iter().any(|s| m.id_on(s).is_some_and(|id| have.contains(&(s, m.kind, id))))
+    };
+    // One key per title, whichever service the friend is on.
+    let key = |m: &Media| {
+        let s = if m.id_on(Service::Mal).is_some() { Service::Mal } else { Service::AniList };
+        (s, m.kind, m.id_on(s).unwrap_or(m.id))
+    };
+    let mut found: HashMap<(Service, MediaKind, u64), Pick> = HashMap::new();
+    let mut order: Vec<(Service, MediaKind, u64)> = Vec::new();
+    for (name, list) in friends {
+        for e in list.iter() {
+            let liked =
+                e.score >= PICK_SCORE && matches!(e.status, ListStatus::Completed | ListStatus::Current);
+            if !liked || known(&e.media) {
+                continue;
+            }
+            let k = key(&e.media);
+            let p = found.entry(k).or_insert_with(|| {
+                order.push(k);
+                Pick { media: e.media.clone(), by: Vec::new() }
+            });
+            if !p.by.iter().any(|(n, _)| n == name) {
+                p.by.push(((*name).to_owned(), e.score));
+            }
+        }
+    }
+    let mut out: Vec<Pick> = order.into_iter().filter_map(|k| found.remove(&k)).collect();
+    for p in &mut out {
+        p.by.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    }
+    out.sort_by(|a, b| {
+        b.by.len()
+            .cmp(&a.by.len())
+            .then(b.score().cmp(&a.score()))
+            .then_with(|| {
+                b.media.mean_score.partial_cmp(&a.media.mean_score).unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.media.title.cmp(&b.media.title))
+    });
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -167,6 +281,48 @@ mod tests {
         let both = in_common(&mine, &theirs);
         let ids: Vec<_> = both.iter().map(|(m, t)| (m.media.id, t.media.id)).collect();
         assert_eq!(ids, [(10, 110), (20, 20)]);
+    }
+
+    fn scored(service: Service, id: u64, mal: Option<u64>, status: ListStatus, score: u8) -> ListEntry {
+        let mut e = entry(service, id, (service == Service::AniList).then_some(id), mal);
+        (e.status, e.score) = (status, score);
+        e
+    }
+
+    #[test]
+    fn taste_needs_enough_titles_scored_by_both() {
+        let a = |s| scored(Service::AniList, 1, None, ListStatus::Completed, s);
+        let (m1, m2, m3, t1, t2, t3) = (a(80), a(60), a(0), a(90), a(40), a(70));
+        assert_eq!(taste(&[(&m1, &t1), (&m2, &t2), (&m3, &t3)]), None, "an unscored title does not count");
+        let m3 = a(100);
+        let t = taste(&[(&m1, &t1), (&m2, &t2), (&m3, &t3)]).unwrap();
+        // Gaps of 10, 20 and 30: 20 on average.
+        assert_eq!((t.shared, t.matching), (3, 80));
+        assert!((t.gap - 2.0).abs() < 1e-4);
+        assert!((t.bias + 4.0 / 3.0).abs() < 1e-4, "they score lower");
+    }
+
+    #[test]
+    fn picks_are_what_friends_loved_and_the_user_lacks() {
+        use ListStatus as L;
+        let mine = [scored(Service::AniList, 1, Some(101), L::Planning, 0)];
+        let ana = [
+            scored(Service::AniList, 1, Some(101), L::Completed, 100), // already mine
+            scored(Service::AniList, 2, Some(102), L::Completed, 90),
+            scored(Service::AniList, 3, Some(103), L::Dropped, 95), // dropped
+            scored(Service::AniList, 4, Some(104), L::Planning, 95), // not seen
+            scored(Service::AniList, 5, Some(105), L::Current, 70), // too low
+            scored(Service::AniList, 6, None, L::Current, 85),
+        ];
+        let ben = [
+            scored(Service::Mal, 101, Some(101), L::Completed, 100), // mine, on the other service
+            scored(Service::Mal, 102, Some(102), L::Completed, 80),
+        ];
+        let p = picks(&mine, &[("Ana", &ana), ("Ben", &ben)]);
+        let ids: Vec<_> = p.iter().map(|p| p.media.id).collect();
+        assert_eq!(ids, [2, 6], "liked by two first");
+        assert_eq!(p[0].by, [("Ana".to_owned(), 90), ("Ben".to_owned(), 80)]);
+        assert_eq!(p[0].score(), 85);
     }
 
     #[test]

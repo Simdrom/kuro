@@ -169,6 +169,34 @@ impl AniList {
         Ok(out)
     }
 
+    /// Anime by id, as [`Self::by_ids`] reads them, with when the episode
+    /// after the next one airs.
+    pub async fn airing(&self, by: Service, ids: &[u64]) -> Result<Vec<Media>> {
+        let field = match by {
+            Service::AniList => "id_in",
+            Service::Mal => "idMal_in",
+        };
+        let q = format!(
+            "query($ids:[Int]){{Page(perPage:{PER_PAGE}){{media(type:ANIME,{field}:$ids){{...M \
+             airingSchedule(notYetAired:true,perPage:2){{nodes{{episode airingAt}}}}}}}}}} {SUMMARY}"
+        );
+        let mut out = Vec::new();
+        for chunk in ids.chunks(PER_PAGE) {
+            let d = self.query(None, &q, json!({ "ids": chunk })).await?;
+            for v in list(&d["Page"]["media"]) {
+                let Some(mut m) = media(v) else { continue };
+                if let Some(a) = m.next_airing {
+                    m.schedule.following = list(&v["airingSchedule"]["nodes"])
+                        .iter()
+                        .find(|n| num(&n["episode"]) == Some(a.episode + 1))
+                        .and_then(|n| n["airingAt"].as_i64());
+                }
+                out.push(m);
+            }
+        }
+        Ok(out)
+    }
+
     /// Relations of several titles at once, for the series overview.
     pub async fn relations(&self, kind: MediaKind, ids: &[u64]) -> Result<Vec<(MediaRef, Vec<Relation>)>> {
         let q = format!(
@@ -272,7 +300,8 @@ impl AniList {
         let q = format!(
             "query($user:Int,$chunk:Int){{MediaListCollection(userId:$user,type:{},chunk:$chunk,perChunk:500){{\
              hasNextChunk lists{{isCustomList entries{{status score(format:POINT_100) progress progressVolumes \
-             repeat notes startedAt{{year month day}} completedAt{{year month day}} updatedAt media{{...M}}}}}}}}}} \
+             repeat notes customLists(asArray:true) startedAt{{year month day}} completedAt{{year month day}} \
+             updatedAt media{{...M}}}}}}}}}} \
              {SUMMARY}",
             gql_kind(kind)
         );
@@ -354,11 +383,16 @@ impl AniList {
     }
 
     pub async fn save(&self, token: &str, media_id: u64, e: &ListEntry) -> Result<()> {
-        let q = "mutation($mediaId:Int,$status:MediaListStatus,$score:Int,$progress:Int,$volumes:Int,$repeat:Int,\
-                 $notes:String,$start:FuzzyDateInput,$finish:FuzzyDateInput){SaveMediaListEntry(mediaId:$mediaId,\
-                 status:$status,scoreRaw:$score,progress:$progress,progressVolumes:$volumes,repeat:$repeat,\
-                 notes:$notes,startedAt:$start,completedAt:$finish){id}}";
-        let vars = json!({
+        // Custom lists are only sent when known: sending none would empty them.
+        let (lists_var, lists_arg) =
+            if e.lists.is_some() { (",$lists:[String]", ",customLists:$lists") } else { ("", "") };
+        let q = format!(
+            "mutation($mediaId:Int,$status:MediaListStatus,$score:Int,$progress:Int,$volumes:Int,$repeat:Int,\
+             $notes:String,$start:FuzzyDateInput,$finish:FuzzyDateInput{lists_var}){{SaveMediaListEntry(\
+             mediaId:$mediaId,status:$status,scoreRaw:$score,progress:$progress,progressVolumes:$volumes,\
+             repeat:$repeat,notes:$notes,startedAt:$start,completedAt:$finish{lists_arg}){{id}}}}"
+        );
+        let mut vars = json!({
             "mediaId": media_id,
             "status": gql_status(e),
             "score": e.score,
@@ -369,7 +403,10 @@ impl AniList {
             "start": gql_date(e.start),
             "finish": gql_date(e.finish),
         });
-        self.query(Some(token), q, vars).await.map(drop)
+        if let Some(l) = &e.lists {
+            vars["lists"] = json!(l);
+        }
+        self.query(Some(token), &q, vars).await.map(drop)
     }
 
     pub async fn delete(&self, token: &str, user: u64, media_id: u64) -> Result<()> {
@@ -638,6 +675,13 @@ fn entry(v: &Value) -> Option<ListEntry> {
         repeat_count: num(&v["repeat"]).unwrap_or(0),
         notes: v["notes"].as_str().unwrap_or_default().to_owned(),
         updated_at: v["updatedAt"].as_i64().unwrap_or(0),
+        // Every custom list of the user, each saying whether the title is in it.
+        lists: v["customLists"].as_array().map(|all| {
+            all.iter()
+                .filter(|l| l["enabled"].as_bool() == Some(true))
+                .filter_map(|l| l["name"].as_str().map(str::to_owned))
+                .collect()
+        }),
     })
 }
 
@@ -862,6 +906,7 @@ mod tests {
     #[tokio::test]
     async fn library_merges_chunks_and_ignores_custom_lists() {
         let entry = json!({"status": "REPEATING", "score": 85, "progress": 4, "repeat": 2, "notes": null,
+            "customLists": [{"name": "Cozy", "enabled": true}, {"name": "Later", "enabled": false}],
             "startedAt": {"year": 2020, "month": 1, "day": 2}, "completedAt": {"year": null},
             "updatedAt": 7, "media": media_json(1)});
         let (_s, a) = server(json!({"data": {"MediaListCollection": {"hasNextChunk": false, "lists": [
@@ -874,6 +919,47 @@ mod tests {
             (ListStatus::Current, true, 85, 2)
         );
         assert_eq!(l[0].finish, None);
+        assert_eq!(l[0].lists, Some(vec!["Cozy".to_owned()]));
+    }
+
+    #[tokio::test]
+    async fn airing_reads_when_the_episode_after_next_airs() {
+        let mut m = media_json(1);
+        m["nextAiringEpisode"] = json!({"episode": 5, "airingAt": 1000});
+        m["airingSchedule"] =
+            json!({"nodes": [{"episode": 5, "airingAt": 1000}, {"episode": 6, "airingAt": 2000}]});
+        let (_s, a) = server(json!({"data": {"Page": {"media": [m, media_json(2)]}}})).await;
+        let got = a.airing(Service::AniList, &[1, 2]).await.unwrap();
+        assert_eq!(got[0].next_airing, Some(Airing { episode: 5, at: 1000 }));
+        assert_eq!(got[0].schedule.following, Some(2000));
+        assert_eq!(got[1].schedule.following, None);
+    }
+
+    #[tokio::test]
+    async fn custom_lists_are_sent_only_when_known() {
+        let s = MockServer::start().await;
+        Mock::given(body_string_contains("customLists:$lists"))
+            .and(body_string_contains(r#""lists":["Cozy"]"#))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"data": {}})))
+            .expect(1)
+            .mount(&s)
+            .await;
+        Mock::given(body_string_contains("SaveMediaListEntry"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"data": {}})))
+            .mount(&s)
+            .await;
+        let a = AniList::with_endpoint(Http::insecure_for_tests().unwrap(), &s.uri());
+        let known = ListEntry { lists: Some(vec!["Cozy".into()]), ..ListEntry::default() };
+        a.save("tok", 5, &known).await.unwrap();
+        a.save("tok", 5, &ListEntry::default()).await.unwrap();
+        let sent: Vec<String> = s
+            .received_requests()
+            .await
+            .unwrap()
+            .iter()
+            .map(|r| String::from_utf8_lossy(&r.body).into())
+            .collect();
+        assert!(!sent[1].contains("customLists"), "unknown lists are left alone");
     }
 
     #[tokio::test]

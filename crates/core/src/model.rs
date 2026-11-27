@@ -236,6 +236,20 @@ pub struct Media {
     pub broadcast: Option<String>,
     pub adult: bool,
     pub next_airing: Option<Airing>,
+    /// The airing around the next episode, as far as it is known.
+    pub schedule: Schedule,
+}
+
+/// What is known about the airing around the next episode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct Schedule {
+    /// Unix seconds the episode after the next one airs, once announced.
+    pub following: Option<i64>,
+    /// Unix seconds the episode before the next one aired, once seen.
+    pub previous: Option<i64>,
+    /// Unix seconds the next episode was first due, when it has moved later since.
+    pub delayed_from: Option<i64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -474,11 +488,24 @@ pub struct ListEntry {
     pub notes: String,
     /// Unix seconds.
     pub updated_at: i64,
+    /// The user's own lists the title is in: custom lists on AniList, tags on
+    /// MyAnimeList. `None` until the service has said, and then nothing is
+    /// sent, so a list read before this existed never empties them.
+    pub lists: Option<Vec<String>>,
 }
+
+/// The most names one title keeps, and the longest name.
+pub const MAX_LISTS: usize = 20;
+pub const MAX_LIST_NAME: usize = 50;
 
 impl ListEntry {
     pub fn new(media: Media) -> Self {
         Self { media, ..Self::default() }
+    }
+
+    /// The user's own lists the title is in.
+    pub fn lists(&self) -> &[String] {
+        self.lists.as_deref().unwrap_or_default()
     }
 
     pub fn score10(&self) -> f32 {
@@ -490,6 +517,36 @@ impl ListEntry {
         let total = self.media.total()?;
         Some((self.progress as f32 / total as f32).clamp(0.0, 1.0))
     }
+}
+
+/// List names as a service can keep them: trimmed, without commas (tags are
+/// split on them), without repeats whatever their case, bounded in length
+/// and number.
+pub fn clean_lists<S: AsRef<str>>(names: impl IntoIterator<Item = S>) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for n in names {
+        let n: String = n.as_ref().replace(',', " ").split_whitespace().collect::<Vec<_>>().join(" ");
+        let n: String = n.chars().take(MAX_LIST_NAME).collect();
+        if !n.is_empty() && !out.iter().any(|x| x.to_lowercase() == n.to_lowercase()) && out.len() < MAX_LISTS
+        {
+            out.push(n);
+        }
+    }
+    out
+}
+
+/// Every list name used in `entries`, sorted without regard to case.
+pub fn list_names<'a>(entries: impl IntoIterator<Item = &'a ListEntry>) -> Vec<String> {
+    let mut names: Vec<String> = Vec::new();
+    for e in entries {
+        for n in e.lists() {
+            if !names.iter().any(|x| x.to_lowercase() == n.to_lowercase()) {
+                names.push(n.clone());
+            }
+        }
+    }
+    names.sort_by_key(|n| n.to_lowercase());
+    names
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -545,6 +602,20 @@ mod tests {
         let m = Media { title: "Romaji".into(), title_english: Some(String::new()), ..Media::default() };
         assert_eq!(m.display_title(TitleLanguage::English), "Romaji");
         assert_eq!(m.display_title(TitleLanguage::Native), "Romaji");
+    }
+
+    #[test]
+    fn list_names_are_cleaned_and_gathered() {
+        let names = clean_lists(["  To  rewatch ", "a,b", "to rewatch", "", &"x".repeat(80)]);
+        assert_eq!(names, ["To rewatch", "a b", &"x".repeat(MAX_LIST_NAME)]);
+        assert_eq!(clean_lists((0..30).map(|i| i.to_string())).len(), MAX_LISTS);
+        let tagged = |l: &[&str]| ListEntry {
+            lists: Some(l.iter().map(|s| (*s).to_owned()).collect()),
+            ..ListEntry::default()
+        };
+        let all = [tagged(&["cozy", "Best"]), tagged(&["best"]), ListEntry::default()];
+        assert_eq!(list_names(&all), ["Best", "cozy"]);
+        assert!(ListEntry::default().lists().is_empty());
     }
 
     #[test]
