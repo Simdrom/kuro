@@ -69,6 +69,11 @@ shows your progress, the average score and yours, and, while it airs, the
 next episode and how many you are behind. **+ Ep** marks the next one; the
 pencil opens the editor.
 
+Put titles in your own lists, such as *To rewatch* or *Cozy*: custom lists
+on AniList (made on its website, ticked in Kuro) or tags on MyAnimeList (named
+right in the editor). The filter shows one of them at a time, and the title
+names them.
+
 Search in your list, filter, sort, see what you changed recently, and pick
 the layout that suits the moment:
 

@@ -325,6 +325,16 @@ impl App {
         self.entry_at(self.home_ref(m))
     }
 
+    /// What the user's own lists are called on the primary service.
+    pub fn lists_label(&self) -> &'static str {
+        if self.s.primary == Service::Mal { t("Tags") } else { t("Custom lists") }
+    }
+
+    /// New custom lists are made on AniList's website, not here.
+    pub fn can_name_lists(&self) -> bool {
+        !(self.s.primary == Service::AniList && self.bg.api.is_signed_in(Service::AniList))
+    }
+
     /// The title's id on the primary service, when known.
     fn home_ref(&self, m: &Media) -> MediaRef {
         match m.id_on(self.s.primary) {

@@ -69,6 +69,9 @@ fn date_row(ui: &mut Ui, p: &theme::Palette, label: &str, text: &mut String) -> 
 fn editor(app: &mut App, ctx: &Context) {
     let Some(mut ed) = app.editor.take() else { return };
     let p = app.p;
+    let mut names = kuro_core::list_names(app.library(ed.entry.media.kind).iter().map(|e| &**e));
+    names.extend(ed.entry.lists().iter().filter(|n| !names.contains(n)).cloned().collect::<Vec<_>>());
+    let (lists_label, can_name) = (app.lists_label(), app.can_name_lists());
     let (mut close, mut save, mut delete) = (false, false, false);
     let mut valid = true;
     let modal = Modal::new(Id::unique("editor")).frame(frame(app)).show(ctx, |ui| {
@@ -148,6 +151,10 @@ fn editor(app: &mut App, ctx: &Context) {
                     let label =
                         if kind == MediaKind::Anime { t("Times rewatched") } else { t("Times reread") };
                     counter(ui, &p, label, &mut e.repeat_count, None);
+                });
+                ui.add_space(8.0);
+                widgets::card(ui, &p, |ui| {
+                    lists_card(ui, &p, e, &names, &mut ed.new_list, lists_label, can_name);
                 });
                 ui.add_space(8.0);
                 widgets::card(ui, &p, |ui| {
@@ -357,6 +364,55 @@ fn command(app: &mut App, ctx: &Context) {
         None if modal.should_close() => {}
         None => app.command = Some(text),
     }
+}
+
+/// The user's own lists or tags of a title: known names to tick, and a new one.
+fn lists_card(
+    ui: &mut Ui,
+    p: &crate::theme::Palette,
+    e: &mut kuro_core::ListEntry,
+    names: &[String],
+    new: &mut String,
+    label: &str,
+    can_name: bool,
+) {
+    ui.label(label);
+    if !names.is_empty() {
+        ui.horizontal_wrapped(|ui| {
+            for n in names {
+                let on = e.lists().iter().any(|x| x.to_lowercase() == n.to_lowercase());
+                if ui.selectable_label(on, n).clicked() {
+                    let mut next: Vec<String> = e.lists().to_vec();
+                    if on {
+                        next.retain(|x| x.to_lowercase() != n.to_lowercase());
+                    } else {
+                        next.push(n.clone());
+                    }
+                    e.lists = Some(kuro_core::clean_lists(next));
+                }
+            }
+        });
+    }
+    if !can_name {
+        widgets::note(ui, p, t("Make new custom lists on AniList; they show here after a refresh."));
+        return;
+    }
+    ui.horizontal(|ui| {
+        let r = ui.add(
+            egui::TextEdit::singleline(new)
+                .hint_text(t("New name"))
+                .char_limit(kuro_core::MAX_LIST_NAME)
+                .desired_width((ui.available_width() - 90.0).max(80.0)),
+        );
+        r.widget_info(|| egui::WidgetInfo::labeled(egui::Role::TextInput, true, t("New name")));
+        let enter = r.lost_focus() && ui.input(|i| i.key_pressed(Key::Enter));
+        if (widgets::button(ui, p, icons::PLUS, t("Add"), false).clicked() || enter) && !new.trim().is_empty()
+        {
+            let next: Vec<String> = e.lists().iter().cloned().chain([new.trim().to_owned()]).collect();
+            e.lists = Some(kuro_core::clean_lists(next));
+            new.clear();
+        }
+    });
 }
 
 fn toast(app: &mut App, ctx: &Context) {

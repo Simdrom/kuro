@@ -236,7 +236,8 @@ fn tools(app: &mut App, ui: &mut Ui, kind: MediaKind) {
             }
         }
     });
-    let on = app.lists[k].filter.format.is_some() || app.lists[k].filter.genre.is_some();
+    let f = &app.lists[k].filter;
+    let on = f.format.is_some() || f.genre.is_some() || f.list.is_some();
     let color = if on { p.orange } else { p.tint };
     let r = widgets::icon_button_colored(ui, &p, icons::FUNNEL, t("Filter"), color, true);
     egui::Popup::menu(&r)
@@ -253,6 +254,8 @@ fn filters(app: &mut App, ui: &mut Ui, kind: MediaKind) {
     let mut genres: Vec<String> = app.library(kind).iter().flat_map(|e| e.media.genres.clone()).collect();
     genres.sort();
     genres.dedup();
+    let names = kuro_core::list_names(app.library(kind).iter().map(|e| &**e));
+    let lists_label = app.lists_label();
     let f = &mut app.lists[k].filter;
     ui.label(t("Format"));
     let mut options = vec![None];
@@ -270,8 +273,18 @@ fn filters(app: &mut App, ui: &mut Ui, kind: MediaKind) {
             }
         },
     );
+    if !names.is_empty() || f.list.is_some() {
+        ui.label(lists_label);
+        let shown = f.list.as_deref().unwrap_or(t("All"));
+        egui::ComboBox::from_id_salt("own-list").selected_text(shown).show_ui(ui, |ui| {
+            ui.selectable_value(&mut f.list, None, t("All"));
+            for n in names {
+                ui.selectable_value(&mut f.list, Some(n.clone()), n);
+            }
+        });
+    }
     if ui.button(t("Clear filters")).clicked() {
-        (f.format, f.genre) = (None, None);
+        (f.format, f.genre, f.list) = (None, None, None);
     }
 }
 

@@ -38,6 +38,8 @@ pub struct Filter {
     pub status: Option<ListStatus>,
     pub format: Option<Format>,
     pub genre: Option<String>,
+    /// One of the user's own lists or tags.
+    pub list: Option<String>,
     pub query: String,
     pub hide_adult: bool,
 }
@@ -47,6 +49,10 @@ impl Filter {
         self.status.is_none_or(|s| s == e.status)
             && self.format.is_none_or(|f| f == e.media.format)
             && self.genre.as_ref().is_none_or(|g| e.media.genres.contains(g))
+            && self
+                .list
+                .as_ref()
+                .is_none_or(|l| e.lists().iter().any(|x| x.to_lowercase() == l.to_lowercase()))
             && !(self.hide_adult && e.media.adult)
             && e.media.matches(&self.query)
     }

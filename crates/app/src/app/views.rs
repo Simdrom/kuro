@@ -311,6 +311,8 @@ pub struct Editor {
     pub is_new: bool,
     pub start: String,
     pub finish: String,
+    /// A list or tag name being typed.
+    pub new_list: String,
 }
 
 pub struct Confirm {

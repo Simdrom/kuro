@@ -126,6 +126,39 @@ fn opening_a_title_shows_its_details_and_back_closes_them() {
 }
 
 #[test]
+fn custom_lists_are_named_ticked_and_filtered() {
+    let mut h = harness();
+    let m = Rc::new(media(4, MediaKind::Anime, "Midnight Ferry"));
+    act(&mut h, Act::Edit(m.clone()));
+    h.state_mut().editor.as_mut().unwrap().new_list = "  Cozy,  nights ".into();
+    settle(&mut h);
+    click(&mut h, "Add");
+    assert_eq!(h.state().editor.as_ref().unwrap().entry.lists, Some(vec!["Cozy nights".to_owned()]));
+    click(&mut h, "Save");
+    assert_eq!(h.state().entry_at(r(4, MediaKind::Anime)).unwrap().lists(), ["Cozy nights"]);
+
+    // Known names are offered on other titles, and ticking one adds it.
+    act(&mut h, Act::Edit(Rc::new(media(2, MediaKind::Anime, "x"))));
+    click(&mut h, "Cozy nights");
+    click(&mut h, "Save");
+    assert_eq!(h.state().entry_at(r(2, MediaKind::Anime)).unwrap().lists(), ["Cozy nights"]);
+
+    h.state_mut().lists[0].filter =
+        kuro_core::list::Filter { list: Some("cozy NIGHTS".into()), ..Default::default() };
+    settle(&mut h);
+    assert!(h.query_by_label_contains("Midnight Ferry, ").is_some());
+    assert!(h.query_by_label_contains("The Mapmaker and the Slowly Moving Northern Coast, ").is_some());
+    assert!(h.query_by_label_contains("Lanterns Over Saltmarsh, ").is_none());
+
+    // Signed in to AniList, new lists are made on the website.
+    let tokens = kuro_api::Tokens { access: "t".into(), refresh: None, expires_at: i64::MAX, device: None };
+    h.state().bg.api.accept_login(Service::AniList, &UserProfile::default(), &tokens).unwrap();
+    act(&mut h, Act::Edit(m));
+    assert!(h.query_by_label("Make new custom lists on AniList; they show here after a refresh.").is_some());
+    assert!(h.query_by_label("New name").is_none());
+}
+
+#[test]
 fn editor_saves_and_rejects_bad_dates() {
     let mut h = harness();
     let m = Rc::new(media(4, MediaKind::Anime, "Midnight Ferry"));

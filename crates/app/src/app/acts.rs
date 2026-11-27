@@ -81,8 +81,13 @@ impl App {
                 let is_new = self.entry(&m).is_none();
                 let entry = self.working_entry(&m);
                 let text = |d: Option<kuro_core::FuzzyDate>| d.map(|d| d.iso()).unwrap_or_default();
-                self.editor =
-                    Some(Editor { start: text(entry.start), finish: text(entry.finish), entry, is_new });
+                self.editor = Some(Editor {
+                    start: text(entry.start),
+                    finish: text(entry.finish),
+                    entry,
+                    is_new,
+                    new_list: String::new(),
+                });
             }
             Act::AskDelete(m) => {
                 let r = self.home_ref(&m);
