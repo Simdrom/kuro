@@ -288,6 +288,13 @@ fn service(app: &mut App, ui: &mut Ui, s: Service) {
     let p = app.p;
     section(ui, &p, s.name());
     let signed = app.bg.api.is_signed_in(s);
+    // A built-in id needs no setup; an id pasted earlier stays visible so it
+    // can be cleared.
+    let own = match s {
+        Service::AniList => &app.s.anilist_client_id,
+        Service::Mal => &app.s.mal_client_id,
+    };
+    let custom = !signed && (!kuro_api::ClientIds::built_in(s) || !own.is_empty());
     card(ui, &p, |ui| {
         if signed {
             let name = app.profiles.get(&s).map_or("…".to_owned(), |u| u.name.clone());
@@ -321,6 +328,9 @@ fn service(app: &mut App, ui: &mut Ui, s: Service) {
                 }
             });
         });
+        if !custom {
+            return;
+        }
         separator(ui, &p);
         let id = match s {
             Service::AniList => &mut app.s.anilist_client_id,
@@ -343,7 +353,7 @@ fn service(app: &mut App, ui: &mut Ui, s: Service) {
             ui.add(egui::Label::new(RichText::new(&redirect).size(12.5).color(p.dim)).selectable(true));
         });
     });
-    if !signed {
+    if custom {
         let (text, url) = match s {
             Service::AniList => (
                 t("Create a client on AniList with this redirect URL, then paste its ID here. It is free."),

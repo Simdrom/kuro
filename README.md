@@ -202,8 +202,14 @@ and keep a local list.
 
 ### Signing in
 
-Each service asks every app for its own client ID. Create one (free), with the
-redirect URL shown, and paste it in **Settings › Accounts**:
+Released builds of Kuro come with AniList and MyAnimeList client IDs built in:
+press **Sign in** in **Settings › Accounts** and approve Kuro in your browser.
+You never type your password into Kuro, and you can revoke its access from the
+service's website.
+
+If you build Kuro yourself, each service needs a client ID for your build.
+Create one (free) with the redirect URL shown and paste it in
+**Settings › Accounts**:
 
 | Service | Page | Redirect URL |
 | --- | --- | --- |
@@ -211,7 +217,8 @@ redirect URL shown, and paste it in **Settings › Accounts**:
 | MyAnimeList (app type "other") | https://myanimelist.net/apiconfig | `http://127.0.0.1:42813/mal` |
 
 To build them in, set `KURO_ANILIST_CLIENT_ID` and `KURO_MAL_CLIENT_ID` when
-compiling. No client secret is used.
+compiling; Settings then hides the client ID fields. No client secret is
+used, so a built-in ID is safe to ship.
 
 Google Calendar works only when it is built in: create an OAuth client of type
 "Desktop app" in the Google Cloud console and set `KURO_GOOGLE_CLIENT_ID` and
