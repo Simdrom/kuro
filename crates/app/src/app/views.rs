@@ -67,6 +67,8 @@ pub enum Route {
     Kioku,
     /// A friend's profile and list.
     Friend(Friend),
+    /// A closer look at the statistics of one list.
+    Stats(MediaKind),
 }
 
 /// Something requested by the interface, applied after drawing.

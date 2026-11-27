@@ -42,6 +42,9 @@ fn screens() {
         shot(&mut h, &format!("settings-{page:?}"));
     }
     h.state_mut().routes.clear();
+    h.state_mut().act(Act::Push(Route::Stats(MediaKind::Anime)));
+    shot(&mut h, "stats");
+    h.state_mut().routes.clear();
     h.state_mut().act(Act::Push(Route::Kioku));
     shot(&mut h, "kioku");
     let found = review(h.state(), &history());

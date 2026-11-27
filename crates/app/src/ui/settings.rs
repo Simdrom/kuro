@@ -73,6 +73,16 @@ pub fn master(app: &mut App, ui: &mut Ui) {
                     separator(ui, &p);
                     widgets::fact(ui, &p, t("My average score"), &decimal(m, 2));
                 }
+                separator(ui, &p);
+                let on = app.routes.last() == Some(&Route::Stats(k));
+                let more = t("More statistics");
+                let r = widgets::nav_row(ui, &p, icons::CHART_BAR, p.tint, more, "", on);
+                // Named apart from the same row of the other list.
+                widgets::label_a11y(&r, Role::Button, &format!("{more}: {}", format::kind(k)));
+                if r.clicked() {
+                    app.routes.clear();
+                    app.act(Act::Push(Route::Stats(k)));
+                }
             });
         }
         section(ui, &p, t("Preferences"));

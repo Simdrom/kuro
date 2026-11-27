@@ -36,6 +36,7 @@ Background|Contexto|Contexte|Hintergrund|Contesto|Bakgrunn|배경
 Backup|Copia de seguridad|Sauvegarde|Sicherung|Backup|Sikkerhetskopi|백업
 Backup saved|Copia guardada|Sauvegarde enregistrée|Sicherung gespeichert|Backup salvato|Sikkerhetskopi lagret|백업을 저장했습니다
 Badge|Etiqueta|Badge|Plakette|Etichetta|Merke|배지
+Best scored genre|Género con mejor nota|Genre le mieux noté|Bestbewertetes Genre|Genere con il voto più alto|Sjangeren med best karakter|가장 높게 평가한 장르
 Binge session|Maratón|Marathon|Binge-Session|Maratona|Maraton|정주행
 Black|Negro|Noir|Schwarz|Nero|Svart|검정
 Blue|Azul|Bleu|Blau|Blu|Blå|파랑
@@ -66,6 +67,7 @@ Community|Comunidad|Communauté|Community|Community|Fellesskap|커뮤니티
 Compilation|Recopilación|Compilation|Zusammenschnitt|Compilation|Samling|총집편
 Complete series overview|Vista completa de la serie|Vue complète de la série|Komplette Serienübersicht|Panoramica completa della serie|Full serieoversikt|시리즈 전체 보기
 Completed|Completado|Terminé|Abgeschlossen|Completato|Fullført|완료
+Completed by year|Completados por año|Terminés par année|Abgeschlossen pro Jahr|Completati per anno|Fullført per år|연도별 완료
 Confetti when I complete a title|Confeti al completar un título|Confettis quand je termine un titre|Konfetti beim Abschließen eines Titels|Coriandoli quando completo un titolo|Konfetti når jeg fullfører en tittel|작품을 완료하면 색종이 효과
 Contains|Contiene|Contient|Enthält|Contiene|Inneholder|포함
 Continue only if this is your account.|Continúa solo si esta es tu cuenta.|Continue seulement si c’est ton compte.|Fahre nur fort, wenn das dein Konto ist.|Continua solo se questo è il tuo account.|Fortsett bare hvis dette er kontoen din.|본인 계정인 경우에만 계속하세요.
@@ -100,6 +102,7 @@ Every day|Cada día|Chaque jour|Jeden Tag|Ogni giorno|Hver dag|매일
 Every hour|Cada hora|Toutes les heures|Jede Stunde|Ogni ora|Hver time|매시간
 Every week|Cada semana|Chaque semaine|Jede Woche|Ogni settimana|Hver uke|매주
 Every {} hours|Cada {} horas|Toutes les {} heures|Alle {} Stunden|Ogni {} ore|Hver {}. time|{}시간마다
+Finished rather than dropped|Terminados en vez de abandonados|Terminés plutôt qu’abandonnés|Beendet statt abgebrochen|Finiti invece che abbandonati|Fullført i stedet for droppet|중단하지 않고 끝낸 비율
 Folder|Carpeta|Dossier|Ordner|Cartella|Mappe|폴더
 Google Calendar|Google Calendar|Google Agenda|Google Kalender|Google Calendar|Google Kalender|Google 캘린더
 Google Calendar could not be updated: {}|No se ha podido actualizar Google Calendar: {}|Google Agenda n’a pas pu être mis à jour : {}|Google Kalender konnte nicht aktualisiert werden: {}|Impossibile aggiornare Google Calendar: {}|Google Kalender kunne ikke oppdateres: {}|Google 캘린더를 업데이트하지 못했습니다: {}
@@ -107,13 +110,17 @@ Google did not give Kuro access to the calendar. Sign out, sign in again and tic
 In a menu, the key shown beside an entry runs it|En un menú, la tecla que aparece junto a una opción la ejecuta|Dans un menu, la touche affichée à côté d’une entrée l’exécute|In einem Menü führt die Taste neben einem Eintrag ihn aus|In un menu, il tasto accanto a una voce la esegue|I en meny kjører tasten ved siden av et valg det|메뉴에서 항목 옆에 표시된 키를 누르면 실행됩니다
 Last backup: {}|Última copia: {}|Dernière sauvegarde : {}|Letzte Sicherung: {}|Ultimo backup: {}|Siste sikkerhetskopi: {}|마지막 백업: {}
 Links that change your list are off. Turn them on in Settings › Widget & automation.|Los enlaces que cambian tu lista están desactivados. Actívalos en Ajustes › Widget y automatización.|Les liens qui modifient ta liste sont désactivés. Active-les dans Réglages › Widget et automatisation.|Links, die deine Liste ändern, sind aus. Schalte sie unter Einstellungen › Widget & Automatisierung ein.|I link che modificano la tua lista sono disattivati. Attivali in Impostazioni › Widget e automazione.|Lenker som endrer listen din er av. Slå dem på i Innstillinger › Widget og automatisering.|목록을 바꾸는 링크가 꺼져 있습니다. 설정 › 위젯 및 자동화에서 켜세요.
+Median score|Nota mediana|Note médiane|Median-Wertung|Voto mediano|Mediankarakter|중앙값 점수
+More statistics|Más estadísticas|Plus de statistiques|Mehr Statistik|Altre statistiche|Mer statistikk|통계 더 보기
 Move through a menu and choose|Moverse por un menú y elegir|Parcourir un menu et choisir|Durch ein Menü gehen und auswählen|Muoversi in un menu e scegliere|Gå gjennom en meny og velg|메뉴에서 이동하고 선택
 New calendar…|Calendario nuevo…|Nouvel agenda…|Neuer Kalender…|Nuovo calendario…|Ny kalender…|새 캘린더…
 Next episodes|Próximos episodios|Prochains épisodes|Nächste Folgen|Prossimi episodi|Neste episoder|다음 에피소드
 No folder chosen|Ninguna carpeta elegida|Aucun dossier choisi|Kein Ordner gewählt|Nessuna cartella scelta|Ingen mappe valgt|선택한 폴더 없음
 No progress for {} days|Sin avances desde hace {} días|Aucun progrès depuis {} jours|Seit {} Tagen kein Fortschritt|Nessun progresso da {} giorni|Ingen fremdrift på {} dager|{}일 동안 진행 없음
 Not available in this build|No disponible en esta versión|Indisponible dans cette version|In dieser Version nicht verfügbar|Non disponibile in questa versione|Ikke tilgjengelig i denne versjonen|이 버전에서는 사용할 수 없습니다
+Nothing to count yet|Aún no hay nada que contar|Rien à compter pour l’instant|Noch nichts zu zählen|Ancora niente da contare|Ingenting å telle ennå|아직 집계할 작품이 없습니다
 Open the menu of the selected title|Abrir el menú del título seleccionado|Ouvrir le menu du titre sélectionné|Menü des ausgewählten Titels öffnen|Apri il menu del titolo selezionato|Åpne menyen for den valgte tittelen|선택한 작품의 메뉴 열기
+Overview|Resumen|Vue d’ensemble|Überblick|Panoramica|Oversikt|개요
 Reminders|Recordatorios|Rappels|Erinnerungen|Promemoria|Påminnelser|리마인더
 Reminders are notifications: turn notifications on to get them.|Los recordatorios son notificaciones: activa las notificaciones para recibirlos.|Les rappels sont des notifications : active les notifications pour les recevoir.|Erinnerungen sind Benachrichtigungen: Schalte Benachrichtigungen ein, um sie zu erhalten.|I promemoria sono notifiche: attiva le notifiche per riceverli.|Påminnelser er varsler: slå på varsler for å få dem.|리마인더는 알림입니다. 받으려면 알림을 켜세요.
 Right-click always opens the full menu. Dragging a row sideways also works on touch screens.|El clic derecho siempre abre el menú completo. Arrastrar una fila de lado también funciona en pantallas táctiles.|Le clic droit ouvre toujours le menu complet. Faire glisser une ligne sur le côté marche aussi sur les écrans tactiles.|Rechtsklick öffnet immer das ganze Menü. Eine Zeile zur Seite ziehen geht auch auf Touchscreens.|Il clic destro apre sempre il menu completo. Trascinare una riga di lato funziona anche sugli schermi touch.|Høyreklikk åpner alltid hele menyen. Å dra en rad sidelengs fungerer også på berøringsskjermer.|오른쪽 클릭하면 항상 전체 메뉴가 열립니다. 행을 옆으로 드래그하는 것은 터치스크린에서도 됩니다.
@@ -375,12 +382,14 @@ Theme|Tema|Thème|Design|Tema|Tema|테마
 This backup could not be read: {}|No se pudo leer esta copia: {}|Cette sauvegarde est illisible : {}|Diese Sicherung konnte nicht gelesen werden: {}|Impossibile leggere questo backup: {}|Sikkerhetskopien kunne ikke leses: {}|이 백업을 읽을 수 없습니다: {}
 This title is not in your list.|Este título no está en tu lista.|Ce titre n’est pas dans ta liste.|Dieser Titel ist nicht in deiner Liste.|Questo titolo non è nella tua lista.|Denne tittelen er ikke i listen din.|이 작품은 목록에 없습니다.
 Time|Hora|Heure|Zeit|Ora|Tid|시간
+Time watched|Tiempo visto|Temps de visionnage|Gesehene Zeit|Tempo di visione|Tid sett|시청 시간
 Times reread|Veces releído|Nombre de relectures|Erneut gelesen|Volte riletto|Ganger lest på nytt|다시 읽은 횟수
 Times rewatched|Veces vuelto a ver|Nombre de revisionnages|Erneut gesehen|Volte rivisto|Ganger sett på nytt|다시 본 횟수
 Tint|Color de acento|Couleur d’accent|Akzentfarbe|Colore d’accento|Aksentfarge|강조 색상
 Title|Título|Titre|Titel|Titolo|Tittel|제목
 Title language|Idioma de los títulos|Langue des titres|Sprache der Titel|Lingua dei titoli|Språk på titler|제목 언어
 Title, or an AniList or MyAnimeList link|Título, o un enlace de AniList o MyAnimeList|Titre, ou lien AniList ou MyAnimeList|Titel oder AniList-/MyAnimeList-Link|Titolo, o link AniList o MyAnimeList|Tittel, eller lenke til AniList eller MyAnimeList|제목 또는 AniList, MyAnimeList 링크
+Titles|Títulos|Titres|Titel|Titoli|Titler|작품
 Titles I stopped watching or reading|Títulos que dejé de ver o leer|Titres que j’ai arrêté de regarder ou lire|Titel, die ich nicht weiterschaue oder -lese|Titoli che ho smesso di guardare o leggere|Titler jeg sluttet å se eller lese|보거나 읽다가 멈춘 작품
 Titles and rankings|Títulos y rankings|Titres et classements|Titel und Ranglisten|Titoli e classifiche|Titler og rangeringer|작품 및 순위
 Titles in the backup replace the ones in your list.|Los títulos de la copia sustituyen a los de tu lista.|Les titres de la sauvegarde remplacent ceux de ta liste.|Titel aus der Sicherung ersetzen die in deiner Liste.|I titoli del backup sostituiscono quelli della tua lista.|Titler i sikkerhetskopien erstatter dem i listen din.|백업의 작품이 목록의 작품을 대체합니다.

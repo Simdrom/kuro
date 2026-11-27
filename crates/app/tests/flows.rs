@@ -329,6 +329,24 @@ fn statistics_rows_jump_to_the_list() {
 }
 
 #[test]
+fn more_statistics_show_scores_genres_and_years() {
+    for size in [[1240.0, 820.0], [430.0, 800.0]] {
+        let mut h = harness_with(store(), size, |_| {});
+        act(&mut h, Act::Go(Tab::Settings));
+        click(&mut h, "More statistics: Anime");
+        assert_eq!(h.state().routes.last(), Some(&Route::Stats(MediaKind::Anime)));
+        assert!(h.query_by_label_contains("Scores · ").is_some());
+        assert!(h.query_by_label_contains("Drama: ").is_some());
+        assert!(h.query_by_label_contains("Studio Example: ").is_some());
+        act(&mut h, Act::Push(Route::Stats(MediaKind::Manga)));
+        assert!(h.query_by_label_contains("Studio Example").is_none(), "no studios for manga");
+    }
+    let mut h = harness_with(Store::in_memory().unwrap(), [1240.0, 820.0], |_| {});
+    act(&mut h, Act::Push(Route::Stats(MediaKind::Anime)));
+    assert!(h.query_by_label("Nothing to count yet").is_some());
+}
+
+#[test]
 fn links_open_titles_searches_and_tabs() {
     let mut h = harness();
     assert!(h.state_mut().open_link("https://anilist.co/anime/3"));

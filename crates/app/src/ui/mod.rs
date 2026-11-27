@@ -15,6 +15,7 @@ pub mod kioku;
 pub mod mylist;
 pub mod rows;
 pub mod settings;
+pub mod stats;
 
 use eframe::egui::{
     self, Align, Align2, CentralPanel, CornerRadius, CursorIcon, Frame, Layout, Margin, Panel, RichText,

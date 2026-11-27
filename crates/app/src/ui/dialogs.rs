@@ -290,6 +290,12 @@ fn command(app: &mut App, ctx: &Context) {
                 rows.push((name.into(), icons::GEAR, Act::Push(Route::Settings(page))));
             }
         }
+        for k in MediaKind::ALL {
+            let name = tf("{} statistics", &[&format::kind(k)]);
+            if !q.is_empty() && name.to_lowercase().contains(&q) {
+                rows.push((name, icons::CHART_BAR, Act::Push(Route::Stats(k))));
+            }
+        }
         let kioku = super::kioku::NAME;
         let about = t("kioku.palette");
         if !q.is_empty() && [kioku, about, "crunchyroll"].iter().any(|n| n.to_lowercase().contains(&q)) {

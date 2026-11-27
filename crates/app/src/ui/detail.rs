@@ -36,6 +36,7 @@ pub fn show(app: &mut App, ui: &mut Ui) {
         Some(Route::Settings(page)) => super::settings::page(app, ui, page),
         Some(Route::Kioku) => super::kioku::show(app, ui),
         Some(Route::Friend(f)) => super::friends::profile(app, ui, &f),
+        Some(Route::Stats(k)) => super::stats::show(app, ui, k),
     }
 }
 

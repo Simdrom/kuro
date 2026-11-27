@@ -146,7 +146,9 @@ actions such as refresh, a random title or Kioku, without touching the mouse.
 ### Settings, statistics and automation
 
 Settings opens with your statistics: titles and days in each status, and your
-average score. Its pages cover general options, lists, accounts,
+average score. **More statistics** goes further: how your scores spread from 1
+to 10, your median score, the genres and studios you watch most and how you
+score them, formats, and the titles you completed each year. Its pages cover general options, lists, accounts,
 notifications, mouse and keyboard (what double-click, middle-click and drag
 do), appearance, widget and automation, data (import, export, backups) and
 about.
