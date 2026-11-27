@@ -215,14 +215,24 @@ fn replace(path: &Path, bytes: &[u8], log: &Log) -> Result<(), String> {
     Ok(())
 }
 
+/// A program that has just closed may keep its file locked a moment longer, or an antivirus may
+/// be reading it, so a denied removal is tried again for a few seconds.
 fn remove(path: &Path, log: &Log) -> Result<(), String> {
-    match std::fs::remove_file(path) {
-        Ok(()) => {
-            log.add(format!("Removed {}", path.display()));
-            Ok(())
+    let end = Instant::now() + Duration::from_secs(5);
+    loop {
+        match std::fs::remove_file(path) {
+            Ok(()) => {
+                log.add(format!("Removed {}", path.display()));
+                return Ok(());
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied && Instant::now() < end => {
+                std::thread::sleep(Duration::from_millis(200));
+            }
+            Err(e) => {
+                return Err(tf("Could not remove {0}: {1}", &[&path.display().to_string(), &e.to_string()]));
+            }
         }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(e) => Err(tf("Could not remove {0}: {1}", &[&path.display().to_string(), &e.to_string()])),
     }
 }
 
