@@ -73,19 +73,6 @@ impl Keyring {
         Self { app: app.to_owned() }
     }
 
-    /// Takes over the tokens stored under an older name.
-    pub fn adopt(&self, old: &Keyring) -> Result<()> {
-        for s in Service::ALL.map(SecretKey::from) {
-            let Some(tokens) = old.load(s)? else { continue };
-            if self.load(s)?.is_none() {
-                self.save(s, &tokens)?;
-            }
-            // Only removed once the new copy is safe.
-            old.delete(s)?;
-        }
-        Ok(())
-    }
-
     /// Removes every session: the setup does it when the user deletes their data.
     pub fn forget_all(&self) -> Result<()> {
         let services = Service::ALL.map(SecretKey::Service);
@@ -176,26 +163,6 @@ mod tests {
         let t = Tokens { access: "AAA".into(), refresh: Some("BBB".into()), expires_at: 1, device: None };
         let s = format!("{t:?}");
         assert!(!s.contains("AAA") && !s.contains("BBB"));
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn adopts_tokens_from_an_older_name() {
-        let pid = std::process::id();
-        let (old, new) =
-            (Keyring::new(&format!("kuro-test-old-{pid}")), Keyring::new(&format!("kuro-test-new-{pid}")));
-        let token = |a: &str| Tokens { access: a.into(), refresh: None, expires_at: 1, device: None };
-        old.save(Service::AniList.into(), &token("a")).unwrap();
-        old.save(Service::Mal.into(), &token("stale")).unwrap();
-        new.save(Service::Mal.into(), &token("newer")).unwrap();
-        new.adopt(&old).unwrap();
-        assert_eq!(new.load(Service::AniList.into()).unwrap().unwrap().access, "a");
-        assert_eq!(new.load(Service::Mal.into()).unwrap().unwrap().access, "newer");
-        for s in Service::ALL.map(SecretKey::from) {
-            assert!(old.load(s).unwrap().is_none());
-            new.delete(s).unwrap();
-        }
-        new.adopt(&old).unwrap();
     }
 
     #[cfg(windows)]

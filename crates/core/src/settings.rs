@@ -24,7 +24,6 @@ impl Theme {
 pub enum Tint {
     #[default]
     Blue,
-    #[serde(alias = "mango")]
     Amber,
     Green,
     Teal,
@@ -43,7 +42,6 @@ impl Tint {
 #[serde(rename_all = "snake_case")]
 pub enum AppIcon {
     #[default]
-    #[serde(alias = "sunrise")]
     Ink,
     Night,
     Leaf,
@@ -501,12 +499,6 @@ Anime "
         let s: Settings = serde_json::from_str(r#"{"tint":"pink"}"#).unwrap();
         assert_eq!(s.tint, Tint::Pink);
         assert!(s.save_both);
-    }
-
-    #[test]
-    fn settings_saved_under_the_old_name_still_load() {
-        let s: Settings = serde_json::from_str(r#"{"tint":"mango","icon":"sunrise","zoom":1.25}"#).unwrap();
-        assert_eq!((s.tint, s.icon, s.zoom), (Tint::Amber, AppIcon::Ink, 1.25));
     }
 
     #[test]

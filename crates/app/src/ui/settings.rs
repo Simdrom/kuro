@@ -961,7 +961,7 @@ fn about(app: &mut App, ui: &mut Ui) {
         ui,
         &p,
         t(
-            "An independent, unofficial app. Not affiliated with ManGo, RocketScience IT, AniList or MyAnimeList.",
+            "An independent, unofficial app. Not affiliated with AniList or MyAnimeList.",
         ),
     );
     section(ui, &p, t("Privacy"));

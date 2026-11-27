@@ -10,7 +10,10 @@
 Unofficial anime and manga tracker for Windows, written in Rust. It works with
 AniList and MyAnimeList, or with a list that stays on your computer.
 
-Independent project. Not affiliated with ManGo, RocketScience IT, AniList or
+Inspired by **ManGo**, the anime and manga tracker for iOS made by
+RocketScience IT: its design was the starting point for this app.
+
+Independent project. Not affiliated with RocketScience IT, AniList or
 MyAnimeList, and built without any of their code or artwork.
 
 ![Kuro: your anime list with a title open beside it](docs/screenshots/list-and-detail.png)
@@ -414,6 +417,9 @@ available yet.
   notification when the window is not in front.
 
 ## What changes from a phone app
+
+Kuro started from ManGo on iOS. This is how its phone features carry over to
+the desktop.
 
 | On a phone | Here |
 | --- | --- |
