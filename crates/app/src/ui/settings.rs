@@ -957,13 +957,7 @@ fn about(app: &mut App, ui: &mut Ui) {
         ),
     );
     note(ui, &p, t("Kuro is Japanese for black, like the ink of manga."));
-    note(
-        ui,
-        &p,
-        t(
-            "An independent, unofficial app. Not affiliated with AniList or MyAnimeList.",
-        ),
-    );
+    note(ui, &p, t("An independent, unofficial app. Not affiliated with AniList or MyAnimeList."));
     section(ui, &p, t("Privacy"));
     card(ui, &p, |ui| {
         ui.add(
