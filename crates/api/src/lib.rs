@@ -442,6 +442,24 @@ impl Api {
         }
     }
 
+    /// The names of the custom lists of the AniList account, anime and manga together.
+    pub async fn custom_lists(&self) -> Result<Vec<String>> {
+        let t = self.token(Service::AniList).await?;
+        let [a, m] = self.anilist.custom_lists(&t.access).await?;
+        Ok(kuro_core::clean_lists(a.into_iter().chain(m)))
+    }
+
+    /// Creates, renames or deletes a custom list of the AniList account, and
+    /// returns the names it has afterwards.
+    pub async fn edit_custom_lists(&self, op: &kuro_core::ListOp) -> Result<Vec<String>> {
+        let t = self.token(Service::AniList).await?;
+        let [a, m] = self.anilist.custom_lists(&t.access).await?;
+        let next = [op.apply(&a), op.apply(&m)];
+        self.anilist.set_custom_lists(&t.access, &next).await?;
+        let [a, m] = next;
+        Ok(kuro_core::clean_lists(a.into_iter().chain(m)))
+    }
+
     /// The people the signed-in AniList user follows.
     pub async fn following(&self) -> Result<Vec<String>> {
         let user = self.user_id(Service::AniList).await?;

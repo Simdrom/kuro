@@ -549,11 +549,70 @@ pub fn list_names<'a>(entries: impl IntoIterator<Item = &'a ListEntry>) -> Vec<S
     names
 }
 
+/// A change to the user's own lists as a whole.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ListOp {
+    Create(String),
+    Rename(String, String),
+    Delete(String),
+}
+
+impl ListOp {
+    /// Applies the change to a set of list names. Renaming or deleting a name
+    /// that is not there changes nothing.
+    pub fn apply(&self, names: &[String]) -> Vec<String> {
+        let same = |a: &str, b: &str| a.to_lowercase() == b.to_lowercase();
+        let next: Vec<String> = match self {
+            Self::Create(n) => names.iter().cloned().chain([n.clone()]).collect(),
+            Self::Rename(from, to) => {
+                names.iter().map(|x| if same(x, from) { to.clone() } else { x.clone() }).collect()
+            }
+            Self::Delete(n) => names.iter().filter(|x| !same(x, n)).cloned().collect(),
+        };
+        clean_lists(next)
+    }
+
+    /// The lists of one title after the change; creating a list adds no title to it.
+    pub fn apply_to_entry(&self, names: &[String]) -> Vec<String> {
+        match self {
+            Self::Create(_) => names.to_vec(),
+            _ => self.apply(names),
+        }
+    }
+
+    /// The name the change is about, before it.
+    pub fn name(&self) -> &str {
+        match self {
+            Self::Create(n) | Self::Rename(n, _) | Self::Delete(n) => n,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct UserProfile {
     pub id: u64,
     pub name: String,
     pub avatar: Option<String>,
+}
+
+#[cfg(test)]
+mod list_op_tests {
+    use super::*;
+
+    fn v(a: &[&str]) -> Vec<String> {
+        a.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    #[test]
+    fn list_ops_ignore_case_and_keep_the_rest() {
+        let names = v(&["Cozy", "Rewatch"]);
+        assert_eq!(ListOp::Create("cozy".into()).apply(&names), names);
+        assert_eq!(ListOp::Create("Later".into()).apply(&names), v(&["Cozy", "Rewatch", "Later"]));
+        assert_eq!(ListOp::Rename("COZY".into(), "Warm".into()).apply(&names), v(&["Warm", "Rewatch"]));
+        assert_eq!(ListOp::Rename("Cozy".into(), "rewatch".into()).apply(&names), v(&["rewatch"]));
+        assert_eq!(ListOp::Delete("rewatch".into()).apply(&names), v(&["Cozy"]));
+        assert_eq!(ListOp::Create("New".into()).apply_to_entry(&names), names);
+    }
 }
 
 #[cfg(test)]

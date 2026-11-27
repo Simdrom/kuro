@@ -69,7 +69,7 @@ fn date_row(ui: &mut Ui, p: &theme::Palette, label: &str, text: &mut String) -> 
 fn editor(app: &mut App, ctx: &Context) {
     let Some(mut ed) = app.editor.take() else { return };
     let p = app.p;
-    let mut names = kuro_core::list_names(app.library(ed.entry.media.kind).iter().map(|e| &**e));
+    let mut names = app.list_names();
     names.extend(ed.entry.lists().iter().filter(|n| !names.contains(n)).cloned().collect::<Vec<_>>());
     let (lists_label, can_name) = (app.lists_label(), app.can_name_lists());
     let (mut close, mut save, mut delete) = (false, false, false);
@@ -394,7 +394,7 @@ fn lists_card(
         });
     }
     if !can_name {
-        widgets::note(ui, p, t("Make new custom lists on AniList; they show here after a refresh."));
+        widgets::note(ui, p, t("Make new lists in My Lists."));
         return;
     }
     ui.horizontal(|ui| {

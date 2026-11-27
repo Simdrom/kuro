@@ -5,16 +5,18 @@ use std::rc::Rc;
 use eframe::egui::{self, Ui, vec2};
 use kuro_api::Ranking;
 use kuro_core::links;
-use kuro_core::{Format, Media, MediaKind, Season, SeasonYear, Service, season};
+use kuro_core::{Format, ListStatus, Media, MediaKind, Season, SeasonYear, Service, season};
 
 use super::rows::{self, Item, Style};
-use crate::app::{Act, App, BrowseSort, Feed, today};
+use crate::app::{Act, App, BrowseSort, Feed, Mine, today};
 use crate::i18n::t;
 use crate::widgets;
 use crate::{format, icons};
 
 /// From this width a toolbar fits on one line.
 const WIDE: f32 = 820.0;
+/// Pages of a ranking read in search of titles for the list filter.
+const MINE_PAGES: u32 = 20;
 
 fn items(app: &App, list: &[Rc<Media>], ranked: bool) -> Vec<Item> {
     list.iter()
@@ -198,6 +200,14 @@ fn ranking_filters(app: &mut App, ui: &mut Ui) {
     let options = Ranking::options(app.ranking.kind, app.s.primary);
     let r = &mut app.ranking;
     widgets::select(ui, "ranking", t("Ranking"), &mut r.ranking, &options, |v| format::ranking(v).to_owned());
+    let kind = r.kind;
+    let mut mine = vec![Mine::Any, Mine::NotAdded];
+    mine.extend(ListStatus::ALL.map(Mine::Status));
+    widgets::select(ui, "mine", t("In my list"), &mut r.mine, &mine, |m| match m {
+        Mine::Any => t("Any status").to_owned(),
+        Mine::NotAdded => t("Not in my list").to_owned(),
+        Mine::Status(s) => format::status(s, kind).to_owned(),
+    });
     if app.s.primary != Service::AniList {
         return;
     }
@@ -263,11 +273,14 @@ pub fn ranking(app: &mut App, ui: &mut Ui) {
     if !app.ranking.feed.started {
         app.load_ranking();
     }
-    let list = items(app, &app.ranking.feed.items, true);
+    let mut list = items(app, &app.ranking.feed.items, true);
+    let mine = app.ranking.mine;
+    list.retain(|i| mine.accepts(i.entry.as_deref()));
     let f = std::mem::take(&mut app.ranking.feed);
     let more = feed(app, ui, "ranking", &f, &list);
     app.ranking.feed = f;
-    if more {
+    // A filter that matches little would otherwise page through the whole ranking.
+    if more && (mine == Mine::Any || app.ranking.feed.page < MINE_PAGES) {
         app.load_ranking();
     }
 }

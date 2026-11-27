@@ -29,7 +29,17 @@ impl App {
         if self.editor.is_some() || self.confirm.is_some() || self.command.is_some() {
             return;
         }
-        let tabs = [Key::Num1, Key::Num2, Key::Num3, Key::Num4, Key::Num5, Key::Num6, Key::Num7, Key::Num8];
+        let tabs = [
+            Key::Num1,
+            Key::Num2,
+            Key::Num3,
+            Key::Num4,
+            Key::Num5,
+            Key::Num6,
+            Key::Num7,
+            Key::Num8,
+            Key::Num9,
+        ];
         for (k, tab) in tabs.into_iter().zip(Tab::ALL) {
             if hit(Modifiers::COMMAND, k) {
                 self.act(Act::Go(tab));

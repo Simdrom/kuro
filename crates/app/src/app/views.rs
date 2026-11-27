@@ -8,6 +8,8 @@ pub enum Tab {
     Manga,
     /// The coming episodes of the user's anime.
     Calendar,
+    /// The user's custom lists or tags.
+    Lists,
     Seasonal,
     Ranking,
     Search,
@@ -17,10 +19,11 @@ pub enum Tab {
 }
 
 impl Tab {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::Anime,
         Self::Manga,
         Self::Calendar,
+        Self::Lists,
         Self::Seasonal,
         Self::Ranking,
         Self::Search,
@@ -123,6 +126,12 @@ pub enum Act {
     /// Searches with the picker's text.
     KiokuLookup,
     KiokuChoose(Box<Media>),
+    /// Creates, renames or deletes one of the user's custom lists.
+    EditLists(ListOp),
+    /// Asks before deleting a custom list.
+    AskDeleteList(String),
+    /// Puts a title in a custom list, or takes it out.
+    ToggleList(Rc<Media>, String),
     /// Adds the friend typed in the Friends tab.
     AddFriend,
     RemoveFriend(Friend),
@@ -258,11 +267,32 @@ impl BrowseSort {
     pub const ALL: [Self; 4] = [Self::Popularity, Self::Score, Self::Title, Self::StartDate];
 }
 
+/// Which ranked titles to show, by their place in the user's list.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Mine {
+    #[default]
+    Any,
+    /// Not in the list at all, to discover something new.
+    NotAdded,
+    Status(ListStatus),
+}
+
+impl Mine {
+    pub fn accepts(self, e: Option<&ListEntry>) -> bool {
+        match self {
+            Self::Any => true,
+            Self::NotAdded => e.is_none(),
+            Self::Status(s) => e.is_some_and(|e| e.status == s),
+        }
+    }
+}
+
 pub struct RankingView {
     pub kind: MediaKind,
     pub ranking: Ranking,
     pub genre: Option<String>,
     pub year: Option<i32>,
+    pub mine: Mine,
     pub feed: Feed,
     pub genres: Vec<String>,
     pub genres_started: bool,
@@ -345,6 +375,29 @@ pub struct ListView {
 }
 
 /// Filtered and sorted rows, kept between frames.
+/// The Lists tab: one custom list at a time.
+#[derive(Default)]
+pub struct OwnListsView {
+    pub selected: Option<String>,
+    pub cache: Option<OwnListsCache>,
+    /// A list being named: a new one, or the one in `from`.
+    pub naming: Option<Naming>,
+    /// Text that finds titles to add to the list.
+    pub find: String,
+    /// Waiting for AniList to change a list.
+    pub busy: bool,
+}
+
+pub struct Naming {
+    pub from: Option<String>,
+    pub text: String,
+}
+
+pub struct OwnListsCache {
+    pub key: (u64, String, SortKey, bool, TitleLanguage),
+    pub items: Rc<Vec<crate::ui::rows::Item>>,
+}
+
 pub struct ListCache {
     pub key: (u64, Filter, SortKey, bool, TitleLanguage),
     pub items: Rc<Vec<crate::ui::rows::Item>>,

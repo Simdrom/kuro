@@ -281,6 +281,8 @@ impl Default for BackupSettings {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// Custom lists made here, kept even while no title is in them.
+    pub custom_lists: Vec<String>,
     // General
     /// UI language code; empty follows the system.
     pub language: String,
@@ -357,6 +359,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            custom_lists: Vec::new(),
             language: String::new(),
             default_kind: MediaKind::Anime,
             sidebar: true,

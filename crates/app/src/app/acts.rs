@@ -105,6 +105,27 @@ impl App {
                 });
             }
             Act::Delete(r) => self.delete(r),
+            Act::EditLists(op) => self.edit_lists(op),
+            Act::AskDeleteList(name) => {
+                self.confirm = Some(Confirm {
+                    title: tf("Delete the list “{}”?", &[&name]),
+                    body: t("Its titles stay in your list; they just leave this one.").into(),
+                    action: t("Delete").into(),
+                    danger: true,
+                    act: Some(Act::EditLists(ListOp::Delete(name))),
+                });
+            }
+            Act::ToggleList(m, name) => {
+                let mut e = self.working_entry(&m);
+                let low = name.to_lowercase();
+                let next: Vec<String> = if e.lists().iter().any(|x| x.to_lowercase() == low) {
+                    e.lists().iter().filter(|x| x.to_lowercase() != low).cloned().collect()
+                } else {
+                    e.lists().iter().cloned().chain([name]).collect()
+                };
+                e.lists = Some(kuro_core::clean_lists(next));
+                self.change(&e);
+            }
             Act::Undo => self.undo(),
             Act::Url(u) => self.sys.open_url(&u),
             Act::Copy(text) => {
