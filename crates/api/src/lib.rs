@@ -101,6 +101,16 @@ impl ClientIds {
         }
     }
 
+    /// Whether this build carries its own client id for `s`, so people can
+    /// sign in without creating one.
+    pub fn built_in(s: Service) -> bool {
+        let id = match s {
+            Service::AniList => option_env!("KURO_ANILIST_CLIENT_ID"),
+            Service::Mal => option_env!("KURO_MAL_CLIENT_ID"),
+        };
+        !id.unwrap_or_default().trim().is_empty()
+    }
+
     pub fn get(&self, s: Service) -> &str {
         match s {
             Service::AniList => &self.anilist,
