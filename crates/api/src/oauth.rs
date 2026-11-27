@@ -247,8 +247,93 @@ enum Answer {
 pub(crate) const DONE: &str = "You are signed in. You can close this tab.";
 pub(crate) const CANCELLED: &str = "Sign-in was cancelled. You can close this tab.";
 
+/// Colours of the sign-in page, so it matches the app's theme and accent.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PageLook {
+    pub dark: bool,
+    pub animations: bool,
+    pub bg: [u8; 3],
+    pub card: [u8; 3],
+    pub line: [u8; 3],
+    pub text: [u8; 3],
+    pub dim: [u8; 3],
+    pub tint: [u8; 3],
+    pub ok: [u8; 3],
+    pub on_ok: [u8; 3],
+    pub bad: [u8; 3],
+    pub on_bad: [u8; 3],
+}
+
+impl Default for PageLook {
+    /// The app's default dark theme with the blue accent.
+    fn default() -> Self {
+        Self {
+            dark: true,
+            animations: true,
+            bg: [0x0E, 0x0E, 0x10],
+            card: [0x1C, 0x1C, 0x1F],
+            line: [0x34, 0x34, 0x39],
+            text: [0xF4, 0xF4, 0xF6],
+            dim: [0xA3, 0xA3, 0xAB],
+            tint: [0x2F, 0x95, 0xFF],
+            ok: [0x3C, 0xCB, 0x68],
+            on_ok: [0x0B, 0x0B, 0x0D],
+            bad: [0xFF, 0x62, 0x59],
+            on_bad: [0x0B, 0x0B, 0x0D],
+        }
+    }
+}
+
+static LOOK: std::sync::Mutex<Option<PageLook>> = std::sync::Mutex::new(None);
+
+/// Called by the app whenever its theme or accent changes.
+pub fn set_page_look(look: PageLook) {
+    *LOOK.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = Some(look);
+}
+
+fn style() -> String {
+    let l = LOOK.lock().unwrap_or_else(std::sync::PoisonError::into_inner).unwrap_or_default();
+    let c = |[r, g, b]: [u8; 3]| format!("#{r:02X}{g:02X}{b:02X}");
+    let scheme = if l.dark { "dark" } else { "light" };
+    let shadow = if l.dark { ".45" } else { ".10" };
+    let spin = if l.animations { "animation:spin 1s linear infinite" } else { "" };
+    format!(
+        ":root{{--bg:{};--card:{};--line:{};--text:{};--dim:{};--tint:{};--ok:{};--on-ok:{};--bad:{};\
+         --on-bad:{};color-scheme:{scheme}}}\
+         *{{box-sizing:border-box}}body{{margin:0;min-height:100vh;display:grid;place-items:center;padding:16px;\
+         background:var(--bg);color:var(--text);font:15px/1.5 'Segoe UI',system-ui,sans-serif}}\
+         main{{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:14px;\
+         padding:32px 28px;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,{shadow})}}\
+         .brand{{font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--tint)}}\
+         .mark{{width:56px;height:56px;margin:20px auto 16px;border-radius:50%;display:grid;place-items:center;\
+         font-size:28px;font-weight:700}}\
+         .ok .mark{{background:var(--ok);color:var(--on-ok)}}.bad .mark{{background:var(--bad);color:var(--on-bad)}}\
+         .wait .mark{{border:4px solid var(--line);border-top-color:var(--tint);{spin}}}\
+         @keyframes spin{{to{{transform:rotate(1turn)}}}}\
+         @media(prefers-reduced-motion:reduce){{.wait .mark{{animation:none}}}}\
+         p{{margin:0;color:var(--dim)}}",
+        c(l.bg),
+        c(l.card),
+        c(l.line),
+        c(l.text),
+        c(l.dim),
+        c(l.tint),
+        c(l.ok),
+        c(l.on_ok),
+        c(l.bad),
+        c(l.on_bad),
+    )
+}
+
 /// `nonce` enables the script that forwards the URL fragment.
 pub(crate) fn page(status: u16, text: &str, nonce: &str) -> String {
+    let (class, mark) = if !nonce.is_empty() {
+        ("wait", "")
+    } else if status == 200 && text == DONE {
+        ("ok", "✓")
+    } else {
+        ("bad", "!")
+    };
     let script = if nonce.is_empty() {
         String::new()
     } else {
@@ -257,12 +342,14 @@ pub(crate) fn page(status: u16, text: &str, nonce: &str) -> String {
              history.replaceState(null,'',location.pathname);\
              fetch('/anilist/token',{{method:'POST',headers:{{'X-Nonce':'{nonce}'}},body:h}})\
              .then(r=>r.text()).then(t=>{{const d=new DOMParser().parseFromString(t,'text/html');\
-             document.querySelector('p').textContent=d.querySelector('p').textContent}})</script>"
+             document.querySelector('main').replaceWith(d.querySelector('main'))}})</script>"
         )
     };
     let body = format!(
-        "<!doctype html><meta charset=utf-8><title>Kuro</title>\
-         <body style=\"font:16px system-ui;display:grid;place-items:center;height:90vh\"><p>{text}</p>{script}"
+        "<!doctype html><meta charset=utf-8><meta name=viewport content=\"width=device-width\">\
+         <title>Kuro</title><style>{}</style>\
+         <main class={class}><div class=brand>Kuro</div><div class=mark>{mark}</div><p>{text}</p></main>{script}",
+        style()
     );
     let csp = if nonce.is_empty() {
         "default-src 'none'; style-src 'unsafe-inline'".to_owned()
@@ -493,5 +580,12 @@ mod tests {
     #[tokio::test]
     async fn missing_client_id_is_reported() {
         assert!(matches!(Login::start(Service::Mal, "").await, Err(ApiError::NotConfigured)));
+    }
+
+    #[test]
+    fn page_uses_the_app_colours() {
+        set_page_look(PageLook { dark: false, tint: [0xBE, 0x23, 0x50], ..PageLook::default() });
+        let p = page(200, DONE, "");
+        assert!(p.contains("--tint:#BE2350") && p.contains("color-scheme:light") && p.contains("class=ok"));
     }
 }

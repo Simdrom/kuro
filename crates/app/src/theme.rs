@@ -153,6 +153,25 @@ impl Palette {
     }
 }
 
+/// Colours for the browser page shown after signing in.
+pub fn login_page(p: &Palette, animations: bool) -> kuro_api::oauth::PageLook {
+    let rgb = |c: Color32| [c.r(), c.g(), c.b()];
+    kuro_api::oauth::PageLook {
+        dark: p.dark,
+        animations,
+        bg: rgb(p.bg),
+        card: rgb(p.card),
+        line: rgb(p.line),
+        text: rgb(p.text),
+        dim: rgb(p.dim),
+        tint: rgb(p.tint),
+        ok: rgb(p.green),
+        on_ok: rgb(on(p.green)),
+        bad: rgb(p.red),
+        on_bad: rgb(on(p.red)),
+    }
+}
+
 pub fn blend(a: Color32, b: Color32, t: f32) -> Color32 {
     let mix = |x: u8, y: u8| (f32::from(x) + (f32::from(y) - f32::from(x)) * t).round() as u8;
     Color32::from_rgb(mix(a.r(), b.r()), mix(a.g(), b.g()), mix(a.b(), b.b()))

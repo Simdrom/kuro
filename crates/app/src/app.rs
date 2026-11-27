@@ -2194,6 +2194,7 @@ impl App {
         if self.applied != Some(look) {
             self.applied = Some(look);
             theme::apply(ctx, &self.p, self.s.animations);
+            kuro_api::oauth::set_page_look(theme::login_page(&self.p, self.s.animations));
             ctx.set_zoom_factor(self.s.zoom);
             ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(min_size()));
         }
