@@ -1,7 +1,10 @@
 //! Cover and avatar downloads from known hosts only.
 
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::{Duration, SystemTime};
+
+use tokio::sync::Semaphore;
 
 use sha2::{Digest, Sha256};
 use url::Url;
@@ -9,6 +12,8 @@ use url::Url;
 use crate::http::{ApiError, Http, Result, Throttle, check, read_limited};
 
 const MAX_IMAGE: usize = 8 * 1024 * 1024;
+/// Downloads at once; more would only queue at the host while scrolling.
+const PARALLEL: usize = 6;
 const HOSTS: [&str; 6] =
     ["anilist.co", "myanimelist.net", "mzstatic.com", "scdn.co", "spotifycdn.com", "cdn.myanimelist.net"];
 
@@ -24,11 +29,12 @@ pub struct ImageCache {
     http: Http,
     dir: PathBuf,
     throttle: Throttle,
+    slots: Arc<Semaphore>,
 }
 
 impl ImageCache {
     pub fn new(http: Http, dir: PathBuf) -> Self {
-        Self { http, dir, throttle: Throttle::new(Duration::ZERO) }
+        Self { http, dir, throttle: Throttle::new(Duration::ZERO), slots: Arc::new(Semaphore::new(PARALLEL)) }
     }
 
     /// The file name is a hash, so a URL cannot choose a path.
@@ -41,7 +47,12 @@ impl ImageCache {
     pub async fn get(&self, url: &str) -> Result<Vec<u8>> {
         let parsed = allowed(url).ok_or(ApiError::Blocked)?;
         let path = self.path(url);
-        if let Ok(bytes) = tokio::fs::read(&path).await {
+        if let Some(bytes) = read_and_touch(&path).await {
+            return Ok(bytes);
+        }
+        let _slot = self.slots.acquire().await.map_err(|_| ApiError::Unavailable)?;
+        // Another request for the same image may have finished while this one waited.
+        if let Some(bytes) = read_and_touch(&path).await {
             return Ok(bytes);
         }
         let res = self.http.send(self.http.client().get(parsed), &self.throttle).await?;
@@ -51,13 +62,24 @@ impl ImageCache {
         if !is_image(&bytes) {
             return Err(ApiError::Decode("not an image".into()));
         }
+        self.write(&path, &bytes).await;
+        Ok(bytes)
+    }
+
+    /// Replaces a cached image with a smaller copy of it, such as one already scaled down.
+    pub async fn replace(&self, url: &str, bytes: &[u8]) {
+        if allowed(url).is_some() && is_image(bytes) {
+            self.write(&self.path(url), bytes).await;
+        }
+    }
+
+    async fn write(&self, path: &Path, bytes: &[u8]) {
         let _ = tokio::fs::create_dir_all(&self.dir).await;
         let temp =
             path.with_extension(format!("{:?}.tmp", std::thread::current().id()).replace(['(', ')'], ""));
-        if tokio::fs::write(&temp, &bytes).await.is_ok() {
-            let _ = tokio::fs::rename(&temp, &path).await;
+        if tokio::fs::write(&temp, bytes).await.is_ok() {
+            let _ = tokio::fs::rename(&temp, path).await;
         }
-        Ok(bytes)
     }
 
     /// The file of an image already downloaded, without going to the network.
@@ -91,6 +113,18 @@ impl ImageCache {
             }
         }
     }
+}
+
+/// Reads a cached file and marks it as just used, so `trim` removes the least used first.
+async fn read_and_touch(path: &Path) -> Option<Vec<u8>> {
+    let bytes = tokio::fs::read(path).await.ok()?;
+    let path = path.to_owned();
+    tokio::task::spawn_blocking(move || {
+        if let Ok(f) = std::fs::File::options().write(true).open(&path) {
+            let _ = f.set_modified(SystemTime::now());
+        }
+    });
+    Some(bytes)
 }
 
 fn files(dir: &Path) -> Vec<(PathBuf, u64, SystemTime)> {
@@ -157,5 +191,31 @@ mod tests {
         assert_eq!(c.size(), 200);
         c.clear();
         assert_eq!(c.size(), 0);
+    }
+
+    #[tokio::test]
+    async fn reading_keeps_an_image_from_being_trimmed() {
+        let dir = tempfile::tempdir().unwrap();
+        let c = ImageCache::new(Http::new().unwrap(), dir.path().into());
+        let (old, new) = ("https://s4.anilist.co/old.jpg", "https://s4.anilist.co/new.jpg");
+        let jpeg = [0xFF, 0xD8, 0xFF, 0, 0, 0, 0, 0];
+        c.replace(old, &jpeg).await;
+        c.replace(new, &jpeg).await;
+        let past = SystemTime::now() - Duration::from_secs(3600);
+        for u in [old, new] {
+            std::fs::File::options().write(true).open(c.path(u)).unwrap().set_modified(past).unwrap();
+        }
+        std::fs::File::options()
+            .write(true)
+            .open(c.path(new))
+            .unwrap()
+            .set_modified(past + Duration::from_secs(60))
+            .unwrap();
+        // Reading the older one makes it the most recently used.
+        assert_eq!(c.get(old).await.unwrap(), jpeg);
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        c.trim(8);
+        assert!(c.cached(old).is_some());
+        assert!(c.cached(new).is_none());
     }
 }
