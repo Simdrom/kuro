@@ -288,6 +288,7 @@ Prequel|Precuela|Préquelle|Vorgeschichte|Prequel|Forløper|전작
 Previous season|Temporada anterior|Saison précédente|Vorige Saison|Stagione precedente|Forrige sesong|이전 시즌
 Primary service|Servicio principal|Service principal|Hauptdienst|Servizio principale|Hovedtjeneste|기본 서비스
 Privacy|Privacidad|Confidentialité|Datenschutz|Privacy|Personvern|개인정보
+Privacy policy|Política de privacidad|Politique de confidentialité|Datenschutzerklärung|Informativa sulla privacy|Personvernerklæring|개인정보 처리방침
 Progress|Progreso|Progression|Fortschritt|Progresso|Fremdrift|진행
 Progress bar|Barra de progreso|Barre de progression|Fortschrittsbalken|Barra di avanzamento|Fremdriftslinje|진행 막대
 Publishing|En publicación|En publication|Erscheint gerade|In pubblicazione|Utgis nå|연재 중
@@ -434,6 +435,7 @@ Volumes|Tomos|Tomes|Bände|Volumi|Bind|권
 Waiting for the browser…|Esperando al navegador…|En attente du navigateur…|Warte auf den Browser…|In attesa del browser…|Venter på nettleseren…|브라우저를 기다리는 중…
 Watching|Viendo|En cours|Schaue ich|In visione|Ser på|보는 중
 Watching and reading|Viendo y leyendo|En cours de visionnage et de lecture|Am Schauen und Lesen|In visione e in lettura|Ser og leser|보는 중 및 읽는 중
+Website|Sitio web|Site web|Website|Sito web|Nettsted|웹사이트
 Widget & automation|Widget y automatización|Widget et automatisation|Widget & Automatisierung|Widget e automazione|Widget og automatisering|위젯 및 자동화
 Windows|Windows|Windows|Windows|Windows|Windows|Windows
 Winter|Invierno|Hiver|Winter|Inverno|Vinter|겨울

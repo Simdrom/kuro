@@ -10,6 +10,10 @@
 Unofficial anime and manga tracker for Windows, written in Rust. It works with
 AniList and MyAnimeList, or with a list that stays on your computer.
 
+**[Website](https://simdrom.github.io/kuro/)** ·
+**[Download](https://github.com/Simdrom/kuro/releases/latest)** ·
+[Privacy policy](https://simdrom.github.io/kuro/privacy.html)
+
 Inspired by **ManGo**, the anime and manga tracker for iOS made by
 RocketScience IT: its design was the starting point for this app.
 
