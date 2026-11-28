@@ -14,3 +14,6 @@ pub mod textures;
 pub mod theme;
 pub mod ui;
 pub mod widgets;
+
+/// Kuro's home page; the privacy policy is `privacy.html` beside it.
+pub const WEBSITE: &str = "https://simdrom.github.io/kuro/";

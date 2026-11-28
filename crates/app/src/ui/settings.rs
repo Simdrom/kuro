@@ -936,6 +936,15 @@ fn about(app: &mut App, ui: &mut Ui) {
     card(ui, &p, |ui| {
         widgets::fact(ui, &p, t("Version"), env!("CARGO_PKG_VERSION"));
         separator(ui, &p);
+        row(ui, &p, icons::GLOBE, t("Website"), |ui| {
+            if widgets::button(ui, &p, icons::ARROW_SQUARE_OUT, t("Open"), false).clicked() {
+                app.act(Act::Url(crate::WEBSITE.to_owned()));
+            }
+            if widgets::button(ui, &p, "", t("Privacy policy"), false).clicked() {
+                app.act(Act::Url(format!("{}privacy.html", crate::WEBSITE)));
+            }
+        });
+        separator(ui, &p);
         toggle_row(ui, &p, icons::CLOUD_ARROW_UP, t("Check for new versions"), &mut app.s.check_updates);
         if let Some(u) = app.update.clone() {
             separator(ui, &p);
